@@ -79,6 +79,7 @@ mongoose
 app.get('/healthz', (req, res) => res.send('OK'));
 // --- HEALTH CHECK ROUTE ---
 app.get('/health', (req, res) => {
+  console.log('✅ Health check pinged');
   res.status(200).send('OK');
 });
 
@@ -96,6 +97,6 @@ app.use((err, req, res, next) => {
   if (!res.headersSent) return res.status(500).send('Internal Server Error');
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running -> http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server running on port ${PORT}`);
 });
