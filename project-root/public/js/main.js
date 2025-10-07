@@ -1,6 +1,7 @@
 // ไฮไลต์เมนูตาม URL ปัจจุบัน + ปุ่มยืนยันอันตราย
 document.addEventListener('DOMContentLoaded', () => {
   const here = location.pathname.replace(/\/+$/, '');
+  const navLinks = document.querySelectorAll('.nav a');
   document.querySelectorAll('.nav a').forEach((a) => {
     const href = (a.getAttribute('href') || '').replace(/\/+$/, '');
     if (href && here === href) a.classList.add('active');
@@ -28,6 +29,34 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!target.closest('.nav-group')) {
       navGroups.forEach((group) => group.classList.remove('open'));
     }
+  });
+
+  const navToggles = document.querySelectorAll('[data-nav-toggle]');
+  const navBackdrop = document.querySelector('[data-nav-backdrop]');
+  const setNavExpanded = (isOpen) => {
+    document.body.classList.toggle('nav-open', isOpen);
+    navToggles.forEach((btn) => btn.setAttribute('aria-expanded', String(isOpen)));
+    if (!isOpen) navGroups.forEach((group) => group.classList.remove('open'));
+  };
+
+  navToggles.forEach((btn) => {
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      const next = !document.body.classList.contains('nav-open');
+      setNavExpanded(next);
+    });
+  });
+
+  if (navBackdrop) {
+    navBackdrop.addEventListener('click', () => setNavExpanded(false));
+  }
+
+  navLinks.forEach((link) => {
+    link.addEventListener('click', () => {
+      if (window.matchMedia('(max-width: 960px)').matches) {
+        setNavExpanded(false);
+      }
+    });
   });
 
   document.querySelectorAll('[data-confirm]').forEach((btn) => {

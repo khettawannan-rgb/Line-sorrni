@@ -31,10 +31,14 @@
         <img src="/static/img/Nila_Flatcolour_Logo-.png" alt="NILA" />
         <span>NILA · LINE ERP Notifier</span>
       </a>
-      <nav class="nav">
-        <div class="nav-group">
-          <button type="button">Overview</button>
-          <div class="nav-dropdown">
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-overlay" data-nav-toggle>
+        <span></span><span></span><span></span>
+      </button>
+      <div class="topbar-menu" id="nav-overlay">
+        <nav class="nav">
+          <div class="nav-group">
+            <button type="button">Overview</button>
+            <div class="nav-dropdown">
             <a href="/admin" class="<%= (active==='dashboard'?'active':'') %>">
               <strong>Dashboard</strong>
               <span>สรุปภาพรวมระบบและ KPI</span>
@@ -101,12 +105,16 @@
             </a>
           </div>
         </div>
-      </nav>
-      <div class="user">
-        สวัสดี, <%= (user && user.username) || 'guest' %>
-        &nbsp; <a class="btn btn-sm" href="/admin/logout">Logout</a>
+        </nav>
+        <div class="user">
+          <div class="user-meta">
+            <span>สวัสดี, <%= (user && user.username) || 'guest' %></span>
+          </div>
+          <a class="btn btn-sm" href="/admin/logout">Logout</a>
+        </div>
       </div>
     </header>
+    <div class="nav-backdrop" data-nav-backdrop></div>
   <% } %>
 
   <main class="container">
