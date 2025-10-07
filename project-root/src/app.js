@@ -24,6 +24,26 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.set('trust proxy', 1);
 
+let mongoReady = false;
+let mongoErrorMessage = '';
+
+mongoose.connection.on('connected', () => {
+  mongoReady = true;
+  mongoErrorMessage = '';
+  console.log('✅ MongoDB connection established');
+});
+
+mongoose.connection.on('disconnected', () => {
+  mongoReady = false;
+  console.warn('⚠️ MongoDB disconnected');
+});
+
+mongoose.connection.on('error', (err) => {
+  mongoReady = false;
+  mongoErrorMessage = err?.message || 'Unknown MongoDB error';
+  console.error('❌ MongoDB error event:', mongoErrorMessage);
+});
+
 // ===== Logs =====
 app.use(morgan('dev'));
 
@@ -71,12 +91,26 @@ async function connectDatabase() {
   console.log('[DB] connecting...');
   try {
     await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 10000 });
+    mongoReady = true;
+    mongoErrorMessage = '';
     console.log('✅ Connected to MongoDB');
     setupDailyCron();
   } catch (err) {
-    console.error('❌ MongoDB connection failed:', err.message);
+    mongoReady = false;
+    mongoErrorMessage = err?.message || 'Unknown MongoDB error';
+    console.error('❌ MongoDB connection failed:', mongoErrorMessage);
   }
 }
+
+const DB_PASSTHROUGH_PREFIXES = ['/health', '/healthz', '/webhook', '/static'];
+
+app.use((req, res, next) => {
+  if (mongoReady) return next();
+  if (DB_PASSTHROUGH_PREFIXES.some((prefix) => req.path.startsWith(prefix))) return next();
+
+  const reason = mongoErrorMessage || 'กำลังเชื่อมต่อฐานข้อมูล...';
+  return res.status(503).send(`Database unavailable: ${reason}`);
+});
 
 // ===== Health =====
 app.get('/healthz', (req, res) => res.send('OK'));
