@@ -77,6 +77,10 @@ mongoose
 
 // ===== Health =====
 app.get('/healthz', (req, res) => res.send('OK'));
+// --- HEALTH CHECK ROUTE ---
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
 
 // ===== Routes =====
 app.get('/', (req, res) => res.redirect('/admin/login'));
