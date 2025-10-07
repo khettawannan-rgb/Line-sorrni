@@ -41,7 +41,7 @@ console.log('[VIEW ENGINE] ejs');
 app.use('/static', express.static(path.join(__dirname, '../public')));
 
 // ===== Webhook (raw body) =====
-app.use('/webhook/line', webhookRouter);
+app.use(['/webhook/line', '/webhook'], webhookRouter);
 
 // ===== Parsers =====
 app.use(bodyParser.urlencoded({ extended: true }));

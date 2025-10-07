@@ -62,6 +62,10 @@ function verifyLineSignatureOrSkip(req) {
 }
 
 // ============ Endpoint ============
+router.get('/', (req, res) => {
+  res.status(200).send('OK');
+});
+
 router.post('/', async (req, res) => {
   // LOG หัวข้อเบื้องต้น (ช่วยดีบัก 500)
   console.log('[WEBHOOK][HEADERS]', {
