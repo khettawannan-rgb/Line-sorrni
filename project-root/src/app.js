@@ -14,7 +14,7 @@ import webhookRouter from './routes/webhook.js';
 import consentRouter from './routes/consent.js';
 import { setupDailyCron } from './jobs/scheduler.js';
 
-const PORT = Number(process.env.PORT || 3000);
+const PORT = Number(process.env.PORT || 10000);
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/line-erp-notifier';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret';
 
