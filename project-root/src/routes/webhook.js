@@ -67,6 +67,7 @@ router.get('/', (req, res) => {
 });
 
 router.post('/', async (req, res) => {
+  console.log('✅ Received event from LINE');
   // LOG หัวข้อเบื้องต้น (ช่วยดีบัก 500)
   console.log('[WEBHOOK][HEADERS]', {
     'content-type': req.headers['content-type'],

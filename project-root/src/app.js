@@ -67,13 +67,16 @@ app.use((req, res, next) => {
 });
 
 // ===== DB =====
-mongoose
-  .connect(MONGODB_URI, { serverSelectionTimeoutMS: 10000 })
-  .then(() => {
-    console.log('Mongo connected');
+async function connectDatabase() {
+  console.log('[DB] connecting...');
+  try {
+    await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 10000 });
+    console.log('✅ Connected to MongoDB');
     setupDailyCron();
-  })
-  .catch((err) => console.error('Mongo error', err));
+  } catch (err) {
+    console.error('❌ MongoDB connection failed:', err.message);
+  }
+}
 
 // ===== Health =====
 app.get('/healthz', (req, res) => res.send('OK'));
@@ -84,7 +87,9 @@ app.get('/health', (req, res) => {
 });
 
 // ===== Routes =====
-app.get('/', (req, res) => res.redirect('/admin/login'));
+app.get('/', (req, res) => {
+  res.status(200).send('NILA LINE ERP Notifier is running 🚀');
+});
 app.use('/consent', consentRouter);
 app.use('/admin', adminRouter);
 
@@ -97,6 +102,13 @@ app.use((err, req, res, next) => {
   if (!res.headersSent) return res.status(500).send('Internal Server Error');
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server running on port ${PORT}`);
+async function start() {
+  await connectDatabase();
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ Server running on port ${PORT}`);
+  });
+}
+
+start().catch((err) => {
+  console.error('[BOOT] Failed to start application:', err);
 });
