@@ -1,0 +1,38 @@
+<!-- src/views/companies.ejs -->
+<div class="panel">
+  <div class="panel-header">
+    <h2>Companies</h2>
+  </div>
+
+  <div class="panel-actions">
+    <a class="btn primary" href="/admin/companies/new">+ New Company</a>
+  </div>
+
+  <div class="table-scroll">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ชื่อบริษัท</th>
+          <th>Timezone</th>
+          <th>Daily Time</th>
+          <th style="width:200px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% (companies || []).forEach(c => { %>
+          <tr>
+            <td><strong><%= c.name %></strong></td>
+            <td><code><%= c.timezone || '-' %></code></td>
+            <td><code><%= c.dailyTime || '-' %></code></td>
+            <td>
+              <a class="btn small" href="/admin/companies/<%= c._id %>/edit">Edit</a>
+              <form action="/admin/companies/<%= c._id %>/delete" method="post" style="display:inline-block" onsubmit="return confirm('ลบบริษัทนี้?');">
+                <button class="btn small danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,131 @@
+<!-- project-root/src/views/insights.ejs -->
+<div class="grid grid-3">
+  <div class="card">
+    <div class="card-title">ข้อความที่บันทึกแล้ว</div>
+    <div class="stat">
+      <span>จำนวนทั้งหมด</span>
+      <strong><%= stats.messageCount %></strong>
+    </div>
+    <div class="stat mt-2">
+      <span>จำนวนผู้ใช้ที่มีการสนทนา</span>
+      <strong><%= stats.uniqueUsers %></strong>
+    </div>
+    <div class="muted mt-2">
+      อัปเดตล่าสุด: <%= stats.lastMessageAt ? new Date(stats.lastMessageAt).toLocaleString('th-TH') : '-' %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">สถานะความยินยอม</div>
+    <div class="stat">
+      <span>ยินยอม</span>
+      <strong><%= stats.consentSummary.granted || 0 %></strong>
+    </div>
+    <div class="stat mt-2">
+      <span>รอดำเนินการ</span>
+      <strong><%= stats.consentSummary.pending || 0 %></strong>
+    </div>
+    <div class="stat mt-2">
+      <span>เพิกถอน</span>
+      <strong><%= stats.consentSummary.revoked || 0 %></strong>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">ข้อความ 14 วันที่ผ่านมา</div>
+    <ul class="clean">
+      <% if (dailyStats && dailyStats.length) { %>
+        <% dailyStats.forEach(function(row){ %>
+          <li>
+            <strong><%= row._id %></strong>
+            <span class="right"><%= row.count %></span>
+          </li>
+        <% }) %>
+      <% } else { %>
+        <li>ยังไม่มีข้อมูล</li>
+      <% } %>
+    </ul>
+  </div>
+</div>
+
+<div class="panel" style="margin-top: 20px;">
+  <div class="panel-header">
+    <h3>ประวัติความยินยอม</h3>
+  </div>
+  <div class="table-wrap">
+    <table class="table compact">
+      <thead>
+        <tr>
+          <th>ผู้ใช้</th>
+          <th>สถานะ</th>
+          <th>ยินยอมเมื่อ</th>
+          <th>อัปเดตล่าสุด</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (consents && consents.length) { %>
+          <% consents.forEach(function(c){ %>
+            <tr>
+              <td>
+                <strong><%= c.displayName || c.userId %></strong>
+                <div class="muted"><%= c.userId %></div>
+              </td>
+              <td>
+                <% if (c.status === 'granted') { %>
+                  <span class="badge success">ยินยอม</span>
+                <% } else if (c.status === 'revoked') { %>
+                  <span class="badge warn">เพิกถอน</span>
+                <% } else { %>
+                  <span class="badge gray">รอดำเนินการ</span>
+                <% } %>
+              </td>
+              <td><%= c.grantedAt ? new Date(c.grantedAt).toLocaleString('th-TH') : '-' %></td>
+              <td><%= c.updatedAt ? new Date(c.updatedAt).toLocaleString('th-TH') : '-' %></td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr>
+            <td colspan="4" class="center muted">ยังไม่มีข้อมูล</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel" style="margin-top: 20px;">
+  <div class="panel-header">
+    <h3>ข้อความล่าสุด</h3>
+  </div>
+  <div class="table-wrap">
+    <table class="table compact">
+      <thead>
+        <tr>
+          <th>ผู้ใช้</th>
+          <th>ข้อความ</th>
+          <th>เวลา</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (recentMessages && recentMessages.length) { %>
+          <% recentMessages.forEach(function(msg){
+               const meta = consentMap && consentMap[msg.userId];
+          %>
+            <tr>
+              <td>
+                <strong><%= (meta && meta.displayName) || msg.userId %></strong>
+                <div class="muted"><%= msg.userId %></div>
+              </td>
+              <td><%= msg.text || '[' + (msg.messageType || msg.type || 'event') + ']' %></td>
+              <td><%= new Date(msg.createdAt).toLocaleString('th-TH') %></td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr>
+            <td colspan="3" class="center muted">ยังไม่มีบันทึกข้อความ</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>

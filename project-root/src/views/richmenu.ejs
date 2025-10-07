@@ -1,0 +1,92 @@
+<!-- project-root/src/views/richmenu.ejs -->
+<div class="grid grid-2">
+  <!-- LEFT: Actions & List -->
+  <div class="panel">
+    <div class="panel-header">
+      <h3>Rich Menu</h3>
+      <div class="toolbar">
+        <!-- สร้าง + อัปโหลดรูป + ตั้ง Default -->
+        <form action="/admin/richmenu/create" method="post" style="display:inline">
+          <button type="submit" class="btn btn-primary">สร้าง + อัปโหลดรูป + ตั้ง Default</button>
+        </form>
+
+        <!-- Debug -->
+        <a class="btn btn-secondary" href="/admin/richmenu/debug">Debug</a>
+
+        <!-- ลบทั้งหมด -->
+        <form action="/admin/richmenu/delete" method="post" style="display:inline" onsubmit="return confirm('ลบ Rich Menu ทั้งหมดหรือไม่?')">
+          <button type="submit" class="btn btn-danger">ลบทั้งหมด</button>
+        </form>
+      </div>
+    </div>
+
+    <% if (result) { %>
+      <div class="note mb-2">
+        <% if (result.ok) { %>
+          ✅ <%= result.message || 'สำเร็จ' %>
+        <% } else if (result.error) { %>
+          ❌ <%= result.error %>
+        <% } %>
+      </div>
+    <% } %>
+
+    <h4 class="mt-2 mb-2">รายการ Rich Menu</h4>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>id</th>
+            <th>name</th>
+            <th>size</th>
+            <th class="center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (Array.isArray(list) && list.length) { %>
+            <% list.forEach((m) => { %>
+              <tr>
+                <td><code><%= m.richMenuId %></code></td>
+                <td><%= m.name || '-' %></td>
+                <td>
+                  <% if (m.size) { %>
+                    <%= m.size.width %>x<%= m.size.height %>
+                  <% } else { %>
+                    -
+                  <% } %>
+                </td>
+                <td class="center">
+                  <form action="/admin/richmenu/default" method="post" style="display:inline">
+                    <input type="hidden" name="id" value="<%= m.richMenuId %>">
+                    <button class="btn btn-sm btn-primary" type="submit">ตั้ง Default</button>
+                  </form>
+                  <form action="/admin/richmenu/delete" method="post" style="display:inline" onsubmit="return confirm('ลบเมนูนี้?')">
+                    <input type="hidden" name="id" value="<%= m.richMenuId %>">
+                    <button class="btn btn-sm btn-danger" type="submit">ลบ</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="4" class="center muted">ยังไม่มี Rich Menu</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- RIGHT: Tips -->
+  <div class="panel">
+    <div class="panel-header">
+      <h3>Tips</h3>
+    </div>
+    <ul class="clean">
+      <li>ขนาด Half menu: <b>2500×843 px</b></li>
+      <li>อัปโหลดรูปแล้วอาจต้องรอ CDN พร้อม <b>0.5–2 นาที</b> ก่อนตั้ง default</li>
+      <li>ถ้าเจอ 413 จาก LINE CDN ให้บีบอัดรูปให้ต่ำกว่า ~ <b>1.5MB</b></li>
+      <li>หลังสร้างแล้วกด <b>ตั้ง Default</b> ให้ผู้ใช้เห็นเมนูนี้ทันที</li>
+    </ul>
+  </div>
+</div>

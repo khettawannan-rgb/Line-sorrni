@@ -1,0 +1,53 @@
+<!-- src/views/members.ejs -->
+<div class="panel">
+  <div class="panel-header">
+    <h2>Members</h2>
+    <p class="muted">จัดการรายชื่อผู้ใช้ LINE และการผูกกับบริษัท</p>
+  </div>
+
+  <div class="panel-actions">
+    <a class="btn primary" href="/admin/members/new">+ New Member</a>
+    <a class="btn" href="/admin/members/link">Map LINE ↔ Company</a>
+  </div>
+
+  <div class="table-scroll">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Display Name</th>
+          <th>LINE userId</th>
+          <th>Company</th>
+          <th>Role</th>
+          <th>Active</th>
+          <th style="width:220px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% (members || []).forEach(m => { %>
+          <tr>
+            <td><strong><%= m.displayName || '-' %></strong></td>
+            <td><code><%= m.lineUserId || '-' %></code></td>
+            <td><%= (m.companyId && m.companyId.name) || '-' %></td>
+            <td><code><%= m.role || 'member' %></code></td>
+            <td>
+              <% if (m.active) { %>
+                <span class="badge success">active</span>
+              <% } else { %>
+                <span class="badge">inactive</span>
+              <% } %>
+            </td>
+            <td>
+              <a class="btn small" href="/admin/members/<%= m._id %>/edit">Edit</a>
+              <form action="/admin/members/<%= m._id %>/delete" method="post" style="display:inline-block" onsubmit="return confirm('ลบสมาชิกนี้?');">
+                <button class="btn small danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+        <% if (!members || members.length === 0) { %>
+          <tr><td colspan="6" class="muted">ยังไม่พบข้อมูลสมาชิก</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>

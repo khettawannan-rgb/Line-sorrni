@@ -1,0 +1,50 @@
+<%- include('partials/header', { title: title }) %>
+
+<h2>Records Monitor</h2>
+
+<form method="get" action="/admin/records" style="margin:12px 0;">
+  <label>Company ID:
+    <input type="text" name="companyId" value="<%= companyId || '' %>" style="width:320px;">
+  </label>
+  <button type="submit">Filter</button>
+</form>
+
+<h3>Counts by date (ล่าสุด 30 วัน)</h3>
+<table class="table">
+  <thead><tr><th>dateStr (CE)</th><th>count</th></tr></thead>
+  <tbody>
+  <% (counts||[]).forEach(c => { %>
+    <tr>
+      <td><%= c._id || '-' %></td>
+      <td><%= c.count %></td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>
+
+<h3>Recent 50 records</h3>
+<table class="table">
+  <thead>
+    <tr>
+      <th>createdAt</th><th>dateStr</th><th>dateStrBE</th>
+      <th>type</th><th>product</th><th>tons</th>
+      <th>project</th><th>rowHash</th>
+    </tr>
+  </thead>
+  <tbody>
+  <% (rows||[]).forEach(r => { %>
+    <tr>
+      <td><%= new Date(r.createdAt).toISOString() %></td>
+      <td><%= r.dateStr || '' %></td>
+      <td><%= r.dateStrBE || '' %></td>
+      <td><%= r.type || '' %></td>
+      <td><%= r.product || '' %></td>
+      <td><%= (r.weightTons ?? (r.weightKg ? (r.weightKg/1000) : 0)).toFixed ? (r.weightTons ?? (r.weightKg ? (r.weightKg/1000) : 0)).toFixed(2) : (r.weightTons || 0) %></td>
+      <td><%= (r.projectName || '') + (r.projectCode ? ` (${r.projectCode})` : '') %></td>
+      <td><%= r.rowHash || '' %></td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>
+
+<%- include('partials/footer') %>

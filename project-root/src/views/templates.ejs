@@ -1,0 +1,41 @@
+<!-- src/views/templates.ejs -->
+<div class="panel">
+  <div class="panel-header">
+    <h2>Templates</h2>
+  </div>
+
+  <div class="panel-actions">
+    <a class="btn primary" href="/admin/templates/new">+ New Template</a>
+  </div>
+
+  <div class="table-scroll">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Code</th>
+          <th>Preview</th>
+          <th style="width:200px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% (templates || []).forEach(t => { %>
+          <tr>
+            <td><strong><%= t.name %></strong></td>
+            <td><code><%= t.code %></code></td>
+            <td class="wrap"><pre class="mono" style="white-space:pre-wrap;"><%= (t.content || '').slice(0,300) %></pre></td>
+            <td>
+              <a class="btn small" href="/admin/templates/<%= t._id %>/edit">Edit</a>
+              <form action="/admin/templates/<%= t._id %>/delete" method="post" style="display:inline-block" onsubmit="return confirm('ลบเทมเพลตนี้?');">
+                <button class="btn small danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+        <% if (!templates || templates.length === 0) { %>
+          <tr><td colspan="4" class="muted">ยังไม่มีเทมเพลต</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>

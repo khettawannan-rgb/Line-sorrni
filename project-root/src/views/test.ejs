@@ -1,0 +1,79 @@
+<!-- src/views/test.ejs -->
+<div class="grid grid-2">
+  <div class="panel">
+    <div class="panel-header">
+      <h2>Preview</h2>
+      <p class="muted">เลือกบริษัทและวันที่เพื่อดูข้อความสรุปก่อนส่ง</p>
+    </div>
+
+    <form class="form" action="/admin/test/preview" method="post">
+      <div class="form-row">
+        <label>บริษัท</label>
+        <select name="companyId" required>
+          <% (companies || []).forEach(c => { %>
+            <option value="<%= c._id %>" <%= (form && form.companyId===String(c._id) ? 'selected' : '') %>><%= c.name %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label>วันที่</label>
+        <input type="date" name="date" value="<%= (form && form.date) || '' %>" required />
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn">Preview</button>
+      </div>
+    </form>
+
+    <% if (preview) { %>
+      <hr />
+      <% if (preview.note) { %>
+        <div class="alert info"><%= preview.note %></div>
+      <% } %>
+      <div class="mono-box">
+        <pre><%= preview.message %></pre>
+      </div>
+    <% } %>
+
+    <% if (error) { %>
+      <div class="alert error" style="margin-top:12px;"><%= error %></div>
+    <% } %>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2>Send</h2>
+      <p class="muted">เลือกผู้รับแล้วกดส่งข้อความไปที่ LINE</p>
+    </div>
+
+    <form class="form" action="/admin/test/send" method="post">
+      <input type="hidden" name="companyId" value="<%= (form && form.companyId) || '' %>" />
+      <input type="hidden" name="date" value="<%= (form && form.date) || '' %>" />
+
+      <div class="form-row">
+        <label>ผู้รับ (LINE userId)</label>
+        <select name="lineUserId" required>
+          <% (recipients || []).forEach(r => { %>
+            <option value="<%= r.lineUserId %>" <%= (form && form.lineUserId===r.lineUserId ? 'selected' : '') %>>
+              <%= r.displayName || r.lineUserId %>
+            </option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn primary">Send</button>
+      </div>
+    </form>
+
+    <% if (sent) { %>
+      <hr />
+      <% if (sent.ok) { %>
+        <div class="alert success">ส่งแล้ว → <code><%= sent.to %></code></div>
+      <% } else { %>
+        <div class="alert error">ส่งไม่สำเร็จ: <%= sent.error || 'unknown error' %></div>
+      <% } %>
+    <% } %>
+  </div>
+</div>

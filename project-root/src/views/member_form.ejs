@@ -1,0 +1,57 @@
+<!-- src/views/member_form.ejs -->
+<%
+  const isEdit = !!(m && m._id);
+  const formAction = isEdit ? `/admin/members/${m._id}/edit` : '/admin/members/new';
+%>
+
+<div class="panel">
+  <div class="panel-header">
+    <h2><%= isEdit ? 'Edit Member' : 'New Member' %></h2>
+  </div>
+
+  <% if (error) { %>
+    <div class="alert error"><%= error %></div>
+  <% } %>
+
+  <form class="form" action="<%= formAction %>" method="post">
+    <div class="form-row">
+      <label>Company</label>
+      <select name="companyId">
+        <option value="">— ไม่ผูก —</option>
+        <% (companies || []).forEach(c => { %>
+          <option value="<%= c._id %>" <%= (m && String(m.companyId)===String(c._id) ? 'selected' : '') %>><%= c.name %></option>
+        <% }) %>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <label>LINE userId</label>
+      <input type="text" name="lineUserId" value="<%= (m && m.lineUserId) || '' %>" required />
+    </div>
+
+    <div class="form-row">
+      <label>Display Name</label>
+      <input type="text" name="displayName" value="<%= (m && m.displayName) || '' %>" />
+    </div>
+
+    <div class="form-row">
+      <label>Role</label>
+      <select name="role">
+        <option value="member" <%= (m && m.role==='member' ? 'selected' : '') %> >member</option>
+        <option value="admin"  <%= (m && m.role==='admin'  ? 'selected' : '') %> >admin</option>
+      </select>
+    </div>
+
+    <div class="form-row inline">
+      <label class="checkbox">
+        <input type="checkbox" name="active" <%= (m && m.active) ? 'checked' : '' %> />
+        <span>Active</span>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <a class="btn" href="/admin/members">Back</a>
+      <button class="btn primary" type="submit"><%= isEdit ? 'Save' : 'Create' %></button>
+    </div>
+  </form>
+</div>

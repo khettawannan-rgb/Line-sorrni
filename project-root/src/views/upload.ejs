@@ -1,0 +1,31 @@
+<!-- src/views/upload.ejs -->
+<div class="upload-shell">
+  <form id="upload-form" class="upload-hero" action="/admin/upload" method="post" enctype="multipart/form-data" data-upload-form>
+    <div class="upload-hero__inner">
+      <div class="upload-dropzone" id="upload-dropzone" data-upload-dropzone>
+        <input type="file" name="file" accept=".xlsx,.xls" id="upload-input" hidden data-upload-input />
+        <div class="upload-dropzone__icon" aria-hidden="true">📄</div>
+        <h2>ลากไฟล์มาวางที่นี่</h2>
+        <p><button type="button" class="link" data-upload-trigger>หรือคลิกเพื่อเลือกไฟล์</button></p>
+        <span class="muted">รองรับไฟล์ Excel (.xlsx, .xls)</span>
+      </div>
+
+      <div class="upload-options">
+        <label class="checkbox">
+          <input type="checkbox" name="clearExisting" data-upload-clear />
+          <span>ล้างข้อมูลเดิมในช่วงวันที่ของไฟล์ก่อนนำเข้า</span>
+        </label>
+        <button type="button" class="btn primary" data-upload-trigger>เลือกไฟล์</button>
+        <button type="submit" class="btn" data-upload-submit hidden>ส่งแบบฟอร์ม</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="upload-queue" id="upload-queue" data-upload-queue>
+    <p class="muted" data-upload-empty>ยังไม่มีไฟล์ในคิว</p>
+  </div>
+
+  <div id="upload-summary">
+    <%- resultHtml || '' %>
+  </div>
+</div>

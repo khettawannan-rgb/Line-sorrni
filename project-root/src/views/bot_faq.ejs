@@ -1,0 +1,296 @@
+<!-- project-root/src/views/bot_faq.ejs -->
+<%
+  const faqEntries = Array.isArray(entries) ? entries : [];
+  const intentSummaryMap = new Map();
+  faqEntries.forEach((item) => {
+    const intentKey = item.intent || 'ไม่ระบุหัวข้อ';
+    if (!intentSummaryMap.has(intentKey)) {
+      intentSummaryMap.set(intentKey, {
+        intent: intentKey,
+        count: 0,
+        active: 0,
+        keywords: new Set(),
+        suggestions: new Set(),
+        items: [],
+      });
+    }
+    const bucket = intentSummaryMap.get(intentKey);
+    bucket.count += 1;
+    if (item.isActive) bucket.active += 1;
+    (item.keywords || []).forEach((kw) => bucket.keywords.add(kw));
+    (item.suggestions || []).forEach((sg) => bucket.suggestions.add(sg));
+    bucket.items.push(item);
+  });
+  const intentSummaryList = Array.from(intentSummaryMap.values()).map((bucket) => {
+    const keywords = Array.from(bucket.keywords || []);
+    const suggestions = Array.from(bucket.suggestions || []);
+    const keywordLimit = 6;
+    const suggestionLimit = 3;
+    const sampleLimit = 3;
+    return {
+      intent: bucket.intent,
+      count: bucket.count,
+      active: bucket.active,
+      keywords: keywords.slice(0, keywordLimit),
+      keywordOverflow: Math.max(0, keywords.length - keywordLimit),
+      suggestions: suggestions.slice(0, suggestionLimit),
+      suggestionOverflow: Math.max(0, suggestions.length - suggestionLimit),
+      samples: bucket.items.slice(0, sampleLimit).map((entry) => ({
+        id: entry._id,
+        keywords: entry.keywords || [],
+        answer: entry.answer || '',
+        isActive: entry.isActive,
+      })),
+      moreSamples: Math.max(0, bucket.items.length - sampleLimit),
+    };
+  }).sort((a, b) => b.count - a.count);
+%>
+
+<div class="bot-faq-page">
+  <div class="panel-block">
+  <div class="panel-heading">
+    <div>
+      <h2>ฐานความรู้สำหรับบอท</h2>
+      <p class="muted">กำหนดคำถาม-คำตอบให้ LINE Bot ตอบอัตโนมัติ และนำเข้าชุดคำถามแนะนำ</p>
+    </div>
+    <form action="/admin/bot-faq/import-defaults" method="post" onsubmit="return confirm('นำเข้าคำตอบแนะนำ?');">
+      <button type="submit" class="btn btn-secondary">นำเข้าชุดคำถามแนะนำ</button>
+    </form>
+  </div>
+
+  <% if (message) { %>
+    <div class="alert ok"><%= message %></div>
+  <% } %>
+  <% if (error) { %>
+    <div class="alert error"><%= error %></div>
+  <% } %>
+
+  <% if (intentSummaryList.length) { %>
+    <div class="panel-body intent-overview">
+      <div class="card glass">
+        <div class="card-heading heading-with-toggle">
+          <div>
+            <h3>หัวข้อที่บอทตอบได้ตอนนี้</h3>
+            <span class="muted">ตรวจสอบคำตอบที่มีอยู่ก่อนจะเพิ่มรายการใหม่</span>
+          </div>
+          <button type="button" class="btn btn-sm ghost" data-action="toggle-intent-summary" aria-expanded="true">หุบหัวข้อ</button>
+        </div>
+        <div class="intent-summary-wrap" data-intent-summary>
+          <div class="intent-summary">
+            <% intentSummaryList.forEach((group) => { %>
+              <div class="intent-card">
+                <h4><%= group.intent %></h4>
+                <div class="intent-meta">
+                  <span>ทั้งหมด <strong><%= group.count %></strong> รายการ</span>
+                <span>เปิดใช้งาน <strong><%= group.active %></strong></span>
+              </div>
+              <% if (group.keywords.length) { %>
+                <div class="token-row">
+                  <% group.keywords.forEach((kw) => { %>
+                    <span class="token"><%= kw %></span>
+                  <% }) %>
+                  <% if (group.keywordOverflow) { %>
+                    <span class="token more">+<%= group.keywordOverflow %></span>
+                  <% } %>
+                </div>
+              <% } else { %>
+                <div class="muted">ยังไม่มีคำหลัก</div>
+              <% } %>
+              <% if (group.suggestions.length) { %>
+                <footer>แนะนำต่อ: <%= group.suggestions.join(', ') %><% if (group.suggestionOverflow) { %>, +<%= group.suggestionOverflow %> รายการ<% } %></footer>
+              <% } else { %>
+                <footer class="muted">ยังไม่มีคำแนะนำต่อ</footer>
+              <% } %>
+              <% if (group.samples && group.samples.length) { %>
+                <ul class="intent-faq-list">
+                  <% group.samples.forEach((entry) => { %>
+                    <li>
+                      <div class="faq-head">
+                        <span class="badge <%= entry.isActive ? 'success' : 'gray' %>"><%= entry.isActive ? 'ใช้งาน' : 'ปิดอยู่' %></span>
+                        <span class="faq-keywords"><%= (entry.keywords || []).join(', ') %></span>
+                      </div>
+                      <p><%= entry.answer %></p>
+                    </li>
+                  <% }) %>
+                </ul>
+                <% if (group.moreSamples) { %>
+                  <div class="intent-more muted">มีอีก <%= group.moreSamples %> รายการ ดูทั้งหมดด้านล่าง</div>
+                <% } %>
+              <% } %>
+            </div>
+          <% }) %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <div class="panel-body grid-2">
+    <div class="card glass">
+      <div class="card-heading">
+        <h3>เพิ่มคำถามใหม่</h3>
+        <span class="muted">ใช้เครื่องหมายจุลภาคหรือขึ้นบรรทัดใหม่เพื่อแยกคำหลัก</span>
+      </div>
+      <form class="form" action="/admin/bot-faq/new" method="post">
+        <div class="form-row">
+          <label>Intent / กลุ่มหัวข้อ</label>
+          <input type="text" name="intent" value="<%= (form && form.intent) || '' %>" placeholder="เช่น วัสดุ, ระบบ, คุณภาพ" />
+        </div>
+        <div class="form-row">
+          <label>คำหลัก (Keywords)</label>
+          <textarea name="keywords" rows="3" placeholder="หินเปียก, หินชื้น"><%= (form && form.keywords) || '' %></textarea>
+        </div>
+        <div class="form-row">
+          <label>คำตอบ (Answer)</label>
+          <textarea name="answer" rows="4" placeholder="ใส่คำตอบที่ต้องการให้บอทตอบ"><%= (form && form.answer) || '' %></textarea>
+        </div>
+        <div class="form-row">
+          <label>คำแนะนำต่อ (แยกด้วย , หรือขึ้นบรรทัดใหม่)</label>
+          <textarea name="suggestions" rows="2" placeholder="ถามสรุปรายวันโดยพิมพ์ &quot;สรุป วันนี้&quot;"><%= (form && form.suggestions) || '' %></textarea>
+        </div>
+        <div class="form-row">
+          <label>แท็กเพิ่มเติม</label>
+          <input type="text" name="tags" value="<%= (form && form.tags) || '' %>" placeholder="เช่น ไลน์บอท, how-to" />
+        </div>
+        <div class="form-row">
+          <label>ลำดับความสำคัญ (เลขยิ่งน้อยยิ่งตอบก่อน)</label>
+          <input type="number" name="priority" min="0" max="999" value="<%= (form && form.priority) || 10 %>" />
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn primary">บันทึกคำตอบ</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card glass">
+      <div class="card-heading">
+        <h3>สถิติภาพรวม</h3>
+        <span class="muted">ช่วยดูว่าฐานคำถามพร้อมใช้งานหรือไม่</span>
+      </div>
+      <dl class="stat-list">
+        <div>
+          <dt>คำถามทั้งหมด</dt>
+          <dd><%= stats?.total || 0 %> รายการ</dd>
+        </div>
+        <div>
+          <dt>เปิดใช้งาน</dt>
+          <dd><%= stats?.active || 0 %> รายการ</dd>
+        </div>
+        <div>
+          <dt>ตอบล่าสุดเมื่อ</dt>
+          <dd><%= stats?.lastMatchedAt ? new Date(stats.lastMatchedAt).toLocaleString('th-TH') : 'ยังไม่มีการใช้งาน' %></dd>
+        </div>
+      </dl>
+      <p class="muted" style="margin-top:auto;">หากมีการเพิ่ม/แก้ไข ระบบจะรีเฟรชข้อมูลบอทอัตโนมัติในทุกข้อความถัดไป</p>
+    </div>
+  </div>
+
+  <div class="panel-body">
+    <div class="card glass">
+      <div class="card-heading">
+        <h3>รายการคำถามทั้งหมด</h3>
+      </div>
+      <div class="table-scroll">
+        <table class="table compact ghost">
+          <thead>
+            <tr>
+              <th style="width:160px;">Intent</th>
+              <th>คำหลัก</th>
+              <th>คำตอบ</th>
+              <th>คำแนะนำ</th>
+              <th style="width:120px;">สถานะ</th>
+              <th style="width:140px;">การใช้งาน</th>
+              <th style="width:140px;">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% (entries || []).forEach(item => { %>
+              <tr>
+                <td>
+                  <strong><%= item.intent || '-' %></strong>
+                  <div class="muted">Priority <%= item.priority %></div>
+                </td>
+                <td>
+                  <% (item.keywords || []).forEach(kw => { %>
+                    <code class="tag"><%= kw %></code>
+                  <% }) %>
+                  <% if (item.tags && item.tags.length) { %>
+                    <div class="muted" style="margin-top:6px;">
+                      <% item.tags.forEach(tag => { %>
+                        <code class="tag" style="background:rgba(148,163,184,.18); color:#475569;"><%= tag %></code>
+                      <% }) %>
+                    </div>
+                  <% } %>
+                </td>
+                <td class="wrap"><%= item.answer %></td>
+                <td class="wrap">
+                  <% if (item.suggestions && item.suggestions.length) { %>
+                    <ul class="list-unstyled">
+                      <% item.suggestions.forEach(s => { %>
+                        <li>• <%= s %></li>
+                      <% }) %>
+                    </ul>
+                  <% } else { %>
+                    <span class="muted">-</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (item.isActive) { %>
+                    <span class="badge success">ใช้งาน</span>
+                  <% } else { %>
+                    <span class="badge gray">ปิดอยู่</span>
+                  <% } %>
+                </td>
+                <td>
+                  <div><strong><%= item.usageCount || 0 %></strong> ครั้ง</div>
+                  <div class="muted" style="font-size:.75rem;">
+                    <%= item.lastMatchedAt ? new Date(item.lastMatchedAt).toLocaleString('th-TH') : '-' %>
+                  </div>
+                </td>
+                <td>
+                  <div class="table-actions">
+                    <form action="/admin/bot-faq/<%= item._id %>/toggle" method="post">
+                      <button type="submit" class="btn btn-sm"><%= item.isActive ? 'ปิดการใช้' : 'เปิดใช้งาน' %></button>
+                    </form>
+                    <form action="/admin/bot-faq/<%= item._id %>/delete" method="post" onsubmit="return confirm('ลบรายการนี้?');">
+                      <button type="submit" class="btn btn-sm danger">ลบ</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+            <% if (!entries || entries.length === 0) { %>
+              <tr>
+                <td colspan="7" class="muted">ยังไม่มีคำถามในระบบ กด “นำเข้าชุดคำถามแนะนำ” เพื่อเริ่มต้น</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const root = document.querySelector('.bot-faq-page');
+    if (!root) return;
+    const summaryWrap = root.querySelector('[data-intent-summary]');
+    const toggleBtn = root.querySelector('[data-action="toggle-intent-summary"]');
+    if (!summaryWrap || !toggleBtn) return;
+
+    toggleBtn.addEventListener('click', () => {
+      const isHidden = summaryWrap.hasAttribute('hidden');
+      if (isHidden) {
+        summaryWrap.removeAttribute('hidden');
+        toggleBtn.textContent = 'หุบหัวข้อ';
+        toggleBtn.setAttribute('aria-expanded', 'true');
+      } else {
+        summaryWrap.setAttribute('hidden', '');
+        toggleBtn.textContent = 'แสดงหัวข้อ';
+        toggleBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  });
+</script>
