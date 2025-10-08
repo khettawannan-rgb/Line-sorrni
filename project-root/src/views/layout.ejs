@@ -77,6 +77,22 @@
               <strong>Rich Menu</strong>
               <span>สร้างและอัปโหลดเมนู</span>
             </a>
+            <a href="/admin/pr" class="<%= (active==='procurement-pr'?'active':'') %>">
+              <strong>PR Board</strong>
+              <span>สร้างและติดตามใบขอซื้อ</span>
+            </a>
+            <a href="/admin/po" class="<%= (active==='procurement-po'?'active':'') %>">
+              <strong>PO Board</strong>
+              <span>สร้างใบสั่งซื้อและส่งอีเมล</span>
+            </a>
+            <a href="/admin/vendors" class="<%= (active==='procurement-vendors'?'active':'') %>">
+              <strong>Vendors</strong>
+              <span>จัดการผู้จัดจำหน่าย</span>
+            </a>
+            <a href="/admin/settings/procurement" class="<%= (active==='procurement-settings'?'active':'') %>">
+              <strong>Procurement Settings</strong>
+              <span>ตั้งค่าการแจ้งเตือนและอัตโนมัติ</span>
+            </a>
           </div>
         </div>
 

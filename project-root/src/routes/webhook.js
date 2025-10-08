@@ -2,6 +2,8 @@
 import { Router } from 'express';
 import bodyParser from 'body-parser';
 import crypto from 'crypto';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime.js';
 import { replyText, replyQuickMenu, pushLineMessage, getUserProfile } from '../services/line.js';
 import LineChatLog from '../models/lineChatLog.model.js';
 import LineMedia from '../models/lineMedia.model.js';
@@ -20,6 +22,12 @@ import {
 } from '../services/summary.js';
 import { fetchWeatherSummary, formatWeatherText } from '../services/weather.js';
 import { findBotFaqResponse } from '../services/botFaq.js';
+import {
+  getLowStockItems,
+  listPurchaseOrders,
+  getPurchaseOrderByNumber,
+  STATUS_LABELS,
+} from '../services/procurement/index.js';
 
 const router = Router();
 
@@ -34,8 +42,13 @@ const STRICT_SIGNATURE =
   String(process.env.STRICT_LINE_SIGNATURE || '').toLowerCase() === 'true';
 const DEFAULT_WEATHER_LAT = Number(process.env.DEFAULT_WEATHER_LATITUDE || 13.7563);
 const DEFAULT_WEATHER_LNG = Number(process.env.DEFAULT_WEATHER_LONGITUDE || 100.5018);
+const DEFAULT_COMPANY_ID = process.env.DEFAULT_COMPANY_ID || '';
+const PORTAL_BASE_URL = process.env.PORTAL_BASE_URL || process.env.APP_PORTAL_URL || 'https://nila-portal.example.com';
+const PROCUREMENT_SAFETY_DAYS = Number(process.env.PROCUREMENT_SAFETY_DAYS || 3);
 
 const WEATHER_KEYWORDS = [/อากาศ/i, /weather/i, /ฝนตก/i, /พยากรณ์/i];
+
+dayjs.extend(relativeTime);
 
 /** ตรวจลายเซ็นจาก LINE (ถ้าเปิด STRICT_LINE_SIGNATURE=true จะบังคับตรวจ) */
 function verifyLineSignatureOrSkip(req) {
@@ -280,6 +293,18 @@ async function handleText(ev) {
     ]);
   }
 
+  if (/^เช็คของ$/i.test(text) || /check stock/i.test(text)) {
+    return replyStockSummary(ev);
+  }
+
+  if (/เปิดใบขอซื้อ/i.test(text)) {
+    return replyPrLink(ev);
+  }
+
+  if (/เช็คสถานะ(สั่งซื้อ|ใบสั่งซื้อ)/i.test(text) || /^po[-\s]/i.test(text)) {
+    return replyPurchaseOrderStatus(ev, text);
+  }
+
   if (text.startsWith('สรุป')) {
     const range = getDateRangeFromKeyword(text);
     if (!range) {
@@ -324,6 +349,94 @@ async function handleText(ev) {
     { label: 'เมนู', text: 'เมนู' },
     { label: 'สรุป วันนี้', text: 'สรุป วันนี้' },
   ]);
+}
+
+async function replyStockSummary(ev) {
+  if (!ev.replyToken) return null;
+  if (!DEFAULT_COMPANY_ID) {
+    return replyText(ev.replyToken, 'ยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID ในระบบ');
+  }
+
+  try {
+    const items = await getLowStockItems(DEFAULT_COMPANY_ID, {
+      safetyDays: PROCUREMENT_SAFETY_DAYS,
+    });
+    if (!items.length) {
+      return replyText(ev.replyToken, '✅ คงคลังยังอยู่ในระดับปลอดภัย ไม่มีสินค้าใกล้หมด');
+    }
+
+    const topItems = items.slice(0, 5);
+    const lines = topItems.map((item) => {
+      const eta = item.forecastDate
+        ? `หมดภายใน ${dayjs(item.forecastDate).fromNow(true)}`
+        : 'ไม่มีข้อมูลคาดการณ์';
+      return `• ${item.itemName} คงเหลือ ${item.currentQuantity}${item.unit || ''} (สั่งซ้ำที่ ${item.reorderPoint}) · ${eta}`;
+    });
+
+    lines.push('', 'พิมพ์ "เปิดใบขอซื้อ" เพื่อสร้าง PR ใหม่');
+    return replyText(ev.replyToken, lines.join('\n'));
+  } catch (err) {
+    console.error('[WEBHOOK] replyStockSummary error:', err.message || err);
+    return replyText(ev.replyToken, 'ไม่สามารถดึงข้อมูลคงคลังได้ กรุณาลองใหม่อีกครั้ง');
+  }
+}
+
+async function replyPrLink(ev) {
+  if (!ev.replyToken) return null;
+  const url = `${PORTAL_BASE_URL.replace(/\/$/, '')}/admin/pr`;
+  const text = 'คลิกที่ลิงก์ด้านล่างเพื่อเปิดหน้าจัดการใบขอซื้อ (PR):\n' + url;
+  return replyText(ev.replyToken, text);
+}
+
+async function replyPurchaseOrderStatus(ev, text = '') {
+  if (!ev.replyToken) return null;
+  if (!DEFAULT_COMPANY_ID) {
+    return replyText(ev.replyToken, 'ยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID ในระบบ');
+  }
+
+  const poMatch = text.match(/(PO[-_\d]+)/i);
+  const poNumber = poMatch ? poMatch[1].toUpperCase() : null;
+
+  try {
+    if (poNumber) {
+      const po = await getPurchaseOrderByNumber(poNumber);
+      if (!po) {
+        return replyText(ev.replyToken, `ไม่พบใบสั่งซื้อ ${poNumber}`);
+      }
+
+      const lines = [
+        `สถานะใบสั่งซื้อ ${po.poNumber}: ${STATUS_LABELS[po.status] || po.status}`,
+        `ผู้จัดจำหน่าย: ${po.vendorId?.name || '-'}`,
+        `ยอดรวม: ${Number(po.totalAmount || 0).toLocaleString('th-TH', { style: 'currency', currency: po.currency || 'THB' })}`,
+      ];
+
+      if (po.expectedDeliveryDate) {
+        lines.push(`กำหนดส่ง: ${dayjs(po.expectedDeliveryDate).format('DD MMM YYYY')}`);
+      }
+      if (po.tracking?.trackingNumber) {
+        lines.push(`Tracking: ${po.tracking.trackingNumber} (${po.tracking.carrier || 'ไม่ระบุ'})`);
+      }
+      if (po.pdfUrl) {
+        lines.push(`ดาวน์โหลดใบสั่งซื้อ: ${po.pdfUrl}`);
+      }
+      return replyText(ev.replyToken, lines.join('\n'));
+    }
+
+    const latest = await listPurchaseOrders({}, { limit: 3 });
+    if (!latest.length) {
+      return replyText(ev.replyToken, 'ยังไม่มีใบสั่งซื้อในระบบ');
+    }
+
+    const lines = ['รายการสถานะใบสั่งซื้อล่าสุด:'];
+    latest.forEach((po) => {
+      lines.push(`• ${po.poNumber} · ${STATUS_LABELS[po.status] || po.status} · ${po.vendorId?.name || '-'}`);
+    });
+    lines.push('', 'พิมพ์ "เช็คสถานะใบสั่งซื้อ PO-XXXX" เพื่อตรวจเฉพาะรายการ');
+    return replyText(ev.replyToken, lines.join('\n'));
+  } catch (err) {
+    console.error('[WEBHOOK] replyPurchaseOrderStatus error:', err.message || err);
+    return replyText(ev.replyToken, 'ไม่สามารถตรวจสอบสถานะใบสั่งซื้อได้ กรุณาลองใหม่');
+  }
 }
 
 async function handleImage(ev) {

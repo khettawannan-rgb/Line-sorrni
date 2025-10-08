@@ -1,0 +1,130 @@
+<section class="page-header">
+  <div>
+    <h1>Vendor Directory</h1>
+    <p class="text-muted">
+      จัดการผู้จัดจำหน่าย สำหรับใช้ในใบสั่งซื้อและการแจ้งเตือนอัตโนมัติ
+    </p>
+  </div>
+</section>
+
+<section class="card">
+  <header>
+    <h2>เพิ่มผู้จัดจำหน่าย</h2>
+  </header>
+  <form method="post" action="/admin/vendors" class="form-grid">
+    <div class="form-group">
+      <label>ชื่อบริษัท</label>
+      <input type="text" name="name" placeholder="ชื่อบริษัท" required />
+    </div>
+    <div class="form-group">
+      <label>อีเมลสำหรับรับ PO</label>
+      <input type="email" name="email" placeholder="name@example.com" required />
+    </div>
+    <div class="form-group">
+      <label>เบอร์ติดต่อ</label>
+      <input type="text" name="phone" placeholder="+66-xxx-xxx" />
+    </div>
+    <div class="form-group">
+      <label>ประเภทสินค้า (คั่นด้วย ,)</label>
+      <input type="text" name="productCategories" placeholder="หิน, ทราย, น้ำมัน" />
+    </div>
+    <div class="form-group">
+      <label>ชื่อผู้ติดต่อ</label>
+      <input type="text" name="contactName" placeholder="ชื่อ-สกุล" />
+    </div>
+    <div class="form-group">
+      <label>อีเมลผู้ติดต่อ</label>
+      <input type="email" name="contactEmail" placeholder="contact@example.com" />
+    </div>
+    <div class="form-group">
+      <label>เบอร์ผู้ติดต่อ</label>
+      <input type="text" name="contactPhone" />
+    </div>
+    <div class="form-group">
+      <label>ที่อยู่</label>
+      <textarea name="address" rows="2"></textarea>
+    </div>
+    <div class="form-group">
+      <label>บันทึกเพิ่มเติม</label>
+      <textarea name="notes" rows="2"></textarea>
+    </div>
+    <footer class="form-footer">
+      <button type="submit" class="btn btn-primary">บันทึกผู้จัดจำหน่าย</button>
+    </footer>
+  </form>
+</section>
+
+<section class="card">
+  <header>
+    <h2>รายการผู้จัดจำหน่ายทั้งหมด</h2>
+  </header>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ชื่อบริษัท</th>
+        <th>อีเมล</th>
+        <th>หมวดสินค้า</th>
+        <th>ผู้ติดต่อ</th>
+        <th>สถานะ</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (!vendors.length) { %>
+        <tr><td colspan="6" class="text-center text-muted">ยังไม่มีผู้จัดจำหน่าย</td></tr>
+      <% } %>
+      <% vendors.forEach((vendor) => { %>
+        <tr>
+          <td>
+            <strong><%= vendor.name %></strong>
+            <div class="text-sm text-muted"><%= vendor.address || '-' %></div>
+          </td>
+          <td><%= vendor.email %></td>
+          <td>
+            <% if (vendor.productCategories?.length) { %>
+              <ul class="list-inline">
+                <% vendor.productCategories.forEach((cat) => { %>
+                  <li><span class="badge neutral"><%= cat %></span></li>
+                <% }) %>
+              </ul>
+            <% } else { %>
+              <span class="text-muted">-</span>
+            <% } %>
+          </td>
+          <td>
+            <% if (vendor.contact?.name) { %>
+              <div><%= vendor.contact.name %></div>
+              <div class="text-sm text-muted"><%= vendor.contact.email || '' %></div>
+              <div class="text-sm text-muted"><%= vendor.contact.phone || '' %></div>
+            <% } else { %>
+              <span class="text-muted">-</span>
+            <% } %>
+          </td>
+          <td>
+            <span class="badge <%= vendor.isActive ? 'success' : 'neutral' %>">
+              <%= vendor.isActive ? 'Active' : 'Inactive' %>
+            </span>
+          </td>
+          <td>
+            <details class="menu">
+              <summary>แก้ไข</summary>
+              <div class="menu-content">
+                <form method="post" action="/admin/vendors/<%= vendor._id %>">
+                  <label>อีเมล</label>
+                  <input type="email" name="email" value="<%= vendor.email %>" />
+                  <label>เบอร์</label>
+                  <input type="text" name="phone" value="<%= vendor.phone || '' %>" />
+                  <label>หมวดสินค้า</label>
+                  <input type="text" name="productCategories" value="<%= (vendor.productCategories || []).join(', ') %>" />
+                  <label>หมายเหตุ</label>
+                  <textarea name="notes" rows="2"><%= vendor.notes || '' %></textarea>
+                  <button type="submit" class="btn btn-sm btn-primary">บันทึก</button>
+                </form>
+              </div>
+            </details>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</section>

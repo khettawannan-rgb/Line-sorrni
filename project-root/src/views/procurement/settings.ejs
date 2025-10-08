@@ -1,0 +1,66 @@
+<section class="page-header">
+  <div>
+    <h1>Procurement Settings</h1>
+    <p class="text-muted">
+      กำหนดค่าการแจ้งเตือน, ผู้รับผิดชอบ และการสร้างเอกสารอัตโนมัติ
+    </p>
+  </div>
+</section>
+
+<section class="card">
+  <header>
+    <h2>การตั้งค่าระบบ</h2>
+  </header>
+  <dl class="definition">
+    <div>
+      <dt>Default Company ID</dt>
+      <dd><code><%= config.defaultCompanyId || 'ยังไม่ตั้งค่า' %></code></dd>
+    </div>
+    <div>
+      <dt>Email Provider</dt>
+      <dd><%= config.emailProvider %></dd>
+    </div>
+    <div>
+      <dt>LINE Channel</dt>
+      <dd><%= config.lineChannel %></dd>
+    </div>
+    <div>
+      <dt>Notify Roles</dt>
+      <dd>
+        <% config.notifyRoles.forEach((role) => { %>
+          <span class="badge neutral"><%= role %></span>
+        <% }) %>
+      </dd>
+    </div>
+    <div>
+      <dt>Safety Stock Days</dt>
+      <dd><%= config.safetyStockDays %> วัน</dd>
+    </div>
+  </dl>
+</section>
+
+<section class="card">
+  <header>
+    <h2>จัดการสแนปช็อตคงคลัง</h2>
+    <p>ใช้สำหรับวิเคราะห์แนวโน้มการใช้งานและระบบ Auto PR</p>
+  </header>
+  <form method="post" action="/admin/settings/procurement/snapshot" class="form-inline">
+    <label>
+      Safety Stock Days
+      <input type="number" name="safetyStockDays" min="1" value="<%= config.safetyStockDays %>" />
+    </label>
+    <button type="submit" class="btn btn-primary">สร้าง Snapshot</button>
+  </form>
+</section>
+
+<section class="card">
+  <header>
+    <h2>Workflow Roadmap</h2>
+  </header>
+  <ol class="roadmap">
+    <li><strong>Stock Forecast Widget</strong> · ใช้ข้อมูล weighbridge เพื่อคาดการณ์การใช้งาน</li>
+    <li><strong>Batch PR</strong> · เลือกหลายรายการต่ำกว่า threshold แล้วสร้าง PR เดียว</li>
+    <li><strong>QR Tracking</strong> · เพิ่ม QR Code ในเอกสาร PDF สำหรับตรวจสอบสถานะผ่าน LINE</li>
+    <li><strong>Audit Trail</strong> · เก็บประวัติการเปลี่ยนแปลงทุกขั้นตอน</li>
+  </ol>
+</section>

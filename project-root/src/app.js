@@ -59,6 +59,7 @@ console.log('[VIEW ENGINE] ejs');
 
 // ===== Static =====
 app.use('/static', express.static(path.join(__dirname, '../public')));
+app.use('/storage', express.static(path.resolve('storage')));
 
 // ===== Webhook (raw body) =====
 app.use(['/webhook/line', '/webhook'], webhookRouter);

@@ -36,6 +36,7 @@ import {
   getUserProfile,
 } from '../services/line.js';
 import { adminSetConsentStatus } from '../services/consent.js';
+import procurementRouter from './procurement.js';
 import {
   invalidateBotFaqCache,
   getBotFaqStats,
@@ -2241,6 +2242,8 @@ router.post('/test/send', requireAuth, async (req, res) => {
     return res.render('test', { companies, recipients, recentDates, form: req.body, preview: null, sent: { ok: false, error: err.message || String(err) }, error: null, title: 'Test & Send', active: 'test' });
   }
 });
+
+router.use(procurementRouter);
 
 export default router;
 export { pickUsableDate };

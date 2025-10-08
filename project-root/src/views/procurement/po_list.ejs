@@ -1,0 +1,143 @@
+<section class="page-header">
+  <div>
+    <h1>Purchase Orders</h1>
+    <p class="text-muted">
+      จัดการใบสั่งซื้อ ส่งอีเมลให้ผู้จัดจำหน่าย และติดตามสถานะจัดส่ง
+    </p>
+  </div>
+  <div class="actions">
+    <a href="#po-create-form" class="btn btn-primary" data-dialog-open="po-create-dialog">+ สร้างใบสั่งซื้อ</a>
+  </div>
+</section>
+
+<section class="card">
+  <header>
+    <h2>รายการใบสั่งซื้อ</h2>
+    <p>ทุกการอัปเดตสถานะจะส่งแจ้งเตือนไปยัง LINE OA</p>
+  </header>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>PO No.</th>
+        <th>Supplier</th>
+        <th>สถานะ</th>
+        <th>ยอดรวม</th>
+        <th>PR อ้างอิง</th>
+        <th>จัดส่ง</th>
+        <th>อัปเดตล่าสุด</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (!pos.length) { %>
+        <tr><td colspan="8" class="text-center text-muted">ยังไม่มีใบสั่งซื้อ</td></tr>
+      <% } %>
+      <% pos.forEach((po) => { %>
+        <tr id="po-<%= po._id %>">
+          <td><strong><%= po.poNumber %></strong></td>
+          <td><%= po.vendorId?.name || '-' %></td>
+          <td><span class="badge status-<%= po.status %>"><%= STATUS_LABELS[po.status] || po.status %></span></td>
+          <td>
+            <strong><%= new Intl.NumberFormat('th-TH', { style: 'currency', currency: po.currency || 'THB' }).format(po.totalAmount || 0) %></strong>
+            <div class="text-muted text-sm">Subtotal: <%= po.subtotal?.toFixed?.(2) || 0 %></div>
+          </td>
+          <td>
+            <% if (po.prId) { %>
+              <a href="/admin/pr?highlight=<%= po.prId._id %>"><%= po.prId.prNumber %></a>
+            <% } else { %>
+              <span class="text-muted">Manual</span>
+            <% } %>
+          </td>
+          <td>
+            <% if (po.tracking?.trackingNumber) { %>
+              <div><strong><%= po.tracking.trackingNumber %></strong></div>
+              <div class="text-muted text-sm"><%= po.tracking.carrier || '-' %></div>
+            <% } else { %>
+              <span class="text-muted">ยังไม่ระบุ</span>
+            <% } %>
+          </td>
+          <td><%= dayjs(po.updatedAt).format('DD MMM YYYY HH:mm') %></td>
+          <td class="text-right">
+            <details class="menu">
+              <summary>ตัวเลือก</summary>
+              <div class="menu-content">
+                <form method="post" action="/admin/po/<%= po._id %>/status">
+                  <label>สถานะ</label>
+                  <select name="status">
+                    <% Object.values(PO_STATUSES).forEach((st) => { %>
+                      <option value="<%= st %>" <%= st === po.status ? 'selected' : '' %>><%= STATUS_LABELS[st] %></option>
+                    <% }) %>
+                  </select>
+                  <input type="text" name="remark" placeholder="หมายเหตุ (เช่น Tracking)" />
+                  <button type="submit" class="btn btn-sm btn-primary">อัปเดต</button>
+                </form>
+                <% if (po.pdfUrl) { %>
+                  <a class="btn btn-sm btn-secondary" href="<%= po.pdfUrl %>" target="_blank">ดาวน์โหลด PDF</a>
+                <% } %>
+              </div>
+            </details>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</section>
+
+<div class="dialog" id="po-create-dialog" hidden>
+  <div class="dialog-content">
+    <header class="dialog-header">
+      <h3>สร้างใบสั่งซื้อ</h3>
+      <button type="button" class="dialog-close" data-dialog-close>&times;</button>
+    </header>
+    <form id="po-create-form" method="post" action="/admin/po" class="form-grid">
+      <div class="form-group">
+        <label>อ้างอิง PR</label>
+        <select name="prId">
+          <option value="">-- เลือก PR --</option>
+          <% prs.forEach((pr) => { %>
+            <option value="<%= pr._id %>"><%= pr.prNumber %> · <%= STATUS_LABELS[pr.status] %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>ผู้จัดจำหน่าย</label>
+        <select name="vendorId" required>
+          <% vendors.forEach((vendor) => { %>
+            <option value="<%= vendor._id %>"><%= vendor.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>ระบุวันส่งมอบ</label>
+        <input type="date" name="expectedDeliveryDate" />
+      </div>
+      <div class="form-group">
+        <label>เงื่อนไขการชำระเงิน</label>
+        <input type="text" name="paymentTerms" value="Credit 30 days" />
+      </div>
+      <div class="form-group">
+        <label>หมายเหตุ</label>
+        <textarea name="note" rows="2"></textarea>
+      </div>
+
+      <fieldset class="form-group" data-item-list>
+        <legend>รายการสินค้า</legend>
+        <div class="item-row">
+          <input type="text" name="itemName" placeholder="ชื่อสินค้า" required />
+          <input type="number" name="quantity" placeholder="จำนวน" min="1" required />
+          <input type="number" name="unitPrice" placeholder="ราคาต่อหน่วย" min="0" step="0.01" />
+          <input type="text" name="unit" placeholder="หน่วย" value="ตัน" />
+        </div>
+      </fieldset>
+      <div class="form-group">
+        <button type="button" class="btn btn-sm btn-secondary" data-add-row>+ เพิ่มรายการ</button>
+      </div>
+
+      <footer class="dialog-footer">
+        <button type="submit" class="btn btn-primary">สร้างใบสั่งซื้อ</button>
+        <button type="button" class="btn btn-ghost" data-dialog-close>ยกเลิก</button>
+      </footer>
+    </form>
+  </div>
+</div>

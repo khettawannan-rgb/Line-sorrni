@@ -8,9 +8,14 @@ import Company from '../models/Company.js';
 import Member from '../models/Member.js';
 import { buildDailySummary, renderDailySummaryMessage } from '../services/summary.js';
 import { pushLineMessage } from '../services/line.js';
+import { runAutoReorder } from '../services/procurement/automationService.js';
+import { generateSnapshot } from '../services/procurement/stockService.js';
 
 dayjs.extend(utc);
 dayjs.extend(tz);
+
+const DEFAULT_COMPANY_ID = process.env.DEFAULT_COMPANY_ID || null;
+const PROCUREMENT_AUTOMATION_ENABLED = String(process.env.ENABLE_PROCUREMENT_AUTOMATION || 'true').toLowerCase() !== 'false';
 
 // helper: หา "เมื่อวาน" ตาม timezone บริษัท
 function getYesterdayISO(tzName = 'Asia/Bangkok') {
@@ -84,6 +89,30 @@ export function setupDailyCron() {
       console.error('[CRON][LOOP ERR]', err);
     }
   });
+
+  if (PROCUREMENT_AUTOMATION_ENABLED && DEFAULT_COMPANY_ID) {
+    cron.schedule('*/30 * * * *', async () => {
+      try {
+        const created = await runAutoReorder(DEFAULT_COMPANY_ID, 'scheduler');
+        if (created.length) {
+          console.log('[PROCUREMENT][AUTO PR]', `created ${created.length} PRs from low stock monitor`);
+        }
+      } catch (err) {
+        console.error('[PROCUREMENT][AUTO PR] failed:', err.message || err);
+      }
+    });
+
+    cron.schedule('15 6 * * *', async () => {
+      try {
+        await generateSnapshot(DEFAULT_COMPANY_ID, {
+          safetyStockDays: Number(process.env.PROCUREMENT_SAFETY_DAYS || 3),
+        });
+        console.log('[PROCUREMENT] snapshot generated for company', DEFAULT_COMPANY_ID);
+      } catch (err) {
+        console.error('[PROCUREMENT] snapshot failed:', err.message || err);
+      }
+    });
+  }
 
   console.log('[CRON] daily scheduler started');
 }
