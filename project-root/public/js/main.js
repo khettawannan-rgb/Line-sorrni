@@ -70,6 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initUploadExperience();
   initDailyLineChart();
   initCustomerInsightCharts();
+  initProcurementDialogs();
+  initDynamicItemRows();
 });
 
 function initDonutCharts() {
@@ -664,4 +666,67 @@ function initCustomerInsightCharts() {
       }
     }
   }
+}
+
+function initProcurementDialogs() {
+  const triggers = document.querySelectorAll('[data-dialog-open]');
+  const closeButtons = document.querySelectorAll('[data-dialog-close]');
+  if (!triggers.length && !closeButtons.length) return;
+
+  const toggleDialog = (dialog, open) => {
+    if (!dialog) return;
+    if (open) {
+      dialog.removeAttribute('hidden');
+      dialog.classList.add('open');
+    } else {
+      dialog.classList.remove('open');
+      dialog.setAttribute('hidden', 'hidden');
+    }
+  };
+
+  triggers.forEach((trigger) => {
+    const targetId = trigger.getAttribute('data-dialog-open');
+    const dialog = document.getElementById(targetId);
+    if (!dialog) return;
+    trigger.addEventListener('click', (event) => {
+      event.preventDefault();
+      toggleDialog(dialog, true);
+    });
+  });
+
+  closeButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const dialog = btn.closest('.dialog');
+      toggleDialog(dialog, false);
+    });
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      document.querySelectorAll('.dialog.open').forEach((dialog) => toggleDialog(dialog, false));
+    }
+  });
+}
+
+function initDynamicItemRows() {
+  document.querySelectorAll('[data-add-row]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const form = btn.closest('form');
+      const container = form?.querySelector('[data-item-list]');
+      const template = container?.querySelector('.item-row');
+      if (!container || !template) return;
+
+      const clone = template.cloneNode(true);
+      clone.querySelectorAll('input').forEach((input) => {
+        if (input.type === 'number') {
+          input.value = '';
+        } else if (input.name === 'unit') {
+          // keep default unit
+        } else {
+          input.value = '';
+        }
+      });
+      container.appendChild(clone);
+    });
+  });
 }
