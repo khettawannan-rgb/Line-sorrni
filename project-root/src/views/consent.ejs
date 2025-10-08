@@ -1,0 +1,37 @@
+<!-- project-root/src/views/consent.ejs -->
+<section class="auth-card">
+  <div class="logo">
+    <img src="/static/img/Nila_Flatcolour_Logo-.png" alt="NILA" />
+    <div class="title">ยืนยันความยินยอม (PDPA)</div>
+  </div>
+  <p class="subtitle">
+    สวัสดี<% if (displayName) { %>คุณ <strong><%= displayName %></strong><% } %>
+    กรุณาตรวจสอบรายละเอียดและเลือกยินยอมหรือปฏิเสธการเก็บข้อมูลส่วนบุคคลเพื่อดำเนินการบริการของเรา
+  </p>
+
+  <div class="panel" style="margin-bottom: 16px;">
+    <h3>ขอบเขตการเก็บข้อมูล</h3>
+    <ul class="clean">
+      <li>บันทึกข้อความและคำสั่งที่คุณส่งถึงบัญชี LINE Official Account นี้</li>
+      <li>ข้อมูลโปรไฟล์พื้นฐานจาก LINE (เช่น Display Name, รูปโปรไฟล์)</li>
+      <li>บันทึกการสรุปผลและรายงานที่เกี่ยวข้องกับบริการ</li>
+    </ul>
+    <p class="mt-2 muted">
+      ข้อมูลจะถูกใช้เพื่อให้บริการสรุปรายงาน แจ้งเตือน และพัฒนาคุณภาพการให้บริการตามข้อกำหนด PDPA
+      คุณสามารถเพิกถอนความยินยอมได้ในภายหลังผ่านช่องทางเดียวกัน
+    </p>
+  </div>
+
+  <form method="post" class="actions" style="gap: .75rem;">
+    <input type="hidden" name="userId" value="<%= userId %>" />
+    <input type="hidden" name="token" value="<%= token %>" />
+
+    <button class="btn btn-secondary" type="submit" name="decision" value="decline">
+      ไม่ยินยอม
+    </button>
+    <div class="spacer"></div>
+    <button class="btn btn-primary" type="submit" name="decision" value="accept">
+      ยินยอมและดำเนินการต่อ
+    </button>
+  </form>
+</section>

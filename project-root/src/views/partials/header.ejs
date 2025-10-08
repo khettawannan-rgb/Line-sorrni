@@ -1,0 +1,25 @@
+<header class="topbar">
+  <div class="brand">
+    <img src="/static/img/Nila_Flatcolour_Logo-.png" alt="NILA" />
+    <span>NILA · LINE ERP Notifier</span>
+  </div>
+  <nav class="nav">
+    <a href="/admin" class="<%= active==='dashboard' ? 'active' : '' %>">Dashboard</a>
+    <a href="/admin/upload" class="<%= active==='upload' ? 'active' : '' %>">Upload</a>
+    <a href="/admin/test" class="<%= active==='test' ? 'active' : '' %>">Test & Send</a>
+    <a href="/admin/companies" class="<%= active==='companies' ? 'active' : '' %>">Companies</a>
+    <a href="/admin/members" class="<%= active==='members' ? 'active' : '' %>">Members</a>
+    <a href="/admin/members/link" class="<%= active==='link' ? 'active' : '' %>">Link Users</a>
+    <a href="/admin/keywords" class="<%= active==='keywords' ? 'active' : '' %>">Keywords</a>
+    <a href="/admin/richmenu" class="<%= active==='richmenu' ? 'active' : '' %>">Rich Menu</a>
+  </nav>
+
+  <div class="user">
+    <span>สวัสดี, <%= (user && user.username) || 'guest' %></span>
+    <% if (user) { %>
+      <a href="/admin/logout" class="btn small">Logout</a>
+    <% } else { %>
+      <a href="/admin/login" class="btn small">Login</a>
+    <% } %>
+  </div>
+</header>

@@ -1,0 +1,86 @@
+<!-- src/views/members_link.ejs -->
+<div class="panel">
+  <div class="panel-header">
+    <h2>Map LINE Users ↔ Companies</h2>
+    <p class="muted">ผูก LINE userId กับบริษัท และกำหนดสถานะ Active</p>
+  </div>
+
+  <% if (msg) { %>
+    <div class="alert success"><%= msg %></div>
+  <% } %>
+
+  <form class="form" method="get" action="/admin/members/link">
+    <div class="form-row">
+      <label>ค้นหา</label>
+      <input type="text" name="q" value="<%= q || '' %>" placeholder="display name / userId" />
+    </div>
+
+    <div class="form-row inline">
+      <label class="checkbox">
+        <input type="checkbox" name="unlinked" value="1" <%= unlinked ? 'checked' : '' %> />
+        <span>แสดงเฉพาะที่ยังไม่ผูกบริษัท</span>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn" type="submit">ค้นหา</button>
+      <span class="muted" style="margin-left:8px;">ทั้งหมด: <%= (counters && counters.all) || 0 %> / ยังไม่ผูก: <%= (counters && counters.unlinked) || 0 %></span>
+    </div>
+  </form>
+</div>
+
+<form class="panel" method="post" action="/admin/members/link">
+  <div class="panel-header">
+    <h3>รายการ</h3>
+  </div>
+
+  <div class="table-scroll">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Display Name</th>
+          <th>LINE userId</th>
+          <th>Company</th>
+          <th>Active</th>
+          <th style="width:220px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% (members || []).forEach((m, i) => { %>
+          <tr>
+            <td><%= i+1 %></td>
+            <td><strong><%= m.displayName || '-' %></strong></td>
+            <td><code><%= m.lineUserId || '-' %></code></td>
+            <td>
+              <!-- ส่งเป็นอาเรย์ให้ตรง index -->
+              <input type="hidden" name="memberId" value="<%= m._id %>" />
+              <select name="companyId">
+                <option value="">— ไม่ผูก —</option>
+                <% (companies || []).forEach(c => { %>
+                  <option value="<%= c._id %>" <%= (m.companyId && String(m.companyId)===String(c._id) ? 'selected' : '') %>><%= c.name %></option>
+                <% }) %>
+              </select>
+            </td>
+            <td style="text-align:center">
+              <input type="checkbox" name="active" value="<%= i %>" <%= m.active ? 'checked' : '' %> />
+            </td>
+            <td>
+              <form action="/admin/members/<%= m._id %>/refresh-profile" method="post" style="display:inline-block">
+                <button class="btn small" type="submit">Refresh Profile</button>
+              </form>
+              <a class="btn small" href="/admin/members/<%= m._id %>/edit">Edit</a>
+            </td>
+          </tr>
+        <% }) %>
+        <% if (!members || members.length === 0) { %>
+          <tr><td colspan="6" class="muted">ไม่พบรายการ</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn primary" type="submit">Save changes</button>
+  </div>
+</form>

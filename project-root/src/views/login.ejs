@@ -1,0 +1,65 @@
+<% /* project-root/src/views/login.ejs */ %>
+<div class="login-shell">
+  <div class="login-frame">
+    <aside class="login-aside">
+      <div class="login-aside-overlay">
+        <div class="login-aside-brand">
+          <img src="/static/img/Nila_Flatcolour_Logo-.png" alt="NILA" />
+          <span>NILA · LINE ERP</span>
+        </div>
+        <div class="login-aside-body">
+          <h2>ภาพรวมที่ควบคุมได้ทุกสาขา</h2>
+          <p>เชื่อมข้อมูลจากทุกจังหวัด ติดตามทีมงาน และดูพยากรณ์อากาศในแดชบอร์ดเดียว</p>
+          <div class="login-aside-stats">
+            <div>
+              <strong>+32%</strong>
+              <span>อัตราการตอบกลับไวขึ้นหลังเริ่มใช้</span>
+            </div>
+            <div>
+              <strong>24 จังหวัด</strong>
+              <span>มีรายงานตำแหน่งล่าสุดภายในระบบ</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="login-main">
+      <header class="login-main-header">
+        <span>ยินดีต้อนรับกลับ</span>
+      </header>
+
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="alert alert-error"><%= error %></div>
+      <% } %>
+
+      <section class="login-main-body">
+        <h1>เข้าสู่ระบบเพื่อจัดการงาน</h1>
+        <p class="subtitle">กรุณากรอกข้อมูลผู้ใช้เพื่อเข้าสู่ระบบจัดการของคุณ</p>
+
+        <form method="post" action="/admin/login" class="login-form">
+          <label>
+            <span>Username</span>
+            <input type="text" name="username" autocomplete="username" required />
+          </label>
+          <label>
+            <span>Password</span>
+            <input type="password" name="password" autocomplete="current-password" required />
+          </label>
+          <div class="login-meta">
+            <label class="remember">
+              <input type="checkbox" disabled checked />
+              <span>จำฉันไว้</span>
+            </label>
+            <a class="muted" href="#">ลืมรหัสผ่าน?</a>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg">เข้าสู่ระบบ</button>
+        </form>
+      </section>
+
+      <footer class="login-main-footer">
+        <small>© <%= new Date().getFullYear() %> NILA Solutions · All rights reserved.</small>
+      </footer>
+    </main>
+  </div>
+</div>

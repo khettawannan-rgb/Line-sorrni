@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <title>Purchase Order <%= po.poNumber %></title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'IBM Plex Sans Thai', sans-serif;
+      font-size: 12px;
+      color: #0f172a;
+      margin: 0;
+      padding: 0;
+    }
+    .page {
+      padding: 32px 40px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0.5px;
+    }
+    .meta {
+      text-align: right;
+    }
+    .meta h2 {
+      margin: 0;
+      font-size: 26px;
+      color: #1d4ed8;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #cbd5f5;
+      padding: 8px 10px;
+      text-align: left;
+    }
+    th {
+      background: #eef2ff;
+    }
+    .section {
+      margin-bottom: 24px;
+    }
+    .section h3 {
+      background: #f8fafc;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 0 0 12px;
+      font-size: 14px;
+      color: #1f2937;
+    }
+    .split {
+      display: flex;
+      gap: 24px;
+    }
+    .split > div {
+      flex: 1;
+    }
+    .totals {
+      margin-left: auto;
+      width: 260px;
+    }
+    .totals td {
+      text-align: right;
+    }
+    .totals td:first-child {
+      text-align: left;
+    }
+    footer {
+      margin-top: 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      font-size: 11px;
+      color: #475569;
+    }
+    .signature {
+      width: 260px;
+      border-top: 1px solid #cbd5f5;
+      text-align: center;
+      padding-top: 8px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(59, 130, 246, 0.1);
+      color: #1d4ed8;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+    }
+    .qr {
+      text-align: right;
+    }
+    .qr img {
+      width: 90px;
+      height: 90px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="brand">
+        <h1>NILA · Smart Procurement</h1>
+        <p>โทร. 02-000-0000 · support@nila.example.com</p>
+        <% if (company) { %>
+          <p><%= company.name %></p>
+          <p><%= company.address || '' %></p>
+        <% } %>
+      </div>
+      <div class="meta">
+        <span class="badge">Purchase Order</span>
+        <h2><%= po.poNumber %></h2>
+        <p>วันที่ออกเอกสาร: <%= dayjs(po.createdAt || new Date()).format('DD MMM YYYY') %></p>
+        <% if (po.expectedDeliveryDate) { %>
+          <p>วันคาดว่าจะส่งมอบ: <%= dayjs(po.expectedDeliveryDate).format('DD MMM YYYY') %></p>
+        <% } %>
+        <p>สกุลเงิน: <%= po.currency || 'THB' %></p>
+      </div>
+    </header>
+
+    <section class="section split">
+      <div>
+        <h3>ข้อมูลผู้ขาย (Vendor)</h3>
+        <p><strong><%= vendor.name %></strong></p>
+        <p>อีเมล: <%= vendor.email || vendor.contact?.email || '-' %></p>
+        <% if (vendor.phone || vendor.contact?.phone) { %>
+          <p>โทร: <%= vendor.phone || vendor.contact?.phone %></p>
+        <% } %>
+        <p><%= vendor.address || '-' %></p>
+      </div>
+      <div>
+        <h3>รายละเอียดการชำระเงิน</h3>
+        <p>เงื่อนไข: <%= po.paymentTerms || 'Credit 30 days' %></p>
+        <p>ผู้ติดต่อ: <%= vendor.contact?.name || '-' %></p>
+      </div>
+      <% if (qrCode) { %>
+        <div class="qr">
+          <img src="<%= qrCode %>" alt="QR Tracking" />
+          <p>สแกนเพื่อติดตามสถานะ</p>
+        </div>
+      <% } %>
+    </section>
+
+    <section class="section">
+      <h3>รายการสินค้า</h3>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 40%;">รายการ</th>
+            <th>จำนวน</th>
+            <th>หน่วย</th>
+            <th>ราคาต่อหน่วย</th>
+            <th>ยอดรวม</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% po.items.forEach((item, idx) => { %>
+            <tr>
+              <td>
+                <strong><%= item.itemName %></strong>
+                <% if (item.note) { %>
+                  <div style="color:#64748b;"><%= item.note %></div>
+                <% } %>
+              </td>
+              <td><%= item.quantity %></td>
+              <td><%= item.unit || '-' %></td>
+              <td><%= Number(item.unitPrice || 0).toLocaleString('th-TH', { style: 'currency', currency: po.currency || 'THB' }) %></td>
+              <td><%= Number(item.lineTotal || 0).toLocaleString('th-TH', { style: 'currency', currency: po.currency || 'THB' }) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <table class="totals">
+        <tbody>
+          <tr>
+            <td>Subtotal</td>
+            <td><%= Number(po.subtotal || 0).toLocaleString('th-TH', { style: 'currency', currency: po.currency || 'THB' }) %></td>
+          </tr>
+          <tr>
+            <td>VAT / Tax</td>
+            <td><%= Number(po.taxAmount || 0).toLocaleString('th-TH', { style: 'currency', currency: po.currency || 'THB' }) %></td>
+          </tr>
+          <tr>
+            <td>ค่าขนส่ง</td>
+            <td><%= Number(po.shippingFee || 0).toLocaleString('th-TH', { style: 'currency', currency: po.currency || 'THB' }) %></td>
+          </tr>
+          <tr>
+            <td><strong>ยอดชำระทั้งหมด</strong></td>
+            <td><strong><%= Number(po.totalAmount || 0).toLocaleString('th-TH', { style: 'currency', currency: po.currency || 'THB' }) %></strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <% if (po.remarks) { %>
+      <section class="section">
+        <h3>หมายเหตุเพิ่มเติม</h3>
+        <p><%= po.remarks %></p>
+      </section>
+    <% } %>
+
+    <footer>
+      <div>
+        <p>สร้างโดยระบบ Smart Procurement Module</p>
+        <p>อัปเดตล่าสุด: <%= dayjs(po.updatedAt || new Date()).format('DD MMM YYYY HH:mm') %></p>
+      </div>
+      <div class="signature">
+        อนุมัติโดย ______________________
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

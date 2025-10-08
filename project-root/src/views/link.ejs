@@ -1,0 +1,102 @@
+<%- include('partials/header', { title: title || 'ผูก LINE ↔ Company' }) %>
+
+<h2>ผูก LINE ↔ Company</h2>
+
+<% if (result && result.ok) { %>
+  <article class="success"><pre><%= result.message %></pre></article>
+<% } else if (result && result.error) { %>
+  <article class="danger"><pre><%= result.error %></pre></article>
+<% } %>
+
+<div class="grid-2" style="align-items:start;gap:16px">
+
+  <section>
+    <h3>ค้นโปรไฟล์จาก UID</h3>
+    <form method="post" action="/admin/link/profile">
+      <label>LINE User ID (UID)</label>
+      <input name="uid" placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" value="<%= form.uid || '' %>" required>
+      <button type="submit">ดึงโปรไฟล์</button>
+    </form>
+
+    <% if (profile) { %>
+      <div class="card" style="margin-top:12px">
+        <h4>โปรไฟล์</h4>
+        <div style="display:flex;gap:12px;align-items:center">
+          <% if (profile.pictureUrl) { %>
+            <img src="<%= profile.pictureUrl %>" alt="avatar" style="width:64px;height:64px;border-radius:50%">
+          <% } %>
+          <div>
+            <div><strong><%= profile.displayName %></strong></div>
+            <div class="muted"><code><%= profile.userId %></code></div>
+            <% if (profile.statusMessage) { %>
+              <div class="muted"><%= profile.statusMessage %></div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <h4>ผูกกับบริษัท</h4>
+        <form method="post" action="/admin/link/save">
+          <input type="hidden" name="uid" value="<%= profile.userId %>">
+          <label>Company</label>
+          <select name="companyId" required>
+            <% (companies||[]).forEach(c => { %>
+              <option value="<%= c._id %>" <%= (existing && existing.companyId && existing.companyId._id?.toString() === c._id?.toString()) || (form.companyId===c._id?.toString()) ? 'selected' : '' %>>
+                <%= c.name %>
+              </option>
+            <% }) %>
+          </select>
+
+          <label>Display Name (optional)</label>
+          <input name="displayName" placeholder="เว้นว่างเพื่อใช้ชื่อจาก LINE" value="<%= existing?.displayName || profile.displayName || '' %>">
+
+          <div style="margin-top:8px">
+            <button type="submit">บันทึกการผูก</button>
+            <% if (existing) { %>
+              <button class="secondary" formaction="/admin/link/unlink" formmethod="post" name="uid" value="<%= profile.userId %>" onclick="return confirm('ปิดการใช้งานผู้ใช้นี้?')">ปิดการใช้งาน</button>
+            <% } %>
+          </div>
+        </form>
+      </div>
+    <% } %>
+  </section>
+
+  <section>
+    <h3>รายการผู้ใช้ที่ผูกอยู่</h3>
+    <% if (!members || members.length === 0) { %>
+      <p class="muted">ยังไม่มีสมาชิก</p>
+    <% } else { %>
+      <table role="grid">
+        <thead>
+          <tr>
+            <th>Display</th>
+            <th>UID</th>
+            <th>Company</th>
+            <th>Active</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% members.forEach(m => { %>
+            <tr>
+              <td><%= m.displayName || '-' %></td>
+              <td><code><%= m.lineUserId %></code></td>
+              <td><%= m.companyId ? m.companyId.name : '-' %></td>
+              <td><%= m.active ? 'Yes' : 'No' %></td>
+              <td>
+                <form method="post" action="/admin/link/profile" style="display:inline-block">
+                  <input type="hidden" name="uid" value="<%= m.lineUserId %>">
+                  <button class="secondary" type="submit">ดู/แก้</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
+
+</div>
+
+<%- include('partials/footer') %>

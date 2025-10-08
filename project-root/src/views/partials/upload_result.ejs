@@ -1,0 +1,127 @@
+<% if (result) { %>
+  <div class="panel upload-result-panel">
+    <div class="panel-header">
+      <h3>ผลการนำเข้า</h3>
+    </div>
+
+    <% if (result.error) { %>
+      <div class="alert error"><%= result.error %></div>
+    <% } else if (result.ok) { %>
+      <div class="note" style="margin-bottom:16px;">บริษัทจากไฟล์:
+        <% if (result.sourceSummary && result.sourceSummary.length) { %>
+          <%= result.sourceSummary.map(s => (s.sourceCompanyId || '(ไม่มีรหัส)') + (s.sourceCompanyName ? ` · ${s.sourceCompanyName}` : '')).join(', ') %>
+        <% } else { %>
+          ไม่พบรหัสบริษัทในไฟล์
+        <% } %>
+      </div>
+
+      <div class="grid grid-2">
+        <div>
+          <div class="stat">
+            <div class="stat-label">เคลียร์ข้อมูลเดิม</div>
+            <div class="stat-value"><%= result.cleared || 0 %> แถว</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">แทรก/อัปเดต</div>
+            <div class="stat-value"><%= result.inserted || 0 %> แถว</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">ช่วงวันที่จากไฟล์</div>
+            <div class="stat-value">
+              <%= (result.range && result.range.minDate) || '-' %> →
+              <%= (result.range && result.range.maxDate) || '-' %>
+            </div>
+          </div>
+          <% if (result.mixAggregatesUpserted !== undefined) { %>
+            <div class="stat">
+              <div class="stat-label">ปรับปรุง MIX</div>
+              <div class="stat-value"><%= result.mixAggregatesUpserted %> รายการ</div>
+            </div>
+          <% } %>
+        </div>
+
+        <div>
+          <h4>วันที่ล่าสุดในระบบ</h4>
+          <div class="table-scroll">
+            <table class="table compact">
+              <thead><tr><th>วันที่ (dateStr)</th><th>จำนวน</th></tr></thead>
+              <tbody>
+                <% (result.recentDates || []).forEach(d => { %>
+                  <tr>
+                    <td><%= d.dateStr %></td>
+                    <td style="text-align:right"><%= d.count %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <% if (result.sourceSummary && result.sourceSummary.length) { %>
+        <hr />
+        <h4>สรุปตามบริษัทจากไฟล์</h4>
+        <div class="table-scroll">
+          <table class="table compact">
+            <thead>
+              <tr>
+                <th>sourceCompanyId</th>
+                <th>ชื่อบริษัทในไฟล์</th>
+                <th style="text-align:right">จำนวนแถว</th>
+                <th style="text-align:right">รวม (ตัน)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% result.sourceSummary.forEach(row => { %>
+                <tr>
+                  <td><code><%= row.sourceCompanyId || '-' %></code></td>
+                  <td><%= row.sourceCompanyName || '-' %></td>
+                  <td style="text-align:right"><%= row.rows %></td>
+                  <td style="text-align:right"><%= row.totalTonsFormatted %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+
+      <% if (result.stats) { %>
+        <hr />
+        <div class="grid grid-2">
+          <div>
+            <h4>สรุปซื้อ (BUY)</h4>
+            <div class="table-scroll">
+              <table class="table compact">
+                <thead><tr><th>สินค้า</th><th style="text-align:right">ตัน</th></tr></thead>
+                <tbody>
+                  <% (result.stats.buyList || []).forEach(r => { %>
+                    <tr>
+                      <td><%= r.product %></td>
+                      <td style="text-align:right"><%= r.tonStr %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <h4>สรุปขาย (SELL)</h4>
+            <div class="table-scroll">
+              <table class="table compact">
+                <thead><tr><th>สินค้า</th><th style="text-align:right">ตัน</th></tr></thead>
+                <tbody>
+                  <% (result.stats.sellList || []).forEach(r => { %>
+                    <tr>
+                      <td><%= r.product %></td>
+                      <td style="text-align:right"><%= r.tonStr %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    <% } %>
+  </div>
+<% } %>

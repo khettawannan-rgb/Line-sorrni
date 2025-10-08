@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title><%= (typeof title !== 'undefined' && title ? title + ' · ' : '') %>NILA · LINE ERP Notifier</title>
+  <link rel="icon" href="/static/img/Nila_Flatcolour_Logo-.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="/static/css/main.css" />
+</head>
+
+<%
+  const isAuth = (typeof noChrome !== 'undefined' && !!noChrome) ? true : false;
+  const bodyClasses = [];
+  if (isAuth) bodyClasses.push('auth');
+  if (!isAuth) {
+    bodyClasses.push('app-shell');
+  }
+  if (!isAuth && typeof active === 'string') {
+    bodyClasses.push(`active-${active}`);
+    if (active === 'dashboard') bodyClasses.push('dashboard-mode');
+  }
+%>
+
+<body class="<%= bodyClasses.join(' ') %>">
+  <% if (!isAuth) { %>
+    <header class="topbar">
+      <a class="brand" href="/admin">
+        <img src="/static/img/Nila_Flatcolour_Logo-.png" alt="NILA" />
+        <span>NILA · LINE ERP Notifier</span>
+      </a>
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-overlay" data-nav-toggle>
+        <span></span><span></span><span></span>
+      </button>
+      <div class="topbar-menu" id="nav-overlay">
+        <nav class="nav">
+          <div class="nav-group">
+            <button type="button">Overview</button>
+            <div class="nav-dropdown">
+            <a href="/admin" class="<%= (active==='dashboard'?'active':'') %>">
+              <strong>Dashboard</strong>
+              <span>สรุปภาพรวมระบบและ KPI</span>
+            </a>
+            <a href="/admin/insights" class="<%= (active==='insights'?'active':'') %>">
+              <strong>Insights</strong>
+              <span>สถิติและกิจกรรมล่าสุด</span>
+            </a>
+            <a href="/admin/locations" class="<%= (active==='locations'?'active':'') %>">
+              <strong>Locations</strong>
+              <span>ตำแหน่งที่ผู้ใช้แชร์ล่าสุด</span>
+            </a>
+            <a href="/admin/consents" class="<%= (active==='consents'?'active':'') %>">
+              <strong>Consents</strong>
+              <span>จัดการสถานะความยินยอม</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="nav-group">
+          <button type="button">Operations</button>
+          <div class="nav-dropdown">
+            <a href="/admin/upload" class="<%= (active==='upload'?'active':'') %>">
+              <strong>Upload</strong>
+              <span>นำเข้าไฟล์ Excel หลายบริษัท</span>
+            </a>
+            <a href="/admin/test" class="<%= (active==='test'?'active':'') %>">
+              <strong>Test &amp; Send</strong>
+              <span>พรีวิวและส่งข้อความ LINE</span>
+            </a>
+            <a href="/admin/tools/purge" class="<%= (active==='tools'?'active':'') %>">
+              <strong>Tools</strong>
+              <span>ล้างข้อมูลและจัดการงานตามเวลา</span>
+            </a>
+            <a href="/admin/richmenu" class="<%= (active==='richmenu'?'active':'') %>">
+              <strong>Rich Menu</strong>
+              <span>สร้างและอัปโหลดเมนู</span>
+            </a>
+            <a href="/admin/pr" class="<%= (active==='procurement-pr'?'active':'') %>">
+              <strong>PR Board</strong>
+              <span>สร้างและติดตามใบขอซื้อ</span>
+            </a>
+            <a href="/admin/po" class="<%= (active==='procurement-po'?'active':'') %>">
+              <strong>PO Board</strong>
+              <span>สร้างใบสั่งซื้อและส่งอีเมล</span>
+            </a>
+            <a href="/admin/vendors" class="<%= (active==='procurement-vendors'?'active':'') %>">
+              <strong>Vendors</strong>
+              <span>จัดการผู้จัดจำหน่าย</span>
+            </a>
+            <a href="/admin/settings/procurement" class="<%= (active==='procurement-settings'?'active':'') %>">
+              <strong>Procurement Settings</strong>
+              <span>ตั้งค่าการแจ้งเตือนและอัตโนมัติ</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="nav-group">
+          <button type="button">Directory</button>
+          <div class="nav-dropdown">
+            <a href="/admin/companies" class="<%= (active==='companies'?'active':'') %>">
+              <strong>Companies</strong>
+              <span>จัดการบริษัทและเวลารายงาน</span>
+            </a>
+            <a href="/admin/members" class="<%= (active==='members'?'active':'') %>">
+              <strong>Members</strong>
+              <span>สมาชิกที่เชื่อม LINE Official Account</span>
+            </a>
+            <a href="/admin/members/link" class="<%= (active==='link'?'active':'') %>">
+              <strong>Link Users</strong>
+              <span>ผูกสมาชิกกับบริษัท</span>
+            </a>
+            <a href="/admin/keywords" class="<%= (active==='keywords'?'active':'') %>">
+              <strong>Keywords</strong>
+              <span>ตั้งค่าคำตอบอัตโนมัติ</span>
+            </a>
+            <a href="/admin/bot-faq" class="<%= (active==='bot-faq'?'active':'') %>">
+              <strong>Bot Q&amp;A</strong>
+              <span>ชุดคำถามคำตอบสำหรับ LINE Bot</span>
+            </a>
+          </div>
+        </div>
+        </nav>
+        <div class="user">
+          <div class="user-meta">
+            <span>สวัสดี, <%= (user && user.username) || 'guest' %></span>
+          </div>
+          <a class="btn btn-sm" href="/admin/logout">Logout</a>
+        </div>
+      </div>
+    </header>
+    <div class="nav-backdrop" data-nav-backdrop></div>
+  <% } %>
+
+  <main class="container">
+    <%- body %>
+  </main>
+
+  <footer class="footer">
+    © 2025 Nila Solutions · All rights reserved.
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+  <script src="/static/js/main.js"></script>
+</body>
+</html>

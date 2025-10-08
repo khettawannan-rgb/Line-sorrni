@@ -1,0 +1,133 @@
+<!-- project-root/src/views/locations.ejs -->
+<% const fmtDate = (ts) => ts ? new Date(ts).toLocaleString('th-TH') : '-'; %>
+<% const fmtLatLng = (loc) => loc ? `${Number(loc.latitude).toFixed(5)}, ${Number(loc.longitude).toFixed(5)}` : '-'; %>
+<% const provinceDataJSON = JSON.stringify(provinceSummary || []); %>
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-sA+e2jXUgXu3kGEXHOIa0GpCCMbnYIY01tZ5JfL0z0k="
+  crossorigin="" />
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-o9N1j7kC3U1JzDvsPWVn0AqfZbG9JQIvIDi64tT0+3s="
+  crossorigin=""></script>
+
+<div class="panel">
+  <div class="panel-header">
+    <h3>แผนที่สรุปจำนวนผู้ใช้ตามจังหวัด</h3>
+    <p class="muted">นับจากตำแหน่งที่ผู้ใช้เคยส่งล่าสุดต่อจังหวัด (เฉพาะรายการที่มีพิกัด)</p>
+  </div>
+  <div
+    id="province-map"
+    class="province-map"
+    data-mapbox-token="<%= mapboxToken || '' %>"></div>
+</div>
+
+<div class="panel">
+  <div class="panel-header">
+    <h3>ภาพรวมตำแหน่งที่ผู้ใช้แชร์</h3>
+    <p class="muted">ข้อมูลอัปเดตอัตโนมัติเมื่อผู้ใช้ส่ง location ใน LINE</p>
+  </div>
+  <div class="metrics-grid locations-metrics">
+    <article class="metric-card">
+      <div class="metric-label">จำนวนตำแหน่งทั้งหมด</div>
+      <div class="metric-value"><%= stats.locations.toLocaleString('th-TH') %></div>
+      <div class="metric-sub">รวมทุกเหตุการณ์ที่เคยแชร์</div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-label">ผู้ใช้ที่แชร์ตำแหน่ง</div>
+      <div class="metric-value"><%= stats.uniqueUsers.toLocaleString('th-TH') %></div>
+      <div class="metric-sub">นับตาม userId ไม่ซ้ำ</div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-label">ตำแหน่งล่าสุด</div>
+      <div class="metric-value"><%= stats.lastTimestamp ? fmtDate(stats.lastTimestamp) : '-' %></div>
+      <div class="metric-sub">ข้อมูลล่าสุดที่ระบบได้รับ</div>
+    </article>
+  </div>
+
+  <% if (locations && locations.length && locations[0].location) { %>
+    <div class="location-map" data-map>
+      <iframe
+        id="location-preview"
+        src="https://www.google.com/maps?q=<%= locations[0].location.latitude %>,<%= locations[0].location.longitude %>&z=15&output=embed"
+        allowfullscreen
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"></iframe>
+      <div class="map-info">
+        <h4>ตำแหน่งล่าสุด</h4>
+        <% const latest = locations[0]; const latestConsent = consentMap && consentMap[latest.userId]; %>
+        <div class="map-info-item">
+          <span class="label">ผู้ใช้</span>
+          <strong><%= latestConsent?.displayName || latest.userId %></strong>
+          <small class="muted"><%= latest.userId %></small>
+        </div>
+        <div class="map-info-item">
+          <span class="label">พิกัด</span>
+          <strong><%= fmtLatLng(latest.location) %></strong>
+          <small class="muted"><%= latest.location.address || 'ไม่มีที่อยู่ในข้อความ' %></small>
+        </div>
+        <div class="map-info-item">
+          <span class="label">เวลา</span>
+          <strong><%= fmtDate(latest.timestamp) %></strong>
+        </div>
+        <a class="btn btn-secondary" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=<%= latest.location.latitude %>,<%= latest.location.longitude %>">เปิดใน Google Maps</a>
+      </div>
+    </div>
+  <% } else { %>
+    <div class="note">ยังไม่มีตำแหน่งที่ผู้ใช้แชร์เข้ามา</div>
+  <% } %>
+</div>
+
+<div class="panel">
+  <div class="panel-header">
+    <h3>ประวัติการแชร์ตำแหน่ง (<%= locations.length %> รายการล่าสุด)</h3>
+    <p class="muted">คลิกแถวเพื่อดูตำแหน่งบนแผนที่</p>
+  </div>
+  <div class="table-scroll">
+    <table class="table ghost locations-table">
+      <thead>
+        <tr>
+          <th>ผู้ใช้</th>
+          <th>พิกัด</th>
+          <th>ที่อยู่</th>
+          <th>เวลา</th>
+          <th>แหล่งที่มา</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% locations.forEach(function(loc, idx){
+             const cons = consentMap && consentMap[loc.userId];
+             const label = cons?.displayName || loc.userId;
+             const coordinates = loc.location ? fmtLatLng(loc.location) : '-';
+        %>
+          <tr data-lat="<%= loc.location?.latitude || '' %>" data-lng="<%= loc.location?.longitude || '' %>" class="<%= idx === 0 ? 'active' : '' %>">
+            <td>
+              <strong><%= label %></strong>
+              <div class="muted"><%= loc.userId %></div>
+            </td>
+            <td><%= coordinates %></td>
+            <td><%= loc.location?.address || '-' %></td>
+            <td><%= fmtDate(loc.timestamp) %></td>
+            <td><%= cons?.status || '-' %></td>
+            <td>
+              <% if (loc.location) { %>
+                <a class="btn btn-sm" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=<%= loc.location.latitude %>,<%= loc.location.longitude %>">แผนที่</a>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+        <% if (!locations.length) { %>
+          <tr><td colspan="6" class="muted">ยังไม่มีข้อมูลตำแหน่ง</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  window.LOC_PROVINCE_DATA = <%- provinceDataJSON %>;
+</script>
+<script src="/static/js/locations_map.js"></script>

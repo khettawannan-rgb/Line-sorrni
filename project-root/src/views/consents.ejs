@@ -1,0 +1,126 @@
+<!-- src/views/consents.ejs -->
+<div class="panel">
+  <div class="panel-header">
+    <h2>LINE Consents (Manual)</h2>
+    <p class="muted">สำหรับทดสอบระบบเท่านั้น: ปรับสถานะให้ผู้ใช้สามารถส่งข้อความเข้ามาได้โดยไม่ต้องผ่านลิงก์ยินยอม</p>
+  </div>
+
+  <% if (feedback?.success) { %>
+    <div class="alert success"><%= feedback.success %></div>
+  <% } %>
+  <% if (feedback?.error) { %>
+    <div class="alert error"><%= feedback.error %></div>
+  <% } %>
+
+  <form class="actions" method="get" action="/admin/consents" style="gap:.75rem; margin-top:12px; flex-wrap:wrap;">
+    <input type="text" name="q" placeholder="ค้นหา userId หรือชื่อ" value="<%= search %>" style="min-width:220px;">
+    <select name="status" style="min-width:150px;">
+      <option value="" <%= statusFilter ? '' : 'selected' %>>ทุกสถานะ</option>
+      <option value="granted" <%= statusFilter==='granted' ? 'selected' : '' %>>granted</option>
+      <option value="pending" <%= statusFilter==='pending' ? 'selected' : '' %>>pending</option>
+      <option value="revoked" <%= statusFilter==='revoked' ? 'selected' : '' %>>revoked</option>
+    </select>
+    <input type="number" name="limit" value="<%= limit %>" min="10" max="500" step="10" style="width:110px;">
+    <button class="btn btn-primary" type="submit">ค้นหา</button>
+    <a class="btn" href="/admin/consents">ล้าง</a>
+  </form>
+
+  <div class="stats" style="margin-top:16px;">
+    <div class="stat">
+      <div>granted</div>
+      <strong><%= (summary && summary.granted) || 0 %></strong>
+    </div>
+    <div class="stat">
+      <div>pending</div>
+      <strong><%= (summary && summary.pending) || 0 %></strong>
+    </div>
+    <div class="stat">
+      <div>revoked</div>
+      <strong><%= (summary && summary.revoked) || 0 %></strong>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header">
+    <h3>รายการยินยอม (<%= consents.length %> รายการ)</h3>
+    <p class="muted">เลือกสถานะใหม่ กรอกหมายเหตุ (ถ้ามี) แล้วกดบันทึก</p>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:220px;">ผู้ใช้</th>
+          <th style="width:160px;">สถานะ</th>
+          <th>ปรับสถานะ</th>
+          <th style="width:260px;">ประวัติ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!consents || consents.length === 0) { %>
+          <tr>
+            <td colspan="4" class="muted">ยังไม่มีข้อมูลความยินยอม</td>
+          </tr>
+        <% } %>
+        <% (consents || []).forEach(function(consent){ %>
+          <tr>
+            <td>
+              <strong><%= consent.displayName || '(ไม่มีชื่อ)' %></strong><br />
+              <code><%= consent.userId %></code>
+            </td>
+            <td>
+              <% const badgeClass = consent.status === 'granted' ? 'badge success' : (consent.status === 'pending' ? 'badge warn' : 'badge gray'); %>
+              <span class="<%= badgeClass %>"><%= consent.status %></span>
+              <div class="muted" style="margin-top:6px;">
+                อัปเดต: <%= consent.updatedAt ? new Date(consent.updatedAt).toLocaleString('th-TH') : '-' %>
+              </div>
+              <div class="muted">
+                ยินยอมล่าสุด: <%= consent.grantedAt ? new Date(consent.grantedAt).toLocaleString('th-TH') : '-' %>
+              </div>
+            </td>
+            <td>
+              <form action="/admin/consents/update" method="post" style="display:flex; flex-direction:column; gap:8px;">
+                <input type="hidden" name="userId" value="<%= consent.userId %>">
+                <input type="hidden" name="search" value="<%= search %>">
+                <input type="hidden" name="statusFilter" value="<%= statusFilter %>">
+                <input type="hidden" name="limit" value="<%= limit %>">
+
+                <input type="text" name="displayName" placeholder="Display name (optional)" value="<%= consent.displayName || '' %>" style="width:100%;">
+
+                <div class="actions" style="gap:.5rem; flex-wrap:wrap;">
+                  <select name="status" style="min-width:120px;">
+                    <option value="granted" <%= consent.status==='granted' ? 'selected' : '' %>>granted</option>
+                    <option value="pending" <%= consent.status==='pending' ? 'selected' : '' %>>pending</option>
+                    <option value="revoked" <%= consent.status==='revoked' ? 'selected' : '' %>>revoked</option>
+                  </select>
+                  <input type="text" name="note" placeholder="หมายเหตุ" style="min-width:160px;" />
+                  <button class="btn btn-primary btn-sm" type="submit">บันทึก</button>
+                </div>
+              </form>
+            </td>
+            <td>
+              <% const history = (consent.history || []).slice(-5).reverse(); %>
+              <% if (history.length === 0) { %>
+                <span class="muted">ยังไม่มีประวัติ</span>
+              <% } else { %>
+                <ul class="clean" style="font-size:.85rem;">
+                  <% history.forEach(function(item){ %>
+                    <li>
+                      <strong><%= item.status %></strong>
+                      <span class="muted"> · <%= item.at ? new Date(item.at).toLocaleString('th-TH') : '-' %></span>
+                      <div class="muted">ช่องทาง: <%= item.channel || '-' %></div>
+                      <% if (item.note) { %>
+                        <div><%= item.note %></div>
+                      <% } %>
+                    </li>
+                  <% }); %>
+                </ul>
+              <% } %>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,38 @@
+{
+  "name": "line-erp-notifier",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node project-root/src/app.js",
+    "dev": "nodemon --watch project-root/src --watch project-root/public --ext js,ejs,css --exec node project-root/src/app.js",
+    "fix-indexes": "node project-root/src/scripts/fix_record_indexes.js",
+    "richmenu:init": "node project-root/src/scripts/setup_richmenu.js",
+    "richmenu:list": "node project-root/src/scripts/setup_richmenu.js --list",
+    "richmenu:nuke": "node project-root/src/scripts/setup_richmenu.js --nuke"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "body-parser": "^1.20.2",
+    "compression": "^1.7.4",
+    "dayjs": "^1.11.13",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-ejs-layouts": "^2.5.1",
+    "express-session": "^1.17.3",
+    "mongoose": "^8.6.1",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.15",
+    "node-cron": "^4.2.1",
+    "puppeteer": "^22.12.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
