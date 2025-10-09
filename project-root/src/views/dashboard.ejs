@@ -268,6 +268,23 @@ const sampleNetwork = {
 <% const networkJSON = JSON.stringify(networkData); %>
 <% const networkNodeLabel = new Map(networkData.nodes.map((node) => [node.id, node.label || node.name || node.id])); %>
 <% const networkLinksSorted = (networkData.links || []).slice().sort((a, b) => (Number(b.conversations || 0) - Number(a.conversations || 0))).slice(0, 10); %>
+<% const sentimentTotals = sentimentTrendData.reduce((acc, row) => ({
+  positive: acc.positive + Number(row.positive || row.pos || 0),
+  neutral: acc.neutral + Number(row.neutral || row.neu || 0),
+  negative: acc.negative + Number(row.negative || row.neg || 0),
+}), { positive: 0, neutral: 0, negative: 0 }); %>
+<% const intentTotals = intentStackData.reduce((acc, row) => {
+  const key = row.category || row.intent || 'อื่น ๆ';
+  acc[key] = (acc[key] || 0) + Number(row.count || row.volume || 0);
+  return acc;
+}, {}); %>
+<% const funnelStages = ['Inquiry', 'Quote', 'PurchaseOrder', 'Payment', 'Delivered']; %>
+<% const funnelTotals = funnelStages.map((stage) => ({
+  stage,
+  count: funnelData.filter((row) => (row.stage || row.status || '').toLowerCase() === stage.toLowerCase()).reduce((sum, row) => sum + Number(row.count || row.value || 0), 0),
+})); %>
+<% const heatmapTopSlots = heatmapData.slice().sort((a, b) => Number(b.volume || b.count || 0) - Number(a.volume || a.count || 0)).slice(0, 5); %>
+<% const retentionSummary = retentionData.slice(0, 6); %>
 <% const filters = behavior.filters || {}; %>
 <% const logicModules = behavior.logicModules || [
      { name: 'Intent Classification', description: 'Classify each message into inquiry/order/complaint etc.', query: 'POST /nlp/intent -> intents collection update' },
@@ -751,6 +768,18 @@ const sampleNetwork = {
             </div>
             <div class="chart-frame">
               <canvas id="chat-trend-chart" height="240"></canvas>
+              <div class="chart-fallback">
+                <strong>Top Activity</strong>
+                <ul>
+                  <% interactionSeries.slice(-5).forEach((row) => { %>
+                    <li>
+                      <strong><%= new Date(`${row.date}T00:00:00`).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) %></strong>
+                      · <%= Number(row.messageCount || 0).toLocaleString('th-TH') %> ข้อความ ·
+                      <%= Number(row.uniqueUsers || 0).toLocaleString('th-TH') %> ผู้ใช้
+                    </li>
+                  <% }) %>
+                </ul>
+              </div>
             </div>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
@@ -769,6 +798,18 @@ GROUP BY 1 ORDER BY 1</code></pre>
             </div>
             <div class="chart-frame">
               <canvas id="chat-heatmap-chart" height="240"></canvas>
+              <div class="chart-fallback">
+                <strong>ช่วงเวลายอดนิยม</strong>
+                <ul>
+                  <% heatmapTopSlots.forEach((slot) => { %>
+                    <li>
+                      <strong>วัน <%= ['อา','จ','อ','พ','พฤ','ศ','ส'][Number(slot.dow || slot.day || 0)] || slot.dow %></strong>
+                      เวลา <%= String(slot.hour || slot.h || 0).padStart(2,'0') %>:00 ·
+                      <%= Number(slot.volume || slot.count || 0).toLocaleString('th-TH') %> ข้อความ
+                    </li>
+                  <% }) %>
+                </ul>
+              </div>
             </div>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
@@ -788,6 +829,14 @@ GROUP BY 1,2</code></pre>
             <div class="chart-frame sentiment">
               <canvas id="sentiment-pie-chart" height="180"></canvas>
               <canvas id="sentiment-mini-chart" height="80"></canvas>
+              <div class="chart-fallback">
+                <strong>รวม 14 วัน</strong>
+                <ul>
+                  <li>Positive · <%= sentimentTotals.positive.toLocaleString('th-TH') %> ข้อความ</li>
+                  <li>Neutral · <%= sentimentTotals.neutral.toLocaleString('th-TH') %> ข้อความ</li>
+                  <li>Negative · <%= sentimentTotals.negative.toLocaleString('th-TH') %> ข้อความ</li>
+                </ul>
+              </div>
             </div>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
@@ -809,6 +858,14 @@ GROUP BY 1</code></pre>
             </div>
             <div class="chart-frame">
               <canvas id="intent-stack-chart" height="260"></canvas>
+              <div class="chart-fallback">
+                <strong>Intent ล่าสุด</strong>
+                <ul>
+                  <% Object.entries(intentTotals).slice(0,6).forEach(([label,value]) => { %>
+                    <li><strong><%= label %></strong> · <%= Number(value).toLocaleString('th-TH') %> ข้อความ</li>
+                  <% }) %>
+                </ul>
+              </div>
             </div>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
@@ -874,6 +931,14 @@ GROUP BY 1</code></pre>
             </div>
             <div class="chart-frame">
               <canvas id="conversion-funnel-chart" height="260"></canvas>
+              <div class="chart-fallback">
+                <strong>จำนวนต่อขั้น</strong>
+                <ul>
+                  <% funnelTotals.forEach((item) => { %>
+                    <li><strong><%= item.stage %></strong> · <%= Number(item.count).toLocaleString('th-TH') %> รายการ</li>
+                  <% }) %>
+                </ul>
+              </div>
             </div>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
@@ -891,6 +956,17 @@ ORDER BY stage_order</code></pre>
             </div>
             <div class="chart-frame">
               <canvas id="agent-response-chart" height="260"></canvas>
+              <div class="chart-fallback">
+                <strong>ค่าเฉลี่ยตอบกลับ</strong>
+                <ul>
+                  <% agentResponseData.slice(0,6).forEach((agent) => { %>
+                    <li>
+                      <strong><%= agent.name || agent.agent_id %></strong>
+                      · <%= Number(agent.avgFirstReplySec || agent.avg || 0).toFixed(0) %>s · SLA <%= ((agent.slaPct || 0) * 100).toFixed(1) %>%
+                    </li>
+                  <% }) %>
+                </ul>
+              </div>
             </div>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
@@ -997,6 +1073,17 @@ LIMIT 20</code></pre>
             </div>
             <div class="chart-frame">
               <canvas id="retention-cohort-chart" height="260"></canvas>
+              <div class="chart-fallback">
+                <strong>อัตรากลับมา</strong>
+                <ul>
+                  <% retentionSummary.forEach((row) => { %>
+                    <li>
+                      Cohort <strong><%= row.cohort %></strong> · สัปดาห์ <%= row.weekOffset %>
+                      · <%= ((row.rate || 0) * 100).toFixed(1) %>%
+                    </li>
+                  <% }) %>
+                </ul>
+              </div>
             </div>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>

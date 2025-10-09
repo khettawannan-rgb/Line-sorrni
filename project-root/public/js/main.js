@@ -489,6 +489,12 @@ function initCustomerInsightCharts() {
     }
   };
 
+  const markReady = (canvas) => {
+    if (!canvas) return;
+    const frame = canvas.closest('.chart-frame');
+    if (frame) frame.classList.add('chart-ready');
+  };
+
   const trendCard = document.querySelector('.insight-chart[data-chart-trend]');
   if (trendCard) {
     const payload = parseDataset(trendCard, 'data-chart-trend', []);
@@ -566,6 +572,7 @@ function initCustomerInsightCharts() {
             },
           },
         });
+        markReady(ctx.canvas);
       }
     }
   }
@@ -615,6 +622,7 @@ function initCustomerInsightCharts() {
             },
           },
         });
+        markReady(ctx.canvas);
       }
     }
   }
@@ -663,6 +671,7 @@ function initCustomerInsightCharts() {
             },
           },
         });
+        markReady(ctx.canvas);
       }
     }
   }
@@ -736,6 +745,7 @@ function initCustomerInsightCharts() {
             },
           },
         });
+        markReady(ctx.canvas);
       }
     }
   }
@@ -779,6 +789,7 @@ function initCustomerInsightCharts() {
             },
           },
         });
+        markReady(pieCtx.canvas);
       }
 
       if (miniCtx) {
@@ -824,6 +835,7 @@ function initCustomerInsightCharts() {
             plugins: { legend: { display: false } },
           },
         });
+        markReady(miniCtx.canvas);
       }
     }
   }
@@ -882,6 +894,7 @@ function initCustomerInsightCharts() {
             },
           },
         });
+        markReady(ctx.canvas);
       }
     }
   }
@@ -944,6 +957,7 @@ function initCustomerInsightCharts() {
             },
           },
         });
+        markReady(ctx.canvas);
       }
     }
   }
@@ -1031,6 +1045,7 @@ function initCustomerInsightCharts() {
             },
           },
         });
+        markReady(ctx.canvas);
       }
     }
   }
@@ -1096,6 +1111,7 @@ function initCustomerInsightCharts() {
             },
           },
         });
+        markReady(ctx.canvas);
       }
     }
   }
