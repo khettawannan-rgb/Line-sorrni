@@ -29,21 +29,245 @@
      (typeof dashboardBehavior !== 'undefined' && dashboardBehavior !== null)
        ? dashboardBehavior
        : (locals.dashboardBehavior || {}); %>
-<% const interactionSeries = behavior.timeSeries || chatTrend || []; %>
+
+<%
+const sampleInteractionSeries = [
+  { date: '2024-09-01', messageCount: 18, uniqueUsers: 7 },
+  { date: '2024-09-02', messageCount: 22, uniqueUsers: 8 },
+  { date: '2024-09-03', messageCount: 24, uniqueUsers: 9 },
+  { date: '2024-09-04', messageCount: 28, uniqueUsers: 10 },
+  { date: '2024-09-05', messageCount: 26, uniqueUsers: 9 },
+  { date: '2024-09-06', messageCount: 31, uniqueUsers: 11 },
+  { date: '2024-09-07', messageCount: 33, uniqueUsers: 12 },
+  { date: '2024-09-08', messageCount: 29, uniqueUsers: 11 },
+  { date: '2024-09-09', messageCount: 35, uniqueUsers: 13 },
+  { date: '2024-09-10', messageCount: 32, uniqueUsers: 12 },
+];
+
+const sampleHeatmap = [
+  { dow: 1, hour: 9, volume: 12 },
+  { dow: 1, hour: 11, volume: 9 },
+  { dow: 2, hour: 10, volume: 16 },
+  { dow: 2, hour: 13, volume: 10 },
+  { dow: 3, hour: 14, volume: 19 },
+  { dow: 3, hour: 16, volume: 13 },
+  { dow: 4, hour: 9, volume: 14 },
+  { dow: 4, hour: 15, volume: 11 },
+  { dow: 5, hour: 10, volume: 18 },
+  { dow: 6, hour: 12, volume: 15 },
+];
+
+const sampleSentimentTrend = [
+  { date: '2024-09-01', positive: 14, neutral: 6, negative: 2 },
+  { date: '2024-09-02', positive: 16, neutral: 5, negative: 3 },
+  { date: '2024-09-03', positive: 18, neutral: 4, negative: 3 },
+  { date: '2024-09-04', positive: 17, neutral: 6, negative: 4 },
+  { date: '2024-09-05', positive: 19, neutral: 5, negative: 3 },
+  { date: '2024-09-06', positive: 22, neutral: 4, negative: 2 },
+  { date: '2024-09-07', positive: 21, neutral: 5, negative: 3 },
+  { date: '2024-09-08', positive: 20, neutral: 6, negative: 4 },
+  { date: '2024-09-09', positive: 24, neutral: 5, negative: 2 },
+  { date: '2024-09-10', positive: 23, neutral: 6, negative: 3 },
+];
+
+const sampleIntentStack = [
+  { week: '2024-W35', category: 'Inquiry', count: 48 },
+  { week: '2024-W35', category: 'Order', count: 36 },
+  { week: '2024-W35', category: 'Complaint', count: 12 },
+  { week: '2024-W35', category: 'Support', count: 22 },
+  { week: '2024-W35', category: 'Other', count: 8 },
+  { week: '2024-W36', category: 'Inquiry', count: 54 },
+  { week: '2024-W36', category: 'Order', count: 39 },
+  { week: '2024-W36', category: 'Complaint', count: 15 },
+  { week: '2024-W36', category: 'Support', count: 27 },
+  { week: '2024-W36', category: 'Other', count: 10 },
+];
+
+const sampleKeywordCloud = [
+  { text: 'ใบสั่งซื้อ', weight: 32 },
+  { text: 'จัดส่ง', weight: 24 },
+  { text: 'รับของ', weight: 18 },
+  { text: 'โครงการ', weight: 15 },
+  { text: 'ราคา', weight: 21 },
+  { text: 'เครดิต', weight: 12 },
+  { text: 'ติดตาม', weight: 19 },
+  { text: 'ตารางส่ง', weight: 14 },
+  { text: 'ใบเสนอราคา', weight: 17 },
+  { text: 'ยอดค้าง', weight: 11 },
+];
+
+const sampleSentimentCloud = {
+  positive: [
+    { text: 'รวดเร็ว', weight: 20 },
+    { text: 'ขอบคุณ', weight: 18 },
+    { text: 'เยี่ยม', weight: 16 },
+    { text: 'สะดวก', weight: 14 },
+    { text: 'บริการดี', weight: 12 },
+    { text: 'ครบถ้วน', weight: 10 },
+    { text: 'ประทับใจ', weight: 9 },
+    { text: 'เรียบร้อย', weight: 8 },
+    { text: 'ถูกต้อง', weight: 7 },
+    { text: 'เป็นกันเอง', weight: 6 },
+  ],
+  negative: [
+    { text: 'ล่าช้า', weight: 19 },
+    { text: 'ผิดนัด', weight: 16 },
+    { text: 'ยังไม่ส่ง', weight: 15 },
+    { text: 'ติดต่อยาก', weight: 13 },
+    { text: 'ขาดสินค้า', weight: 11 },
+    { text: 'แจ้งเตือน', weight: 10 },
+    { text: 'ตรวจสอบ', weight: 9 },
+    { text: 'ปัญหา', weight: 8 },
+    { text: 'เคลม', weight: 7 },
+    { text: 'รอคอนเฟิร์ม', weight: 6 },
+  ],
+};
+
+const sampleFunnel = [
+  { period: '2024-W35', stage: 'Inquiry', count: 128 },
+  { period: '2024-W35', stage: 'Quote', count: 102 },
+  { period: '2024-W35', stage: 'PurchaseOrder', count: 78 },
+  { period: '2024-W35', stage: 'Payment', count: 61 },
+  { period: '2024-W35', stage: 'Delivered', count: 54 },
+  { period: '2024-W36', stage: 'Inquiry', count: 134 },
+  { period: '2024-W36', stage: 'Quote', count: 110 },
+  { period: '2024-W36', stage: 'PurchaseOrder', count: 84 },
+  { period: '2024-W36', stage: 'Payment', count: 69 },
+  { period: '2024-W36', stage: 'Delivered', count: 58 },
+];
+
+const sampleAgentResponse = [
+  { agent_id: 'AG01', name: 'นภัส', avgFirstReplySec: 115, medianFirstReplySec: 92, p90FirstReplySec: 210, slaPct: 0.94 },
+  { agent_id: 'AG02', name: 'ธีรภัทร', avgFirstReplySec: 148, medianFirstReplySec: 120, p90FirstReplySec: 260, slaPct: 0.88 },
+  { agent_id: 'AG03', name: 'ณิชา', avgFirstReplySec: 132, medianFirstReplySec: 104, p90FirstReplySec: 230, slaPct: 0.91 },
+  { agent_id: 'AG04', name: 'ลลิตา', avgFirstReplySec: 165, medianFirstReplySec: 138, p90FirstReplySec: 310, slaPct: 0.82 },
+  { agent_id: 'AG05', name: 'ภูผา', avgFirstReplySec: 189, medianFirstReplySec: 150, p90FirstReplySec: 340, slaPct: 0.79 },
+  { agent_id: 'AG06', name: 'อรพิน', avgFirstReplySec: 124, medianFirstReplySec: 101, p90FirstReplySec: 216, slaPct: 0.9 },
+  { agent_id: 'AG07', name: 'พชร', avgFirstReplySec: 172, medianFirstReplySec: 143, p90FirstReplySec: 320, slaPct: 0.84 },
+  { agent_id: 'AG08', name: 'ปฐม', avgFirstReplySec: 156, medianFirstReplySec: 133, p90FirstReplySec: 298, slaPct: 0.86 },
+  { agent_id: 'AG09', name: 'อิศรา', avgFirstReplySec: 141, medianFirstReplySec: 118, p90FirstReplySec: 244, slaPct: 0.89 },
+  { agent_id: 'AG10', name: 'ขวัญฤดี', avgFirstReplySec: 167, medianFirstReplySec: 140, p90FirstReplySec: 305, slaPct: 0.83 },
+];
+
+const sampleAgentLeaderboard = [
+  { agent_id: 'AG01', name: 'นภัส', conversationCount: 64, avgFirstReplySec: 115, slaPct: 0.94, avgSentiment: 0.72 },
+  { agent_id: 'AG02', name: 'ธีรภัทร', conversationCount: 59, avgFirstReplySec: 148, slaPct: 0.88, avgSentiment: 0.65 },
+  { agent_id: 'AG03', name: 'ณิชา', conversationCount: 61, avgFirstReplySec: 132, slaPct: 0.91, avgSentiment: 0.69 },
+  { agent_id: 'AG04', name: 'ลลิตา', conversationCount: 57, avgFirstReplySec: 165, slaPct: 0.82, avgSentiment: 0.62 },
+  { agent_id: 'AG05', name: 'ภูผา', conversationCount: 55, avgFirstReplySec: 189, slaPct: 0.79, avgSentiment: 0.58 },
+  { agent_id: 'AG06', name: 'อรพิน', conversationCount: 53, avgFirstReplySec: 124, slaPct: 0.90, avgSentiment: 0.71 },
+  { agent_id: 'AG07', name: 'พชร', conversationCount: 52, avgFirstReplySec: 172, slaPct: 0.84, avgSentiment: 0.63 },
+  { agent_id: 'AG08', name: 'ปฐม', conversationCount: 51, avgFirstReplySec: 156, slaPct: 0.86, avgSentiment: 0.67 },
+  { agent_id: 'AG09', name: 'อิศรา', conversationCount: 49, avgFirstReplySec: 141, slaPct: 0.89, avgSentiment: 0.68 },
+  { agent_id: 'AG10', name: 'ขวัญฤดี', conversationCount: 47, avgFirstReplySec: 167, slaPct: 0.83, avgSentiment: 0.61 },
+];
+
+const sampleTopCustomers = [
+  { user_id: 'U1001', displayName: 'บริษัทบูรพา', messageCount: 42, sessionCount: 7, sentimentAvg: 0.68, engagementScore: 86 },
+  { user_id: 'U1002', displayName: 'Bangkok Build', messageCount: 38, sessionCount: 6, sentimentAvg: 0.54, engagementScore: 79 },
+  { user_id: 'U1003', displayName: 'Siam Energy', messageCount: 44, sessionCount: 8, sentimentAvg: 0.61, engagementScore: 91 },
+  { user_id: 'U1004', displayName: 'นวัตกรรมไทย', messageCount: 31, sessionCount: 5, sentimentAvg: 0.49, engagementScore: 73 },
+  { user_id: 'U1005', displayName: 'โครงการบางใหญ่', messageCount: 36, sessionCount: 6, sentimentAvg: 0.57, engagementScore: 84 },
+  { user_id: 'U1006', displayName: 'Eastern Partner', messageCount: 29, sessionCount: 5, sentimentAvg: 0.46, engagementScore: 70 },
+  { user_id: 'U1007', displayName: 'Metro Build', messageCount: 33, sessionCount: 6, sentimentAvg: 0.59, engagementScore: 78 },
+  { user_id: 'U1008', displayName: 'บริษัทเอ.พี.', messageCount: 27, sessionCount: 4, sentimentAvg: 0.52, engagementScore: 66 },
+  { user_id: 'U1009', displayName: 'Lanna Supply', messageCount: 30, sessionCount: 5, sentimentAvg: 0.55, engagementScore: 74 },
+  { user_id: 'U1010', displayName: 'ภาคใต้คอนสตรัค', messageCount: 34, sessionCount: 6, sentimentAvg: 0.51, engagementScore: 80 },
+];
+
+const sampleRetention = [
+  { cohort: '2024-W32', weekOffset: 0, rate: 1.0 },
+  { cohort: '2024-W32', weekOffset: 1, rate: 0.76 },
+  { cohort: '2024-W32', weekOffset: 2, rate: 0.64 },
+  { cohort: '2024-W32', weekOffset: 3, rate: 0.56 },
+  { cohort: '2024-W33', weekOffset: 0, rate: 1.0 },
+  { cohort: '2024-W33', weekOffset: 1, rate: 0.72 },
+  { cohort: '2024-W33', weekOffset: 2, rate: 0.58 },
+  { cohort: '2024-W33', weekOffset: 3, rate: 0.49 },
+  { cohort: '2024-W34', weekOffset: 0, rate: 1.0 },
+  { cohort: '2024-W34', weekOffset: 1, rate: 0.69 },
+];
+
+const sampleChurn = [
+  { user_id: 'U2001', displayName: 'สยามวัสดุ', lastSeen: '2024-08-28T09:30:00Z', gapDays: 12.2, sentimentTrend: -0.3 },
+  { user_id: 'U2002', displayName: 'Metro Steel', lastSeen: '2024-08-27T10:12:00Z', gapDays: 13.4, sentimentTrend: -0.1 },
+  { user_id: 'U2003', displayName: 'Cem Thai', lastSeen: '2024-08-21T14:22:00Z', gapDays: 19.7, sentimentTrend: -0.4 },
+  { user_id: 'U2004', displayName: 'ภูเก็ตซัพพลาย', lastSeen: '2024-08-29T08:18:00Z', gapDays: 11.0, sentimentTrend: -0.2 },
+  { user_id: 'U2005', displayName: 'Northern Build', lastSeen: '2024-08-24T16:08:00Z', gapDays: 15.8, sentimentTrend: -0.35 },
+  { user_id: 'U2006', displayName: 'Eastern Tech', lastSeen: '2024-08-20T09:02:00Z', gapDays: 20.3, sentimentTrend: -0.25 },
+  { user_id: 'U2007', displayName: 'AEC Group', lastSeen: '2024-08-25T11:42:00Z', gapDays: 14.6, sentimentTrend: -0.28 },
+  { user_id: 'U2008', displayName: 'ภูผาโปรเจกต์', lastSeen: '2024-08-30T13:15:00Z', gapDays: 9.9, sentimentTrend: -0.18 },
+  { user_id: 'U2009', displayName: 'Smart Build', lastSeen: '2024-08-19T10:10:00Z', gapDays: 21.4, sentimentTrend: -0.32 },
+  { user_id: 'U2010', displayName: 'บางเขนเมทัล', lastSeen: '2024-08-23T07:52:00Z', gapDays: 16.5, sentimentTrend: -0.22 },
+];
+
+const sampleAnomalies = [
+  { date: '2024-09-01', metric: 'complaints', deltaSigma: 3.2, keyword: 'ล่าช้า' },
+  { date: '2024-09-02', metric: 'complaints', deltaSigma: 3.1, keyword: 'ยังไม่ส่ง' },
+  { date: '2024-09-03', metric: 'complaints', deltaSigma: 2.9, keyword: 'เคลม' },
+  { date: '2024-09-04', metric: 'negative_sentiment', deltaSigma: 3.4, keyword: 'ผิดนัด' },
+  { date: '2024-09-05', metric: 'complaints', deltaSigma: 3.0, keyword: 'แจ้งเตือน' },
+  { date: '2024-09-06', metric: 'negative_sentiment', deltaSigma: 3.5, keyword: 'ติดต่อยาก' },
+  { date: '2024-09-07', metric: 'complaints', deltaSigma: 3.3, keyword: 'ตรวจสอบ' },
+  { date: '2024-09-08', metric: 'negative_sentiment', deltaSigma: 3.1, keyword: 'คอนเฟิร์ม' },
+  { date: '2024-09-09', metric: 'complaints', deltaSigma: 3.6, keyword: 'ขาดสินค้า' },
+  { date: '2024-09-10', metric: 'negative_sentiment', deltaSigma: 3.2, keyword: 'ล่าช้า' },
+];
+
+const sampleNetwork = {
+  nodes: [
+    { id: 'U1001', label: 'บริษัทบูรพา', group: 'customer' },
+    { id: 'U1002', label: 'Bangkok Build', group: 'customer' },
+    { id: 'U1003', label: 'Siam Energy', group: 'customer' },
+    { id: 'U1004', label: 'นวัตกรรมไทย', group: 'customer' },
+    { id: 'U1005', label: 'โครงการบางใหญ่', group: 'customer' },
+    { id: 'AG01', label: 'นภัส', group: 'agent' },
+    { id: 'AG02', label: 'ธีรภัทร', group: 'agent' },
+    { id: 'AG03', label: 'ณิชา', group: 'agent' },
+    { id: 'AG04', label: 'ลลิตา', group: 'agent' },
+    { id: 'AG05', label: 'ภูผา', group: 'agent' },
+  ],
+  links: [
+    { source: 'U1001', target: 'AG01', conversations: 18 },
+    { source: 'U1002', target: 'AG02', conversations: 14 },
+    { source: 'U1003', target: 'AG03', conversations: 16 },
+    { source: 'U1004', target: 'AG02', conversations: 11 },
+    { source: 'U1005', target: 'AG01', conversations: 12 },
+    { source: 'U1001', target: 'AG04', conversations: 9 },
+    { source: 'U1003', target: 'AG05', conversations: 7 },
+    { source: 'U1002', target: 'AG03', conversations: 10 },
+    { source: 'U1004', target: 'AG05', conversations: 8 },
+    { source: 'U1005', target: 'AG04', conversations: 6 },
+  ],
+};
+%>
+
+<% const interactionSeries = (Array.isArray(behavior.timeSeries) && behavior.timeSeries.length) ? behavior.timeSeries : sampleInteractionSeries; %>
 <% const interactionSeriesJSON = JSON.stringify(interactionSeries); %>
-<% const heatmapJSON = JSON.stringify(behavior.heatmap || []); %>
-<% const sentimentTrendJSON = JSON.stringify(behavior.sentimentTrend || []); %>
-<% const intentStackJSON = JSON.stringify(behavior.intentDistribution || []); %>
-<% const keywordCloudJSON = JSON.stringify(behavior.keywordCloud || []); %>
-<% const sentimentCloudJSON = JSON.stringify(behavior.sentimentWordCloud || { positive: [], negative: [] }); %>
-<% const funnelJSON = JSON.stringify(behavior.conversionFunnel || []); %>
-<% const agentResponseJSON = JSON.stringify(behavior.agentResponse || []); %>
-<% const agentLeaderboard = behavior.agentLeaderboard || []; %>
-<% const topCustomers = behavior.topCustomers || []; %>
-<% const retentionJSON = JSON.stringify(behavior.retentionCohorts || []); %>
-<% const churnList = behavior.churnRisks || []; %>
-<% const anomalyList = behavior.anomalies || []; %>
-<% const networkJSON = JSON.stringify(behavior.networkGraph || { nodes: [], links: [] }); %>
+<% const heatmapData = (Array.isArray(behavior.heatmap) && behavior.heatmap.length) ? behavior.heatmap : sampleHeatmap; %>
+<% const heatmapJSON = JSON.stringify(heatmapData); %>
+<% const sentimentTrendData = (Array.isArray(behavior.sentimentTrend) && behavior.sentimentTrend.length) ? behavior.sentimentTrend : sampleSentimentTrend; %>
+<% const sentimentTrendJSON = JSON.stringify(sentimentTrendData); %>
+<% const intentStackData = (Array.isArray(behavior.intentDistribution) && behavior.intentDistribution.length) ? behavior.intentDistribution : sampleIntentStack; %>
+<% const intentStackJSON = JSON.stringify(intentStackData); %>
+<% const keywordCloudData = (Array.isArray(behavior.keywordCloud) && behavior.keywordCloud.length) ? behavior.keywordCloud : sampleKeywordCloud; %>
+<% const keywordCloudJSON = JSON.stringify(keywordCloudData); %>
+<% const sentimentCloudData = (behavior.sentimentWordCloud && (behavior.sentimentWordCloud.positive?.length || behavior.sentimentWordCloud.negative?.length)) ? behavior.sentimentWordCloud : sampleSentimentCloud; %>
+<% const sentimentCloudJSON = JSON.stringify(sentimentCloudData); %>
+<% const funnelData = (Array.isArray(behavior.conversionFunnel) && behavior.conversionFunnel.length) ? behavior.conversionFunnel : sampleFunnel; %>
+<% const funnelJSON = JSON.stringify(funnelData); %>
+<% const agentResponseData = (Array.isArray(behavior.agentResponse) && behavior.agentResponse.length) ? behavior.agentResponse : sampleAgentResponse; %>
+<% const agentResponseJSON = JSON.stringify(agentResponseData); %>
+<% const agentLeaderboard = (Array.isArray(behavior.agentLeaderboard) && behavior.agentLeaderboard.length) ? behavior.agentLeaderboard : sampleAgentLeaderboard; %>
+<% const topCustomers = (Array.isArray(behavior.topCustomers) && behavior.topCustomers.length) ? behavior.topCustomers : sampleTopCustomers; %>
+<% const retentionData = (Array.isArray(behavior.retentionCohorts) && behavior.retentionCohorts.length) ? behavior.retentionCohorts : sampleRetention; %>
+<% const retentionJSON = JSON.stringify(retentionData); %>
+<% const churnList = (Array.isArray(behavior.churnRisks) && behavior.churnRisks.length) ? behavior.churnRisks : sampleChurn; %>
+<% const anomalyList = (Array.isArray(behavior.anomalies) && behavior.anomalies.length) ? behavior.anomalies : sampleAnomalies; %>
+<% const networkData = (behavior.networkGraph && Array.isArray(behavior.networkGraph.links) && behavior.networkGraph.links.length) ? behavior.networkGraph : sampleNetwork; %>
+<% const networkJSON = JSON.stringify(networkData); %>
+<% const networkNodeLabel = new Map(networkData.nodes.map((node) => [node.id, node.label || node.name || node.id])); %>
+<% const networkLinksSorted = (networkData.links || []).slice().sort((a, b) => (Number(b.conversations || 0) - Number(a.conversations || 0))).slice(0, 10); %>
 <% const filters = behavior.filters || {}; %>
 <% const logicModules = behavior.logicModules || [
      { name: 'Intent Classification', description: 'Classify each message into inquiry/order/complaint etc.', query: 'POST /nlp/intent -> intents collection update' },
@@ -174,11 +398,61 @@
   .sentiment-cloud {
     min-height: 280px;
   }
+  .keyword-cloud{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:flex-start;
+  }
+  .keyword-cloud span{
+    display:inline-block;
+    background:rgba(99,102,241,0.12);
+    color:#1f2937;
+    padding:6px 12px;
+    border-radius:14px;
+    font-weight:600;
+    transition:transform .15s ease, background .15s ease;
+  }
+  .keyword-cloud span:hover{
+    transform:scale(1.08);
+    background:rgba(99,102,241,0.18);
+  }
   .sentiment-cloud-wrap {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 12px;
     padding: 1rem;
+  }
+  .sentiment-column{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .sentiment-column h4{
+    margin:0;
+    font-size:1rem;
+    color:#0f172a;
+  }
+  .sentiment-column .cloud-list{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .sentiment-column .cloud-list span{
+    display:inline-block;
+    background:rgba(15,23,42,0.08);
+    padding:6px 10px;
+    border-radius:12px;
+    font-weight:600;
+    color:#0f172a;
+  }
+  .sentiment-column[data-sentiment="positive"] .cloud-list span{
+    background:rgba(16,185,129,0.18);
+    color:#047857;
+  }
+  .sentiment-column[data-sentiment="negative"] .cloud-list span{
+    background:rgba(239,68,68,0.15);
+    color:#b91c1c;
   }
   .logic-list ol {
     margin-left: 1.2rem;
@@ -275,6 +549,13 @@
     .keyword-card,
     .sentiment-cloud {
       min-height: auto;
+    }
+    .network-list li{
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .network-volume{
+      margin-left: 0;
     }
   }
   @media (max-width: 560px) {
@@ -536,13 +817,13 @@ FROM fact_chat_message
 GROUP BY 1,2</code></pre>
             </details>
           </div>
-          <div class="card glass keyword-card" data-keyword-cloud='<%- keywordCloudJSON %>' data-drilldown="top-keywords">
+          <div class="card glass keyword-card" data-drilldown="top-keywords">
             <div class="card-heading">
               <h3>Top Keywords Cloud</h3>
               <span class="muted">N-grams (stopwords removed)</span>
             </div>
             <div class="chart-frame keyword">
-              <canvas id="keyword-cloud" height="260"></canvas>
+              <div id="keyword-cloud" class="keyword-cloud" data-keyword-cloud='<%- keywordCloudJSON %>'></div>
             </div>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
@@ -568,18 +849,18 @@ FROM consent_audit_latest
 GROUP BY 1</code></pre>
             </details>
           </div>
-          <div class="card glass sentiment-cloud" data-sentiment-cloud='<%- sentimentCloudJSON %>' data-drilldown="sentiment-wordcloud">
+          <div class="card glass sentiment-cloud" data-drilldown="sentiment-wordcloud">
             <div class="card-heading">
               <h3>Word Clouds แยกตาม Sentiment</h3>
             </div>
-            <div class="sentiment-cloud-wrap">
-              <div>
+            <div class="sentiment-cloud-wrap" data-sentiment-cloud='<%- sentimentCloudJSON %>'>
+              <div class="sentiment-column" data-sentiment="positive">
                 <h4>Positive</h4>
-                <canvas id="sentiment-cloud-positive" height="140"></canvas>
+                <div class="cloud-list"></div>
               </div>
-              <div>
+              <div class="sentiment-column" data-sentiment="negative">
                 <h4>Negative</h4>
-                <canvas id="sentiment-cloud-negative" height="140"></canvas>
+                <div class="cloud-list"></div>
               </div>
             </div>
           </div>
@@ -798,13 +1079,28 @@ FROM complaint_spike_detector</code></pre>
         </div>
 
         <div class="insight-row row-network">
-          <div class="card glass network-card" data-network='<%- networkJSON %>' data-drilldown="customer-agent-network">
+          <div class="card glass network-card" data-drilldown="customer-agent-network">
             <div class="card-heading">
               <h3>Customer ↔ Agent Network</h3>
               <span class="muted">น้ำหนักตามจำนวนบทสนทนา</span>
             </div>
-            <div class="chart-frame">
-              <canvas id="network-graph" height="340"></canvas>
+            <div class="chart-frame network">
+              <ul class="network-list">
+                <% if (networkLinksSorted.length) { %>
+                  <% networkLinksSorted.forEach((link) => { %>
+                    <% const sourceLabel = networkNodeLabel.get(link.source) || link.source; %>
+                    <% const targetLabel = networkNodeLabel.get(link.target) || link.target; %>
+                    <li>
+                      <span class="network-party customer"><%= sourceLabel %></span>
+                      <span class="network-connector">↔</span>
+                      <span class="network-party agent"><%= targetLabel %></span>
+                      <span class="network-volume"><%= Number(link.conversations || 0).toLocaleString('th-TH') %> บทสนทนา</span>
+                    </li>
+                  <% }) %>
+                <% } else { %>
+                  <li class="empty">ยังไม่มีบทสนทนาที่จับคู่ได้</li>
+                <% } %>
+              </ul>
             </div>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
@@ -1388,3 +1684,35 @@ GROUP BY 1,2</code></pre>
     showTab(initial);
   })();
 </script>
+  .network-list{
+    list-style:none;
+    padding:0;
+    margin:0;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .network-list li{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    background:rgba(15,23,42,0.05);
+    border-radius:14px;
+    padding:12px 16px;
+  }
+  .network-list li.empty{
+    justify-content:center;
+    color:#6b7280;
+    font-style:italic;
+  }
+  .network-party{
+    font-weight:600;
+  }
+  .network-party.customer{ color:#2563eb; }
+  .network-party.agent{ color:#ef476f; }
+  .network-volume{
+    margin-left:auto;
+    font-weight:600;
+    color:#0f172a;
+  }

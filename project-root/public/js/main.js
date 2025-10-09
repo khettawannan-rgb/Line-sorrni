@@ -666,6 +666,480 @@ function initCustomerInsightCharts() {
       }
     }
   }
+
+  const heatmapCard = document.querySelector('.insight-chart[data-heatmap]');
+  if (heatmapCard) {
+    const payload = parseDataset(heatmapCard, 'data-heatmap', []);
+    if (Array.isArray(payload) && payload.length) {
+      const ctx = heatmapCard.querySelector('#chat-heatmap-chart')?.getContext('2d');
+      if (ctx) {
+        const dayLabels = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+        const maxVolume = payload.reduce(
+          (max, row) => Math.max(max, Number(row.volume ?? row.count ?? row.value ?? 0)),
+          1,
+        );
+        const bubbleData = payload.map((row) => {
+          const rawVolume = Number(row.volume ?? row.count ?? row.value ?? 0);
+          const dow = Number(row.dow ?? row.day ?? row.weekday ?? 0);
+          const hour = Number(row.hour ?? row.h ?? row.timeslot ?? 0);
+          const label = dayLabels[dow] || `D${dow}`;
+          return {
+            x: label,
+            y: hour,
+            r: Math.max(5, (rawVolume / maxVolume) * 18),
+            volume: rawVolume,
+          };
+        });
+
+        new Chart(ctx, {
+          type: 'bubble',
+          data: {
+            datasets: [
+              {
+                label: 'ปริมาณข้อความ',
+                data: bubbleData,
+                backgroundColor: 'rgba(99,102,241,0.68)',
+                borderColor: 'rgba(99,102,241,0.9)',
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (context) => {
+                    const label = context.raw.x;
+                    const hour = context.raw.y;
+                    const volume = context.raw.volume || 0;
+                    return `${label} ${hour}:00 · ${volume.toLocaleString('th-TH')} ข้อความ`;
+                  },
+                },
+              },
+            },
+            scales: {
+              x: {
+                type: 'category',
+                labels: dayLabels,
+                grid: { display: false },
+                ticks: { color: '#475569' },
+              },
+              y: {
+                beginAtZero: false,
+                ticks: { color: '#475569', stepSize: 2 },
+                grid: { color: 'rgba(148,163,184,0.25)' },
+                title: { display: true, text: 'ชั่วโมง', color: '#475569' },
+              },
+            },
+          },
+        });
+      }
+    }
+  }
+
+  const sentimentCard = document.querySelector('.insight-chart[data-sentiment]');
+  if (sentimentCard) {
+    const payload = parseDataset(sentimentCard, 'data-sentiment', []);
+    if (Array.isArray(payload) && payload.length) {
+      const pieCtx = sentimentCard.querySelector('#sentiment-pie-chart')?.getContext('2d');
+      const miniCtx = sentimentCard.querySelector('#sentiment-mini-chart')?.getContext('2d');
+      const totals = payload.reduce(
+        (acc, row) => {
+          acc.positive += Number(row.positive ?? row.pos ?? 0);
+          acc.neutral += Number(row.neutral ?? row.neu ?? 0);
+          acc.negative += Number(row.negative ?? row.neg ?? 0);
+          return acc;
+        },
+        { positive: 0, neutral: 0, negative: 0 },
+      );
+
+      if (pieCtx) {
+        new Chart(pieCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Positive', 'Neutral', 'Negative'],
+            datasets: [
+              {
+                data: [totals.positive, totals.neutral, totals.negative],
+                backgroundColor: ['#22c55e', '#94a3b8', '#ef4444'],
+                borderColor: '#ffffff',
+                borderWidth: 4,
+                hoverOffset: 6,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+            },
+          },
+        });
+      }
+
+      if (miniCtx) {
+        const labels = payload.map((row) => {
+          const iso = typeof row.date === 'string' ? row.date : '';
+          const date = iso ? new Date(`${iso}T00:00:00+07:00`) : null;
+          return date
+            ? date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
+            : row.date || '';
+        });
+        const series = payload.map((row) => {
+          const pos = Number(row.positive ?? 0);
+          const neg = Number(row.negative ?? 0);
+          const neu = Number(row.neutral ?? 0);
+          const total = pos + neg + neu;
+          return total ? (pos - neg) / total : 0;
+        });
+
+        new Chart(miniCtx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: 'Net Sentiment',
+                data: series,
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99,102,241,0.2)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3,
+                pointRadius: 0,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: { display: false },
+              y: { display: false, suggestedMin: -0.6, suggestedMax: 0.6 },
+            },
+            plugins: { legend: { display: false } },
+          },
+        });
+      }
+    }
+  }
+
+  const intentStackCard = document.querySelector('.insight-chart[data-intent-stack]');
+  if (intentStackCard) {
+    const payload = parseDataset(intentStackCard, 'data-intent-stack', []);
+    if (Array.isArray(payload) && payload.length) {
+      const ctx = intentStackCard.querySelector('#intent-stack-chart')?.getContext('2d');
+      if (ctx) {
+        const weeks = Array.from(
+          new Set(payload.map((row) => row.week || row.period || row.label || 'Unknown')),
+        );
+        const categories = Array.from(
+          new Set(payload.map((row) => row.category || row.intent || 'อื่น ๆ')),
+        );
+        const palette = ['#6366f1', '#ec4899', '#f97316', '#10b981', '#38bdf8', '#facc15', '#8b5cf6'];
+        const datasets = categories.map((category, idx) => ({
+          label: category,
+          data: weeks.map((week) => {
+            return payload
+              .filter((row) =>
+                (row.week || row.period || row.label || 'Unknown') === week &&
+                (row.category || row.intent || 'อื่น ๆ') === category,
+              )
+              .reduce((sum, row) => sum + Number(row.count ?? row.volume ?? 0), 0);
+          }),
+          backgroundColor: palette[idx % palette.length],
+          stack: 'intent',
+        }));
+
+        new Chart(ctx, {
+          type: 'bar',
+          data: { labels: weeks, datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                stacked: true,
+                ticks: { color: '#475569' },
+                grid: { display: false },
+              },
+              y: {
+                stacked: true,
+                beginAtZero: true,
+                ticks: { color: '#475569' },
+                grid: { color: 'rgba(148,163,184,0.25)' },
+              },
+            },
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { usePointStyle: true, color: '#475569' },
+              },
+            },
+          },
+        });
+      }
+    }
+  }
+
+  const funnelCard = document.querySelector('.funnel-card[data-funnel]');
+  if (funnelCard) {
+    const payload = parseDataset(funnelCard, 'data-funnel', []);
+    if (Array.isArray(payload) && payload.length) {
+      const ctx = funnelCard.querySelector('#conversion-funnel-chart')?.getContext('2d');
+      if (ctx) {
+        const stageOrder = ['Inquiry', 'Quote', 'PurchaseOrder', 'Payment', 'Delivered'];
+        const stageLabelMap = {
+          Inquiry: 'Inquiry',
+          Quote: 'Quote',
+          PurchaseOrder: 'PO',
+          Payment: 'Payment',
+          Delivered: 'Delivered',
+        };
+        const stageTotals = stageOrder.map((stage) =>
+          payload
+            .filter((row) => (row.stage || row.status || '').toLowerCase() === stage.toLowerCase())
+            .reduce((sum, row) => sum + Number(row.count ?? row.value ?? 0), 0),
+        );
+
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: stageOrder.map((stage) => stageLabelMap[stage] || stage),
+            datasets: [
+              {
+                label: 'จำนวนรายการ',
+                data: stageTotals,
+                backgroundColor: '#6366f1',
+                borderRadius: 12,
+              },
+            ],
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: { color: '#475569' },
+                grid: { color: 'rgba(148,163,184,0.2)' },
+              },
+              y: {
+                ticks: { color: '#475569' },
+                grid: { display: false },
+              },
+            },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (context) => `${context.raw.toLocaleString('th-TH')} รายการ`,
+                },
+              },
+            },
+          },
+        });
+      }
+    }
+  }
+
+  const agentResponseCard = document.querySelector('.insight-chart[data-agent-response]');
+  if (agentResponseCard) {
+    const payload = parseDataset(agentResponseCard, 'data-agent-response', []);
+    if (Array.isArray(payload) && payload.length) {
+      const ctx = agentResponseCard.querySelector('#agent-response-chart')?.getContext('2d');
+      if (ctx) {
+        const labels = payload.map((row) => row.name || row.agent_id || '-');
+        const avg = payload.map((row) => Number(row.avgFirstReplySec ?? row.avg ?? 0));
+        const median = payload.map((row) => Number(row.medianFirstReplySec ?? row.median ?? 0));
+        const sla = payload.map((row) => Number(row.slaPct ?? row.sla ?? 0) * 100);
+        const palette = ['#6366f1', '#ec4899'];
+
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: 'Avg (วินาที)',
+                data: avg,
+                backgroundColor: palette[0],
+                borderRadius: 10,
+                maxBarThickness: 18,
+              },
+              {
+                label: 'Median (วินาที)',
+                data: median,
+                backgroundColor: palette[1],
+                borderRadius: 10,
+                maxBarThickness: 18,
+              },
+              {
+                type: 'line',
+                label: 'SLA%',
+                data: sla,
+                yAxisID: 'y1',
+                borderColor: '#f59e0b',
+                backgroundColor: '#f59e0b',
+                tension: 0.2,
+                pointRadius: 4,
+                fill: false,
+              },
+            ],
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                ticks: { color: '#475569' },
+                grid: { color: 'rgba(148,163,184,0.2)' },
+              },
+              y: {
+                ticks: { color: '#475569' },
+                grid: { display: false },
+              },
+              y1: {
+                position: 'right',
+                beginAtZero: true,
+                max: 100,
+                ticks: { color: '#f59e0b', callback: (value) => `${value}%` },
+                grid: { drawOnChartArea: false },
+              },
+            },
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { usePointStyle: true, color: '#475569' },
+              },
+              tooltip: {
+                callbacks: {
+                  label: (context) => {
+                    if (context.dataset.label.includes('SLA')) {
+                      return `${context.parsed.y.toFixed(1)}% SLA`;
+                    }
+                    return `${context.dataset.label}: ${context.parsed.x.toLocaleString('th-TH')} วินาที`;
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+    }
+  }
+
+  const retentionCard = document.querySelector('.insight-chart[data-retention]');
+  if (retentionCard) {
+    const payload = parseDataset(retentionCard, 'data-retention', []);
+    if (Array.isArray(payload) && payload.length) {
+      const ctx = retentionCard.querySelector('#retention-cohort-chart')?.getContext('2d');
+      if (ctx) {
+        const offsets = Array.from(new Set(payload.map((row) => Number(row.weekOffset ?? row.offset ?? 0)))).sort((a, b) => a - b);
+        const cohorts = Array.from(new Set(payload.map((row) => row.cohort || row.week || row.label || 'Cohort')));
+        const palette = ['#6366f1', '#ec4899', '#10b981', '#f97316', '#38bdf8', '#8b5cf6', '#facc15'];
+        const datasets = cohorts.map((cohort, idx) => ({
+          label: cohort,
+          data: offsets.map((offset) => {
+            const match = payload.find(
+              (row) =>
+                (row.cohort || row.week || row.label || 'Cohort') === cohort &&
+                Number(row.weekOffset ?? row.offset ?? 0) === offset,
+            );
+            return match ? Number(match.rate ?? match.returningRate ?? 0) : null;
+          }),
+          borderColor: palette[idx % palette.length],
+          backgroundColor: 'transparent',
+          fill: false,
+          tension: 0.3,
+          pointRadius: 3,
+          spanGaps: true,
+        }));
+
+        new Chart(ctx, {
+          type: 'line',
+          data: { labels: offsets.map((off) => `สัปดาห์ ${off}`), datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                suggestedMax: 1,
+                ticks: {
+                  color: '#475569',
+                  callback: (value) => `${(value * 100).toFixed(0)}%`,
+                },
+                grid: { color: 'rgba(148,163,184,0.25)' },
+              },
+              x: {
+                ticks: { color: '#475569' },
+                grid: { display: false },
+              },
+            },
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { usePointStyle: true, color: '#475569' },
+              },
+              tooltip: {
+                callbacks: {
+                  label: (context) => `${(context.parsed.y * 100).toFixed(1)}% กลับมาใช้งาน`,
+                },
+              },
+            },
+          },
+        });
+      }
+    }
+  }
+
+  const keywordHost = document.getElementById('keyword-cloud');
+  if (keywordHost) {
+    const payload = parseDataset(keywordHost, 'data-keyword-cloud', []);
+    if (Array.isArray(payload) && payload.length) {
+      const maxWeight = payload.reduce((max, item) => Math.max(max, Number(item.weight ?? item.score ?? 0)), 1);
+      keywordHost.innerHTML = '';
+      payload.forEach((item) => {
+        const span = document.createElement('span');
+        span.textContent = item.text || item.keyword || item.term || '-';
+        const weight = Number(item.weight ?? item.score ?? 0);
+        const scale = maxWeight ? 0.85 + (weight / maxWeight) * 0.75 : 1;
+        span.style.fontSize = `${Math.min(2.1, scale).toFixed(2)}rem`;
+        keywordHost.appendChild(span);
+      });
+    }
+  }
+
+  const sentimentWrap = document.querySelector('.sentiment-cloud-wrap[data-sentiment-cloud]');
+  if (sentimentWrap) {
+    const payload = parseDataset(sentimentWrap, 'data-sentiment-cloud', { positive: [], negative: [] });
+    const pushWords = (targetSelector, words, baseColor) => {
+      const column = sentimentWrap.querySelector(targetSelector);
+      if (!column) return;
+      const list = column.querySelector('.cloud-list');
+      if (!list) return;
+      list.innerHTML = '';
+      const max = words.reduce((maxValue, item) => Math.max(maxValue, Number(item.weight ?? item.score ?? 0)), 1);
+      words.forEach((item) => {
+        const span = document.createElement('span');
+        span.textContent = item.text || item.term || '-';
+        const weight = Number(item.weight ?? item.score ?? 0);
+        const scale = max ? 0.85 + (weight / max) * 0.65 : 1;
+        span.style.fontSize = `${Math.min(1.6, scale).toFixed(2)}rem`;
+        list.appendChild(span);
+      });
+    };
+
+    pushWords('[data-sentiment="positive"]', payload.positive || [], '#16a34a');
+    pushWords('[data-sentiment="negative"]', payload.negative || [], '#dc2626');
+  }
 }
 
 function initProcurementDialogs() {
