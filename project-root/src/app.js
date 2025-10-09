@@ -123,7 +123,11 @@ app.get('/health', (req, res) => {
 
 // ===== Routes =====
 app.get('/', (req, res) => {
-  res.status(200).send('NILA LINE ERP Notifier is running 🚀');
+  res.render('dashboard', {
+    title: 'Dashboard',
+    active: 'dashboard',
+    user: req.session?.user || null,
+  });
 });
 app.use('/consent', consentRouter);
 app.use('/admin', adminRouter);
