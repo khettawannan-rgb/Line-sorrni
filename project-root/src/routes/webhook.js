@@ -4,7 +4,7 @@ import bodyParser from 'body-parser';
 import crypto from 'crypto';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime.js';
-import { replyText, replyQuickMenu, pushLineMessage, getUserProfile } from '../services/line.js';
+import { replyText, replyQuickMenu, replyFlex, pushLineMessage, getUserProfile } from '../services/line.js';
 import LineChatLog from '../models/lineChatLog.model.js';
 import LineMedia from '../models/lineMedia.model.js';
 import {
@@ -44,6 +44,7 @@ const DEFAULT_WEATHER_LAT = Number(process.env.DEFAULT_WEATHER_LATITUDE || 13.75
 const DEFAULT_WEATHER_LNG = Number(process.env.DEFAULT_WEATHER_LONGITUDE || 100.5018);
 const DEFAULT_COMPANY_ID = process.env.DEFAULT_COMPANY_ID || '';
 const PORTAL_BASE_URL = process.env.PORTAL_BASE_URL || process.env.APP_PORTAL_URL || 'https://nila-portal.example.com';
+const PORTAL_BASE = PORTAL_BASE_URL.replace(/\/$/, '');
 const PROCUREMENT_SAFETY_DAYS = Number(process.env.PROCUREMENT_SAFETY_DAYS || 3);
 
 const WEATHER_KEYWORDS = [/อากาศ/i, /weather/i, /ฝนตก/i, /พยากรณ์/i];
@@ -285,11 +286,14 @@ async function handleText(ev) {
   }
 
   if (text === 'เมนู') {
-    return replyQuickMenu(ev.replyToken, 'เลือกช่วงสรุปที่ต้องการ', [
+    return replyQuickMenu(ev.replyToken, 'เลือกฟังก์ชันที่ต้องการ', [
+      { label: 'สถานะ PO', text: 'สถานะ' },
       { label: 'สรุป วันนี้', text: 'สรุป วันนี้' },
       { label: 'สรุป เมื่อวาน', text: 'สรุป เมื่อวาน' },
       { label: 'สรุป สัปดาห์นี้', text: 'สรุป สัปดาห์นี้' },
       { label: 'สรุป เดือนนี้', text: 'สรุป เดือนนี้' },
+      { label: 'สร้าง PO', text: 'สร้างใบสั่งซื้อ' },
+      { label: 'เปิด PR', text: 'เปิดใบขอซื้อ' },
     ]);
   }
 
@@ -301,8 +305,16 @@ async function handleText(ev) {
     return replyPrLink(ev);
   }
 
+  if (text === 'สถานะ' || text === 'เช็คสถานะ') {
+    return replyPurchaseOrderStatus(ev, text);
+  }
+
   if (/เช็คสถานะ(สั่งซื้อ|ใบสั่งซื้อ)/i.test(text) || /^po[-\s]/i.test(text)) {
     return replyPurchaseOrderStatus(ev, text);
+  }
+
+  if (/สร้าง(ใบ)?สั่งซื้อ/i.test(text) || /สร้าง\s*po/i.test(text)) {
+    return replyPoCreationFlex(ev);
   }
 
   if (text.startsWith('สรุป')) {
@@ -348,6 +360,8 @@ async function handleText(ev) {
   return replyQuickMenu(ev.replyToken, 'พิมพ์ "เมนู" เพื่อเริ่มต้น', [
     { label: 'เมนู', text: 'เมนู' },
     { label: 'สรุป วันนี้', text: 'สรุป วันนี้' },
+    { label: 'สถานะ PO', text: 'สถานะ' },
+    { label: 'สร้าง PO', text: 'สร้างใบสั่งซื้อ' },
   ]);
 }
 
@@ -373,7 +387,7 @@ async function replyStockSummary(ev) {
       return `• ${item.itemName} คงเหลือ ${item.currentQuantity}${item.unit || ''} (สั่งซ้ำที่ ${item.reorderPoint}) · ${eta}`;
     });
 
-    lines.push('', 'พิมพ์ "เปิดใบขอซื้อ" เพื่อสร้าง PR ใหม่');
+    lines.push('', 'พิมพ์ "เปิดใบขอซื้อ" เพื่อสร้าง PR ใหม่ หรือ "สร้างใบสั่งซื้อ" เพื่อเปิดฟอร์ม PO');
     return replyText(ev.replyToken, lines.join('\n'));
   } catch (err) {
     console.error('[WEBHOOK] replyStockSummary error:', err.message || err);
@@ -383,7 +397,7 @@ async function replyStockSummary(ev) {
 
 async function replyPrLink(ev) {
   if (!ev.replyToken) return null;
-  const url = `${PORTAL_BASE_URL.replace(/\/$/, '')}/admin/pr`;
+  const url = `${PORTAL_BASE}/admin/pr`;
   const text = 'คลิกที่ลิงก์ด้านล่างเพื่อเปิดหน้าจัดการใบขอซื้อ (PR):\n' + url;
   return replyText(ev.replyToken, text);
 }
@@ -437,6 +451,114 @@ async function replyPurchaseOrderStatus(ev, text = '') {
     console.error('[WEBHOOK] replyPurchaseOrderStatus error:', err.message || err);
     return replyText(ev.replyToken, 'ไม่สามารถตรวจสอบสถานะใบสั่งซื้อได้ กรุณาลองใหม่');
   }
+}
+
+async function replyPoCreationFlex(ev) {
+  if (!ev.replyToken) return null;
+
+  const poUrl = `${PORTAL_BASE}/admin/po`;
+  const prUrl = `${PORTAL_BASE}/admin/pr`;
+
+  const contents = {
+    type: 'bubble',
+    size: 'mega',
+    header: {
+      type: 'box',
+      layout: 'vertical',
+      contents: [
+        {
+          type: 'text',
+          text: 'สร้างใบสั่งซื้อ',
+          weight: 'bold',
+          size: 'lg',
+          color: '#ffffff',
+        },
+        {
+          type: 'text',
+          text: 'ขั้นตอนสำหรับทีมจัดซื้อ',
+          size: 'sm',
+          color: '#dbeafe',
+        },
+      ],
+      paddingAll: '16px',
+      backgroundColor: '#1d4ed8',
+    },
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'md',
+      contents: [
+        {
+          type: 'box',
+          layout: 'baseline',
+          spacing: 'sm',
+          contents: [
+            { type: 'text', text: '1.', flex: 0, weight: 'bold', color: '#1e293b' },
+            {
+              type: 'text',
+              text: 'เตรียมใบขอซื้อ (PR) หรือรายละเอียดผู้จัดจำหน่าย',
+              wrap: true,
+              color: '#0f172a',
+            },
+          ],
+        },
+        {
+          type: 'box',
+          layout: 'baseline',
+          spacing: 'sm',
+          contents: [
+            { type: 'text', text: '2.', flex: 0, weight: 'bold', color: '#1e293b' },
+            {
+              type: 'text',
+              text: 'กรอกจำนวนสินค้า ราคา และวันที่คาดว่าจะจัดส่ง',
+              wrap: true,
+              color: '#0f172a',
+            },
+          ],
+        },
+        {
+          type: 'box',
+          layout: 'baseline',
+          spacing: 'sm',
+          contents: [
+            { type: 'text', text: '3.', flex: 0, weight: 'bold', color: '#1e293b' },
+            {
+              type: 'text',
+              text: 'กดสร้างใบสั่งซื้อเพื่อส่งอีเมลแจ้งผู้จัดจำหน่ายอัตโนมัติ',
+              wrap: true,
+              color: '#0f172a',
+            },
+          ],
+        },
+      ],
+    },
+    footer: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      contents: [
+        {
+          type: 'button',
+          style: 'primary',
+          action: { type: 'uri', label: 'เปิดหน้าสร้างใบสั่งซื้อ', uri: poUrl },
+        },
+        {
+          type: 'button',
+          style: 'secondary',
+          action: { type: 'uri', label: 'ดูใบขอซื้อ (PR)', uri: prUrl },
+        },
+        {
+          type: 'text',
+          text: 'สร้างแล้วพิมพ์ "เช็คสถานะใบสั่งซื้อ PO-XXXX" เพื่อติดตามความคืบหน้า',
+          size: 'xs',
+          color: '#64748b',
+          wrap: true,
+        },
+      ],
+    },
+  };
+
+  return replyFlex(ev.replyToken, 'ขั้นตอนสร้างใบสั่งซื้อ', contents);
 }
 
 async function handleImage(ev) {
