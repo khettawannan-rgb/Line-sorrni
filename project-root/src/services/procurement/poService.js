@@ -69,6 +69,7 @@ export async function listPurchaseOrders(filter = {}, opts = {}) {
   const cursor = PurchaseOrder.find(query)
     .populate('vendorId')
     .populate('prId')
+    .populate('companyId')
     .sort({ createdAt: -1 });
 
   if (opts.limit) cursor.limit(opts.limit);
@@ -84,7 +85,11 @@ export async function getPurchaseOrderById(id) {
 
 export async function getPurchaseOrderByNumber(poNumber) {
   if (!poNumber) return null;
-  return PurchaseOrder.findOne({ poNumber }).populate('vendorId').populate('prId').lean();
+  return PurchaseOrder.findOne({ poNumber })
+    .populate('vendorId')
+    .populate('prId')
+    .populate('companyId')
+    .lean();
 }
 
 export async function createPurchaseOrder(payload, actor = 'system') {

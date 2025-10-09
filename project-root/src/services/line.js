@@ -73,10 +73,24 @@ export async function replyQuickMenu(replyToken, text, items = []) {
     console.log('[LINE DEV] replyQuickMenu ->', text, items);
     return;
   }
-  const quickItems = (items || []).map((it) => ({
-    type: 'action',
-    action: { type: 'message', label: it.label, text: it.text },
-  }));
+  const quickItems = (items || []).map((it) => {
+    const label = it.label || it.text || 'เลือก';
+    if (it.postbackData) {
+      return {
+        type: 'action',
+        action: {
+          type: 'postback',
+          label,
+          data: it.postbackData,
+          displayText: it.displayText || it.text || label,
+        },
+      };
+    }
+    return {
+      type: 'action',
+      action: { type: 'message', label, text: it.text ?? label },
+    };
+  });
   const payload = {
     replyToken,
     messages: [{

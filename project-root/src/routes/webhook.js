@@ -4,9 +4,12 @@ import bodyParser from 'body-parser';
 import crypto from 'crypto';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime.js';
+import customParseFormat from 'dayjs/plugin/customParseFormat.js';
 import { replyText, replyQuickMenu, replyFlex, pushLineMessage, getUserProfile } from '../services/line.js';
 import LineChatLog from '../models/lineChatLog.model.js';
 import LineMedia from '../models/lineMedia.model.js';
+import Company from '../models/Company.js';
+import Vendor from '../models/Vendor.js';
 import {
   buildConsentUrl,
   ensureConsentRecord,
@@ -26,6 +29,8 @@ import {
   getLowStockItems,
   listPurchaseOrders,
   getPurchaseOrderByNumber,
+  createPurchaseOrder,
+  createVendor,
   STATUS_LABELS,
 } from '../services/procurement/index.js';
 
@@ -49,7 +54,20 @@ const PROCUREMENT_SAFETY_DAYS = Number(process.env.PROCUREMENT_SAFETY_DAYS || 3)
 
 const WEATHER_KEYWORDS = [/อากาศ/i, /weather/i, /ฝนตก/i, /พยากรณ์/i];
 
+const RAW_SUPER_ADMIN_IDS = [
+  ...String(process.env.SUPER_ADMIN_LINE_USER_IDS || '')
+    .split(/[\s,]+/)
+    .map((id) => id.trim())
+    .filter(Boolean),
+  ...String(process.env.TEST_USER_IDS || '')
+    .split(/[\s,]+/)
+    .map((id) => id.trim())
+    .filter(Boolean),
+];
+const SUPER_ADMIN_LINE_IDS = new Set(RAW_SUPER_ADMIN_IDS);
+
 dayjs.extend(relativeTime);
+dayjs.extend(customParseFormat);
 
 /** ตรวจลายเซ็นจาก LINE (ถ้าเปิด STRICT_LINE_SIGNATURE=true จะบังคับตรวจ) */
 function verifyLineSignatureOrSkip(req) {
@@ -139,6 +157,38 @@ router.post('/', async (req, res) => {
 
 function getUserId(ev) {
   return ev?.source?.userId || null;
+}
+
+function isSuperAdminUser(userId) {
+  return userId ? SUPER_ADMIN_LINE_IDS.has(userId) : false;
+}
+
+function escapeRegex(input = '') {
+  return String(input || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function parseNumber(value) {
+  if (value === null || value === undefined) return NaN;
+  const numeric = String(value).replace(/[,\s]/g, '');
+  const parsed = Number(numeric);
+  return Number.isFinite(parsed) ? parsed : NaN;
+}
+
+function parseDateInput(input) {
+  if (!input) return null;
+  const value = String(input).trim();
+  if (!value) return null;
+  const formats = ['DD/MM/YYYY', 'DD-MM-YYYY', 'YYYY-MM-DD', 'DD MMM YYYY'];
+  for (const fmt of formats) {
+    const parsed = dayjs(value, fmt, true);
+    if (parsed.isValid()) return parsed.toDate();
+  }
+  const fallback = dayjs(value);
+  return fallback.isValid() ? fallback.toDate() : null;
+}
+
+function hasPlaceholder(value) {
+  return /<.+?>/.test(String(value || ''));
 }
 
 async function logIncomingEvent(ev, consentDoc) {
@@ -258,6 +308,10 @@ async function handleEvent(ev) {
     return handleMessageEvent(ev);
   }
 
+  if (ev.type === 'postback') {
+    return handlePostbackEvent(ev);
+  }
+
   if (ev.replyToken) {
     return replyText(ev.replyToken, 'pong');
   }
@@ -278,8 +332,45 @@ async function handleMessageEvent(ev) {
   }
 }
 
+async function handlePostbackEvent(ev) {
+  const data = ev.postback?.data || '';
+  const [action, query = ''] = data.split('?');
+  const params = new URLSearchParams(query);
+
+  if (action === 'po-status') {
+    const userId = getUserId(ev);
+    if (!isSuperAdminUser(userId)) {
+      return replyText(ev.replyToken, 'ฟีเจอร์นี้ใช้ได้เฉพาะผู้ดูแลระบบ');
+    }
+    const target = params.get('company');
+    if (!target || target === 'menu') {
+      return replyCompanyStatusMenu(ev);
+    }
+    if (target === 'all') {
+      return replyPurchaseOrderStatus(ev, '', {});
+    }
+    return replyPurchaseOrderStatus(ev, '', { companyId: target });
+  }
+
+  if (action === 'po-create') {
+    const step = params.get('step') || '';
+    if (step === 'start') {
+      return replyPoDraftInstructions(ev);
+    }
+    if (step === 'template') {
+      return replyPoDraftTemplate(ev);
+    }
+  }
+
+  return replyQuickMenu(ev.replyToken, 'พิมพ์ "เมนู" เพื่อเริ่มต้น', [
+    { label: 'เมนู', text: 'เมนู' },
+  ]);
+}
+
 async function handleText(ev) {
   const text = (ev.message?.text || '').trim();
+  const userId = getUserId(ev);
+  const superAdmin = isSuperAdminUser(userId);
 
   if (/^ping$/i.test(text) || text === 'เทส') {
     return replyText(ev.replyToken, 'pong');
@@ -306,7 +397,17 @@ async function handleText(ev) {
   }
 
   if (text === 'สถานะ' || text === 'เช็คสถานะ') {
+    if (superAdmin && !/^เช็คสถานะใบสั่งซื้อ/i.test(text)) {
+      return replyCompanyStatusMenu(ev);
+    }
     return replyPurchaseOrderStatus(ev, text);
+  }
+
+  if (superAdmin) {
+    const companyMsg = text.match(/^สถานะ\s*บริษัท\s+([0-9a-f]{24})$/i);
+    if (companyMsg) {
+      return replyPurchaseOrderStatus(ev, text, { companyId: companyMsg[1] });
+    }
   }
 
   if (/เช็คสถานะ(สั่งซื้อ|ใบสั่งซื้อ)/i.test(text) || /^po[-\s]/i.test(text)) {
@@ -315,6 +416,19 @@ async function handleText(ev) {
 
   if (/สร้าง(ใบ)?สั่งซื้อ/i.test(text) || /สร้าง\s*po/i.test(text)) {
     return replyPoCreationFlex(ev);
+  }
+
+  if (/^po\s*ใหม่$/i.test(text)) {
+    return replyPoDraftInstructions(ev);
+  }
+
+  if (/^po\s*ตัวอย่าง$/i.test(text) || /^ตัวอย่าง\s*po$/i.test(text)) {
+    return replyPoDraftTemplate(ev);
+  }
+
+  if (/^po\s*ใหม่/i.test(text)) {
+    const handled = await tryCreatePoFromFreeform(ev, text);
+    if (handled) return handled;
   }
 
   if (text.startsWith('สรุป')) {
@@ -402,10 +516,222 @@ async function replyPrLink(ev) {
   return replyText(ev.replyToken, text);
 }
 
-async function replyPurchaseOrderStatus(ev, text = '') {
+const STATUS_COLOR_MAP = {
+  pending: '#2563eb',
+  approved: '#0ea5e9',
+  in_delivery: '#f59e0b',
+  delivered: '#16a34a',
+  cancelled: '#dc2626',
+};
+
+function statusColor(status) {
+  return STATUS_COLOR_MAP[status] || '#1e293b';
+}
+
+function formatCurrency(amount, currency = 'THB') {
+  try {
+    return Number(amount || 0).toLocaleString('th-TH', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+    });
+  } catch {
+    return `${amount || 0} ${currency}`;
+  }
+}
+
+function buildPoStatusBubble(po, { showCompany = true } = {}) {
+  const statusLabel = STATUS_LABELS[po.status] || po.status;
+  const companyName = po.companyId?.name || 'ไม่ระบุบริษัท';
+  const vendorName = po.vendorId?.name || '-';
+  const totalText = formatCurrency(po.totalAmount, po.currency || 'THB');
+
+  const infoRows = [];
+  if (showCompany) {
+    infoRows.push({
+      type: 'box',
+      layout: 'baseline',
+      spacing: 'sm',
+      contents: [
+        { type: 'text', text: 'บริษัท', flex: 2, size: 'sm', color: '#64748b' },
+        { type: 'text', text: companyName, flex: 4, size: 'sm', color: '#0f172a', wrap: true },
+      ],
+    });
+  }
+  infoRows.push(
+    {
+      type: 'box',
+      layout: 'baseline',
+      spacing: 'sm',
+      contents: [
+        { type: 'text', text: 'ผู้จัดจำหน่าย', flex: 2, size: 'sm', color: '#64748b' },
+        { type: 'text', text: vendorName, flex: 4, size: 'sm', color: '#0f172a', wrap: true },
+      ],
+    },
+    {
+      type: 'box',
+      layout: 'baseline',
+      spacing: 'sm',
+      contents: [
+        { type: 'text', text: 'ยอดรวม', flex: 2, size: 'sm', color: '#64748b' },
+        { type: 'text', text: totalText, flex: 4, size: 'sm', weight: 'bold', color: '#0f172a' },
+      ],
+    }
+  );
+
+  if (po.expectedDeliveryDate) {
+    infoRows.push({
+      type: 'box',
+      layout: 'baseline',
+      spacing: 'sm',
+      contents: [
+        { type: 'text', text: 'กำหนดส่ง', flex: 2, size: 'sm', color: '#64748b' },
+        {
+          type: 'text',
+          text: dayjs(po.expectedDeliveryDate).format('DD MMM YYYY'),
+          flex: 4,
+          size: 'sm',
+          color: '#0f172a',
+        },
+      ],
+    });
+  }
+
+  if (po.tracking?.trackingNumber) {
+    infoRows.push({
+      type: 'box',
+      layout: 'baseline',
+      spacing: 'sm',
+      contents: [
+        { type: 'text', text: 'Tracking', flex: 2, size: 'sm', color: '#64748b' },
+        {
+          type: 'text',
+          text: `${po.tracking.trackingNumber}${po.tracking.carrier ? ` (${po.tracking.carrier})` : ''}`,
+          flex: 4,
+          size: 'sm',
+          color: '#0f172a',
+          wrap: true,
+        },
+      ],
+    });
+  }
+
+  if (po.pdfUrl) {
+    infoRows.push({
+      type: 'text',
+      text: 'มีไฟล์ PDF แนบไว้แล้ว',
+      size: 'xs',
+      color: '#0f766e',
+    });
+  }
+
+  const footerButtons = [
+    {
+      type: 'button',
+      style: 'primary',
+      color: '#1d4ed8',
+      action: {
+        type: 'message',
+        label: 'ติดตาม PO นี้',
+        text: `เช็คสถานะใบสั่งซื้อ ${po.poNumber}`,
+      },
+    },
+  ];
+
+  if (po.pdfUrl) {
+    footerButtons.push({
+      type: 'button',
+      style: 'secondary',
+      action: { type: 'uri', label: 'ดาวน์โหลด PDF', uri: po.pdfUrl },
+    });
+  }
+
+  return {
+    type: 'bubble',
+    size: 'mega',
+    header: {
+      type: 'box',
+      layout: 'vertical',
+      paddingAll: '20px',
+      backgroundColor: '#1d4ed8',
+      contents: [
+        { type: 'text', text: 'สถานะใบสั่งซื้อ', size: 'xs', color: '#bfdbfe' },
+        { type: 'text', text: po.poNumber, weight: 'bold', size: 'lg', color: '#ffffff' },
+        {
+          type: 'text',
+          text: statusLabel,
+          size: 'sm',
+          weight: 'bold',
+          color: statusColor(po.status),
+        },
+      ],
+    },
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'md',
+      contents: [
+        {
+          type: 'box',
+          layout: 'baseline',
+          spacing: 'sm',
+          contents: [
+            { type: 'text', text: 'อัปเดตล่าสุด', flex: 2, size: 'sm', color: '#64748b' },
+            {
+              type: 'text',
+              text: dayjs(po.updatedAt || po.createdAt).format('DD MMM YYYY HH:mm'),
+              flex: 4,
+              size: 'sm',
+              color: '#0f172a',
+            },
+          ],
+        },
+        ...infoRows,
+      ],
+    },
+    footer: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      contents: footerButtons,
+    },
+  };
+}
+
+function buildQuickReplyItems(items = []) {
+  return items
+    .filter((item) => item && (item.postbackData || item.text))
+    .slice(0, 13)
+    .map((item) => {
+      if (item.postbackData) {
+        return {
+          type: 'action',
+          action: {
+            type: 'postback',
+            label: item.label || item.displayText || 'เลือก',
+            data: item.postbackData,
+            displayText: item.displayText || item.label || 'เลือก',
+          },
+        };
+      }
+      return {
+        type: 'action',
+        action: {
+          type: 'message',
+          label: item.label || item.text,
+          text: item.text,
+        },
+      };
+    });
+}
+
+async function replyPurchaseOrderStatus(ev, text = '', options = {}) {
   if (!ev.replyToken) return null;
+  const userId = getUserId(ev);
+  const superAdmin = isSuperAdminUser(userId);
+
   const poMatch = String(text || '').match(/(PO[-_\d]+)/i);
-  const poNumber = poMatch ? poMatch[1].toUpperCase() : null;
+  const poNumber = options.poNumber || (poMatch ? poMatch[1].toUpperCase() : null);
 
   try {
     if (poNumber) {
@@ -417,29 +743,28 @@ async function replyPurchaseOrderStatus(ev, text = '') {
         ]);
       }
 
-      const lines = [
-        `สถานะใบสั่งซื้อ ${po.poNumber}: ${STATUS_LABELS[po.status] || po.status}`,
-        `ผู้จัดจำหน่าย: ${po.vendorId?.name || '-'}`,
-        `ยอดรวม: ${Number(po.totalAmount || 0).toLocaleString('th-TH', { style: 'currency', currency: po.currency || 'THB' })}`,
-      ];
-
-      if (po.expectedDeliveryDate) {
-        lines.push(`กำหนดส่ง: ${dayjs(po.expectedDeliveryDate).format('DD MMM YYYY')}`);
-      }
-      if (po.tracking?.trackingNumber) {
-        lines.push(`Tracking: ${po.tracking.trackingNumber} (${po.tracking.carrier || 'ไม่ระบุ'})`);
-      }
-      if (po.pdfUrl) {
-        lines.push(`ดาวน์โหลดใบสั่งซื้อ: ${po.pdfUrl}`);
-      }
-      lines.push('', 'เลือก "สถานะล่าสุด" เพื่อดูใบอื่น ๆ');
-      return replyQuickMenu(ev.replyToken, lines.join('\n'), [
+      const bubble = buildPoStatusBubble(po, { showCompany: true });
+      const quickReplyItems = buildQuickReplyItems([
         { label: 'สถานะล่าสุด', text: 'สถานะ' },
+        { label: 'ค้นหา PO อื่น', text: 'เช็คสถานะใบสั่งซื้อ PO-' },
         { label: 'เมนู', text: 'เมนู' },
       ]);
+
+      const followUp = {
+        type: 'text',
+        text: `สถานะล่าสุดของ ${po.poNumber}`,
+        quickReply: { items: quickReplyItems },
+      };
+
+      return replyFlex(ev.replyToken, `สถานะ ${po.poNumber}`, bubble, [followUp]);
     }
 
-    if (!DEFAULT_COMPANY_ID) {
+    let targetCompanyId = options.companyId || null;
+    if (!targetCompanyId && !superAdmin) {
+      targetCompanyId = DEFAULT_COMPANY_ID || null;
+    }
+
+    if (!targetCompanyId && !superAdmin) {
       return replyQuickMenu(
         ev.replyToken,
         'ยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID ในระบบ จึงไม่สามารถดึงใบสั่งซื้อล่าสุดได้',
@@ -451,28 +776,83 @@ async function replyPurchaseOrderStatus(ev, text = '') {
       );
     }
 
-    const latest = await listPurchaseOrders({ companyId: DEFAULT_COMPANY_ID }, { limit: 3 });
+    let companyDoc = null;
+    if (targetCompanyId) {
+      try {
+        companyDoc = await Company.findById(targetCompanyId).lean();
+        if (!companyDoc && superAdmin) {
+          return replyQuickMenu(ev.replyToken, 'ไม่พบบริษัทที่เลือก โปรดลองใหม่', [
+            { label: 'เลือกบริษัท', postbackData: 'po-status?company=menu', displayText: 'เลือกบริษัทอื่น' },
+            { label: 'เมนู', text: 'เมนู' },
+          ]);
+        }
+      } catch {
+        // ignore parse errors
+      }
+    }
+
+    const query = {};
+    if (targetCompanyId) query.companyId = targetCompanyId;
+
+    const latest = await listPurchaseOrders(query, { limit: options.limit || 5 });
     if (!latest.length) {
+      if (superAdmin) {
+        return replyQuickMenu(ev.replyToken, 'ยังไม่มีใบสั่งซื้อสำหรับบริษัทนี้', [
+          { label: 'บริษัทอื่น', postbackData: 'po-status?company=menu', displayText: 'เลือกบริษัทอื่น' },
+          { label: 'สร้าง PO', text: 'สร้างใบสั่งซื้อ' },
+          { label: 'เมนู', text: 'เมนู' },
+        ]);
+      }
       return replyQuickMenu(ev.replyToken, 'ยังไม่มีใบสั่งซื้อในระบบ', [
         { label: 'สร้าง PO', text: 'สร้างใบสั่งซื้อ' },
         { label: 'เมนู', text: 'เมนู' },
       ]);
     }
 
-    const lines = ['รายการสถานะใบสั่งซื้อล่าสุด:'];
-    latest.forEach((po) => {
-      lines.push(`• ${po.poNumber} · ${STATUS_LABELS[po.status] || po.status} · ${po.vendorId?.name || '-'}`);
-    });
-    lines.push('', 'แตะเมนูด้านล่างเพื่อดูรายละเอียดใบเฉพาะ หรือพิมพ์ "เช็คสถานะใบสั่งซื้อ PO-XXXX"');
+    const bubbles = latest.slice(0, 10).map((po) => buildPoStatusBubble(po, { showCompany: !targetCompanyId }));
+    const contents = bubbles.length === 1 ? bubbles[0] : { type: 'carousel', contents: bubbles };
 
-    const quickItems = latest.map((po) => ({
-      label: `${po.poNumber}`.slice(0, 20),
-      text: `เช็คสถานะใบสั่งซื้อ ${po.poNumber}`,
-    }));
+    const companyName = companyDoc?.name || (targetCompanyId ? '(ไม่ทราบชื่อบริษัท)' : 'ทุกบริษัท');
+    const quickItems = [];
+
+    if (superAdmin) {
+      if (targetCompanyId) {
+        quickItems.push({
+          label: 'รีเฟรช',
+          postbackData: `po-status?company=${targetCompanyId}`,
+          displayText: `สถานะบริษัท ${companyName}`,
+        });
+        quickItems.push({
+          label: 'บริษัทอื่น',
+          postbackData: 'po-status?company=menu',
+          displayText: 'เลือกบริษัทอื่น',
+        });
+      } else {
+        quickItems.push({
+          label: 'เลือกบริษัท',
+          postbackData: 'po-status?company=menu',
+          displayText: 'เลือกบริษัท',
+        });
+      }
+    } else {
+      quickItems.push({ label: 'รีเฟรช', text: 'สถานะ' });
+    }
+
+    quickItems.push({ label: 'ค้นหา PO', text: 'เช็คสถานะใบสั่งซื้อ PO-' });
     quickItems.push({ label: 'สร้าง PO', text: 'สร้างใบสั่งซื้อ' });
     quickItems.push({ label: 'เมนู', text: 'เมนู' });
 
-    return replyQuickMenu(ev.replyToken, lines.join('\n'), quickItems);
+    const followUp = {
+      type: 'text',
+      text: `รายการสถานะใบสั่งซื้อ${targetCompanyId || !superAdmin ? '' : ' (ทุกบริษัท)'}`,
+      quickReply: { items: buildQuickReplyItems(quickItems) },
+    };
+
+    const altText = targetCompanyId
+      ? `สถานะใบสั่งซื้อของ ${companyName}`
+      : 'สถานะใบสั่งซื้อล่าสุด';
+
+    return replyFlex(ev.replyToken, altText, contents, [followUp]);
   } catch (err) {
     console.error('[WEBHOOK] replyPurchaseOrderStatus error:', err.message || err);
     return replyQuickMenu(ev.replyToken, 'ไม่สามารถตรวจสอบสถานะใบสั่งซื้อได้ กรุณาลองใหม่', [
@@ -484,9 +864,6 @@ async function replyPurchaseOrderStatus(ev, text = '') {
 
 async function replyPoCreationFlex(ev) {
   if (!ev.replyToken) return null;
-
-  const poUrl = `${PORTAL_BASE}/admin/po`;
-  const prUrl = `${PORTAL_BASE}/admin/pr`;
 
   const contents = {
     type: 'bubble',
@@ -569,25 +946,471 @@ async function replyPoCreationFlex(ev) {
         {
           type: 'button',
           style: 'primary',
-          action: { type: 'uri', label: 'เปิดหน้าสร้างใบสั่งซื้อ', uri: poUrl },
+          action: { type: 'postback', label: 'เริ่มกรอกผ่านแชท', data: 'po-create?step=start', displayText: 'PO ใหม่' },
         },
         {
           type: 'button',
           style: 'secondary',
-          action: { type: 'uri', label: 'ดูใบขอซื้อ (PR)', uri: prUrl },
+          action: { type: 'message', label: 'ดูใบขอซื้อ (PR)', text: 'เปิดใบขอซื้อ' },
         },
         {
-          type: 'text',
-          text: 'สร้างแล้วพิมพ์ "เช็คสถานะใบสั่งซื้อ PO-XXXX" เพื่อติดตามความคืบหน้า',
-          size: 'xs',
-          color: '#64748b',
-          wrap: true,
+          type: 'button',
+          style: 'secondary',
+          action: { type: 'postback', label: 'ดูตัวอย่างข้อความ', data: 'po-create?step=template', displayText: 'PO ตัวอย่าง' },
         },
       ],
     },
   };
 
-  return replyFlex(ev.replyToken, 'ขั้นตอนสร้างใบสั่งซื้อ', contents);
+  const quickReplyItems = buildQuickReplyItems([
+    { label: 'เริ่มกรอก', postbackData: 'po-create?step=start', displayText: 'PO ใหม่' },
+    { label: 'ตัวอย่าง', postbackData: 'po-create?step=template', displayText: 'PO ตัวอย่าง' },
+    { label: 'สถานะ PO', text: 'สถานะ' },
+    { label: 'เมนู', text: 'เมนู' },
+  ]);
+
+  const followUp = {
+    type: 'text',
+    text: 'เลือกรูปแบบที่ต้องการต่อได้เลย',
+    quickReply: { items: quickReplyItems },
+  };
+
+  return replyFlex(ev.replyToken, 'ขั้นตอนสร้างใบสั่งซื้อ', contents, [followUp]);
+}
+
+async function replyPoDraftInstructions(ev) {
+  if (!ev.replyToken) return null;
+
+  const contents = {
+    type: 'bubble',
+    header: {
+      type: 'box',
+      layout: 'vertical',
+      paddingAll: '20px',
+      backgroundColor: '#0f172a',
+      contents: [
+        { type: 'text', text: 'สร้างใบสั่งซื้อผ่านแชท', color: '#ffffff', size: 'lg', weight: 'bold' },
+        { type: 'text', text: 'ทำตามขั้นตอนสั้น ๆ ด้านล่าง', color: '#cbd5f5', size: 'sm' },
+      ],
+    },
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'md',
+      contents: [
+        {
+          type: 'box',
+          layout: 'baseline',
+          spacing: 'sm',
+          contents: [
+            { type: 'text', text: '1', flex: 0, size: 'sm', color: '#0f172a', weight: 'bold' },
+            {
+              type: 'text',
+              text: 'พิมพ์หรือก๊อปปี้ข้อความตัวอย่างแล้วเปลี่ยนข้อมูลสินค้า/ผู้จัดจำหน่ายตามจริง',
+              wrap: true,
+              size: 'sm',
+              color: '#0f172a',
+            },
+          ],
+        },
+        {
+          type: 'box',
+          layout: 'baseline',
+          spacing: 'sm',
+          contents: [
+            { type: 'text', text: '2', flex: 0, size: 'sm', color: '#0f172a', weight: 'bold' },
+            {
+              type: 'text',
+              text: 'ระบุจำนวนสินค้า ราคา และกำหนดส่งให้ครบ ระบบจะบันทึกและสร้างเลข PO ให้อัตโนมัติ',
+              wrap: true,
+              size: 'sm',
+              color: '#0f172a',
+            },
+          ],
+        },
+        {
+          type: 'box',
+          layout: 'baseline',
+          spacing: 'sm',
+          contents: [
+            { type: 'text', text: '3', flex: 0, size: 'sm', color: '#0f172a', weight: 'bold' },
+            {
+              type: 'text',
+              text: 'ระบบจะส่งไฟล์ PDF และแจ้งเตือนสถานะให้ในห้องนี้เมื่อสร้างเสร็จ',
+              wrap: true,
+              size: 'sm',
+              color: '#0f172a',
+            },
+          ],
+        },
+      ],
+    },
+    footer: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      contents: [
+        {
+          type: 'button',
+          style: 'primary',
+          color: '#1d4ed8',
+          action: { type: 'postback', data: 'po-create?step=template', label: 'เรียกดูตัวอย่างข้อความ', displayText: 'PO ตัวอย่าง' },
+        },
+        {
+          type: 'button',
+          style: 'secondary',
+          action: { type: 'message', label: 'ขั้นตอนถัดไป', text: 'เช็คสถานะ' },
+        },
+      ],
+    },
+  };
+
+  const followUp = {
+    type: 'text',
+    text: 'พร้อมแล้วแตะ "เรียกดูตัวอย่างข้อความ" เพื่อเริ่มต้นได้เลย',
+    quickReply: {
+      items: buildQuickReplyItems([
+        { label: 'ตัวอย่างข้อความ', postbackData: 'po-create?step=template', displayText: 'PO ตัวอย่าง' },
+        { label: 'สถานะ PO', text: 'สถานะ' },
+        { label: 'เมนู', text: 'เมนู' },
+      ]),
+    },
+  };
+
+  return replyFlex(ev.replyToken, 'สร้างใบสั่งซื้อผ่านแชท', contents, [followUp]);
+}
+
+const PO_TEMPLATE_TEXT = [
+  'PO ใหม่',
+  'บริษัท: <ชื่อบริษัท>',
+  'ผู้จัดจำหน่าย: <ชื่อผู้จัดจำหน่าย>',
+  'ส่งภายใน: <วันที่ส่งมอบ เช่น 30/09/2024>',
+  'รายการสินค้า:',
+  '1) <ชื่อสินค้า> x <จำนวน> <หน่วย> @ <ราคา/หน่วย>',
+  '2) <เพิ่มรายการตามต้องการ>',
+  'หมายเหตุ: <ระบุเงื่อนไขการชำระเงินหรือข้อมูลเพิ่มเติม>',
+].join('\n');
+
+async function replyPoDraftTemplate(ev) {
+  if (!ev.replyToken) return null;
+
+  const sampleItems = [
+    'PO ใหม่',
+    'บริษัท: NILA ENERGY CO., LTD.',
+    'ผู้จัดจำหน่าย: Bangkok Asphalt Partner',
+    'ส่งภายใน: 30/09/2024',
+    'รายการสินค้า:',
+    '1) ยางมะตอยชนิด 60/70 x 20 ตัน @ 15,200',
+    '2) ค่าขนส่งพิเศษ @ 5,000',
+    'หมายเหตุ: เงื่อนไขเครดิต 30 วัน หลังรับของ',
+  ];
+
+  const contents = {
+    type: 'bubble',
+    header: {
+      type: 'box',
+      layout: 'vertical',
+      paddingAll: '18px',
+      backgroundColor: '#1d4ed8',
+      contents: [
+        { type: 'text', text: 'ตัวอย่างข้อความสร้าง PO', size: 'lg', color: '#ffffff', weight: 'bold' },
+        { type: 'text', text: 'ปรับแก้ข้อมูลแล้วส่งกลับในห้องแชทนี้', size: 'sm', color: '#dbeafe' },
+      ],
+    },
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      contents: sampleItems.map((line) => ({
+        type: 'text',
+        text: line,
+        size: 'sm',
+        wrap: true,
+        color: '#0f172a',
+      })),
+    },
+    footer: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      contents: [
+        {
+          type: 'button',
+          style: 'primary',
+          action: {
+            type: 'message',
+            label: 'ใช้ข้อความตัวอย่าง',
+            text: PO_TEMPLATE_TEXT,
+          },
+        },
+        {
+          type: 'button',
+          style: 'secondary',
+          action: { type: 'message', label: 'กลับเมนู', text: 'เมนู' },
+        },
+      ],
+    },
+  };
+
+  const followUp = {
+    type: 'text',
+    text: 'กด "ใช้ข้อความตัวอย่าง" เพื่อคัดลอก จากนั้นแก้ไขรายละเอียดก่อนส่งกลับมา',
+    quickReply: {
+      items: buildQuickReplyItems([
+        { label: 'ส่งตามตัวอย่าง', text: PO_TEMPLATE_TEXT },
+        { label: 'สถานะ PO', text: 'สถานะ' },
+        { label: 'เมนู', text: 'เมนู' },
+      ]),
+    },
+  };
+
+  return replyFlex(ev.replyToken, 'ตัวอย่างข้อความสร้างใบสั่งซื้อ', contents, [followUp]);
+}
+
+async function replyCompanyStatusMenu(ev) {
+  if (!ev.replyToken) return null;
+
+  const companies = await Company.find().sort({ name: 1 }).lean();
+  if (!companies.length) {
+    return replyQuickMenu(ev.replyToken, 'ยังไม่มีบริษัทในระบบ', [
+      { label: 'เมนู', text: 'เมนู' },
+    ]);
+  }
+
+  const listContents = companies.slice(0, 10).map((company, idx) => ({
+    type: 'box',
+    layout: 'baseline',
+    spacing: 'sm',
+    contents: [
+      { type: 'text', text: `${idx + 1}.`, flex: 0, size: 'sm', color: '#1e293b' },
+      { type: 'text', text: company.name, size: 'sm', color: '#0f172a', wrap: true },
+    ],
+  }));
+
+  const bubble = {
+    type: 'bubble',
+    header: {
+      type: 'box',
+      layout: 'vertical',
+      paddingAll: '20px',
+      backgroundColor: '#1f2937',
+      contents: [
+        { type: 'text', text: 'เลือกบริษัทเพื่อตรวจสถานะ PO', size: 'lg', weight: 'bold', color: '#ffffff' },
+        { type: 'text', text: 'แตะชื่อบริษัทจากแถบด้านล่าง', size: 'sm', color: '#e5e7eb' },
+      ],
+    },
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'md',
+      contents: listContents,
+    },
+    footer: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      contents: [
+        {
+          type: 'button',
+          style: 'primary',
+          color: '#1d4ed8',
+          action: { type: 'postback', label: 'ดูทุกบริษัท', data: 'po-status?company=all', displayText: 'สถานะทุกบริษัท' },
+        },
+        {
+          type: 'button',
+          style: 'secondary',
+          action: { type: 'message', label: 'ค้นหา PO เฉพาะ', text: 'เช็คสถานะใบสั่งซื้อ PO-' },
+        },
+      ],
+    },
+  };
+
+  const quickReplyItems = companies.slice(0, 11).map((company) => ({
+    type: 'action',
+    action: {
+      type: 'postback',
+      label: company.name.slice(0, 20),
+      data: `po-status?company=${company._id}`,
+      displayText: `สถานะบริษัท ${company.name}`,
+    },
+  }));
+
+  if (companies.length > 11) {
+    quickReplyItems.push({
+      type: 'action',
+      action: {
+        type: 'message',
+        label: 'ค้นหา PO',
+        text: 'เช็คสถานะใบสั่งซื้อ PO-',
+      },
+    });
+  }
+
+  quickReplyItems.push({
+    type: 'action',
+    action: {
+      type: 'message',
+      label: 'เมนู',
+      text: 'เมนู',
+    },
+  });
+
+  const followUp = {
+    type: 'text',
+    text: 'เลือกบริษัทที่ต้องการตรวจสอบ',
+    quickReply: { items: quickReplyItems.slice(0, 13) },
+  };
+
+  return replyFlex(ev.replyToken, 'เลือกบริษัทเพื่อตรวจสถานะใบสั่งซื้อ', bubble, [followUp]);
+}
+
+async function tryCreatePoFromFreeform(ev, rawText) {
+  const userId = getUserId(ev);
+  if (!isSuperAdminUser(userId)) return false;
+
+  const lines = String(rawText || '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (!lines.length || !/^PO\s*ใหม่/i.test(lines[0])) return false;
+
+  let companyName = '';
+  let vendorName = '';
+  let expectedStr = '';
+  let note = '';
+  let inItems = false;
+  const items = [];
+
+  for (let i = 1; i < lines.length; i += 1) {
+    const line = lines[i];
+    const lower = line.toLowerCase();
+
+    if (lower.startsWith('บริษัท')) {
+      companyName = line.split(':').slice(1).join(':').trim();
+      continue;
+    }
+    if (lower.startsWith('ผู้จัดจำหน่าย')) {
+      vendorName = line.split(':').slice(1).join(':').trim();
+      continue;
+    }
+    if (lower.startsWith('ส่งภายใน')) {
+      expectedStr = line.split(':').slice(1).join(':').trim();
+      continue;
+    }
+    if (lower.startsWith('รายการ')) {
+      inItems = true;
+      continue;
+    }
+    if (lower.startsWith('หมายเหตุ')) {
+      note = line.split(':').slice(1).join(':').trim();
+      inItems = false;
+      continue;
+    }
+
+    if (inItems && /^\d+\)/.test(line)) {
+      const match = line.match(/^\d+\)\s*(.+?)\s+x\s*([\d.,]+)\s*([^\s@]+)?\s*@\s*([\d.,]+)/i);
+      if (match) {
+        const itemName = match[1].trim();
+        if (hasPlaceholder(itemName)) continue;
+        const quantity = parseNumber(match[2]);
+        const unit = (match[3] || 'หน่วย').trim();
+        const unitPrice = parseNumber(match[4]);
+        if (itemName && Number.isFinite(quantity) && quantity > 0) {
+          items.push({
+            itemName,
+            quantity,
+            unit,
+            unitPrice: Number.isFinite(unitPrice) ? unitPrice : 0,
+          });
+        }
+      }
+    }
+  }
+
+  if (hasPlaceholder(note) || note.toLowerCase().includes('ข้อมูลเพิ่มเติม')) {
+    note = '';
+  }
+
+  if (!vendorName || hasPlaceholder(vendorName) || vendorName.toLowerCase().includes('ชื่อผู้จัดจำหน่าย')) {
+    await replyQuickMenu(ev.replyToken, 'กรุณาระบุชื่อผู้จัดจำหน่ายจริงก่อนส่ง', [
+      { label: 'ดูตัวอย่าง', postbackData: 'po-create?step=template', displayText: 'PO ตัวอย่าง' },
+      { label: 'เมนู', text: 'เมนู' },
+    ]);
+    return true;
+  }
+
+  if (!items.length) {
+    await replyQuickMenu(ev.replyToken, 'กรุณาระบุผู้จัดจำหน่ายและรายการสินค้าให้ครบถ้วน', [
+      { label: 'ดูตัวอย่าง', postbackData: 'po-create?step=template', displayText: 'PO ตัวอย่าง' },
+      { label: 'เมนู', text: 'เมนู' },
+    ]);
+    return true;
+  }
+
+  const actor = `line:${userId || 'unknown'}`;
+
+  let company = null;
+  if (companyName) {
+    if (hasPlaceholder(companyName) || companyName.toLowerCase().includes('ชื่อบริษัท')) {
+      await replyQuickMenu(ev.replyToken, 'กรุณาแทนที่ชื่อบริษัทในข้อความก่อนส่ง', [
+        { label: 'ดูตัวอย่าง', postbackData: 'po-create?step=template', displayText: 'PO ตัวอย่าง' },
+        { label: 'เมนู', text: 'เมนู' },
+      ]);
+      return true;
+    }
+    const regex = new RegExp(`^${escapeRegex(companyName)}$`, 'i');
+    company = await Company.findOne({ name: regex }).lean();
+  }
+  if (!company && DEFAULT_COMPANY_ID) {
+    company = await Company.findById(DEFAULT_COMPANY_ID).lean();
+  }
+  if (!company) {
+    await replyQuickMenu(ev.replyToken, 'ไม่พบบริษัทที่ระบุ และยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID', [
+      { label: 'เลือกบริษัท', postbackData: 'po-status?company=menu', displayText: 'เลือกบริษัท' },
+      { label: 'เมนู', text: 'เมนู' },
+    ]);
+    return true;
+  }
+
+  let vendor = null;
+  if (vendorName) {
+    const regex = new RegExp(`^${escapeRegex(vendorName)}$`, 'i');
+    vendor = await Vendor.findOne({ name: regex }).lean();
+  }
+
+  if (!vendor) {
+    vendor = await createVendor({ name: vendorName }, actor);
+  }
+
+  if (hasPlaceholder(expectedStr) || expectedStr.toLowerCase().includes('วันที่ส่งมอบ')) {
+    expectedStr = '';
+  }
+
+  const expectedDate = parseDateInput(expectedStr);
+  const vendorId = vendor._id ? vendor._id.toString() : vendor.id;
+
+  const payload = {
+    companyId: company._id,
+    vendorId,
+    expectedDeliveryDate: expectedDate || undefined,
+    items,
+    note,
+  };
+
+  try {
+    const po = await createPurchaseOrder(payload, actor);
+    console.log('[LINE][PO CREATE]', { poNumber: po.poNumber, actor });
+    await replyPurchaseOrderStatus(ev, '', { poNumber: po.poNumber });
+    return true;
+  } catch (err) {
+    console.error('[LINE][PO CREATE ERR]', err);
+    await replyQuickMenu(ev.replyToken, 'สร้างใบสั่งซื้อไม่สำเร็จ กรุณาตรวจสอบข้อมูลอีกครั้ง', [
+      { label: 'ดูตัวอย่าง', postbackData: 'po-create?step=template', displayText: 'PO ตัวอย่าง' },
+      { label: 'เมนู', text: 'เมนู' },
+    ]);
+    return true;
+  }
 }
 
 async function handleImage(ev) {
