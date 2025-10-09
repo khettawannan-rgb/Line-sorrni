@@ -65,6 +65,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  const filterToggle = document.querySelector('[data-filter-toggle]');
+  const filterSection = document.querySelector('[data-filter-section]');
+  if (filterToggle && filterSection) {
+    filterToggle.addEventListener('click', () => {
+      const collapsed = filterSection.classList.toggle('is-collapsed');
+      filterToggle.setAttribute('aria-expanded', String(!collapsed));
+      filterToggle.textContent = collapsed ? 'แสดงฟิลเตอร์' : 'ซ่อนฟิลเตอร์';
+    });
+  }
+
   initDonutCharts();
   initLocationsTable();
   initUploadExperience();

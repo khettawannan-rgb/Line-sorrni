@@ -375,6 +375,20 @@ const sampleNetwork = {
     display: flex;
     gap: 8px;
     align-items: flex-end;
+    flex-wrap: wrap;
+  }
+  .insight-filters.is-collapsed {
+    display: none;
+  }
+  .filter-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 0.25rem clamp(10px, 1vw, 16px);
+    margin-bottom: 0.75rem;
+  }
+  .filter-toolbar .btn {
+    height: 32px;
   }
   .row-kpi {
     display: grid;
@@ -666,7 +680,10 @@ const sampleNetwork = {
         <div class="insight-meta">ข้อมูลย้อนหลัง 14 วันล่าสุด</div>
       </div>
       <div class="panel-body insight-body" data-behavior-root>
-        <form class="insight-filters glass">
+        <div class="filter-toolbar">
+          <button type="button" class="btn ghost small" data-filter-toggle aria-expanded="true">ซ่อนฟิลเตอร์</button>
+        </div>
+        <form class="insight-filters glass" data-filter-section>
           <div>
             <label>ช่วงเวลา</label>
             <select name="dateRange">

@@ -443,7 +443,7 @@ body.auth{
   align-items:flex-start;
   justify-content:space-between;
   gap:1.5rem;
-  padding:0 clamp(10px,1vw,16px) 18px;
+  padding:clamp(14px,1.5vw,22px) clamp(10px,1vw,16px) 18px;
   margin:0 0 22px;
   border-bottom:1px solid rgba(216,224,240,.65);
 }
@@ -487,7 +487,7 @@ body.auth{
   flex-direction:column;
   gap:6px;
   margin-bottom:18px;
-  padding:0 clamp(10px,1vw,16px);
+  padding:clamp(12px,1.2vw,18px) clamp(10px,1vw,16px) 0;
 }
 .panel-heading{
   padding:0 clamp(10px,1vw,18px) 16px;
