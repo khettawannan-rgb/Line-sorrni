@@ -25,7 +25,7 @@
 <% const chatTrendJSON = JSON.stringify(chatTrend || []); %>
 <% const chatTopicTopJSON = JSON.stringify((chat.topicSummary || []).slice(0, 5)); %>
 <% const consentStatusJSON = JSON.stringify(consentTotals); %>
-<% const behavior = dashboardBehavior || {}; %>
+<% const behavior = (typeof dashboardBehavior !== 'undefined' && dashboardBehavior) || {}; %>
 <% const interactionSeries = behavior.timeSeries || chatTrend || []; %>
 <% const interactionSeriesJSON = JSON.stringify(interactionSeries); %>
 <% const heatmapJSON = JSON.stringify(behavior.heatmap || []); %>
