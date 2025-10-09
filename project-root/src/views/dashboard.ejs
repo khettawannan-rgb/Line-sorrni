@@ -538,6 +538,12 @@ const sampleNetwork = {
     font-size: 0.75rem;
     overflow-x: auto;
   }
+  .chart-fallback{ position:relative; z-index:0; display:flex; flex-direction:column; gap:6px; width:100%; text-align:left; color:#6b7280; }
+  .chart-fallback ul{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:4px; }
+  .chart-fallback li{ font-size:.78rem; }
+  .chart-fallback li strong{ color:#0f172a; }
+  .chart-frame.chart-ready .chart-fallback{ display:none; }
+  .chart-note{ margin:4px 0 0; font-size:.78rem; color:#64748b; line-height:1.4; }
   @media (max-width: 1024px) {
     .insight-filters {
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -632,7 +638,7 @@ const sampleNetwork = {
   </aside>
 
   <div class="dashboard-main">
-    <header class="dashboard-top" id="overview" data-dashboard-section="core behavior classic">
+    <header class="dashboard-top" id="overview" data-dashboard-section="core behavior">
       <div>
         <h1>รายงานภาพรวม</h1>
         <p>ข้อมูลสรุปการผลิต การจัดส่ง และการสนับสนุนลูกค้าจากทุกภูมิภาค</p>
@@ -649,10 +655,9 @@ const sampleNetwork = {
     <section class="dashboard-tabs">
       <button type="button" class="is-active" data-dashboard-tab="core">มุมมองหลัก</button>
       <button type="button" data-dashboard-tab="behavior">พฤติกรรมผู้ใช้</button>
-      <button type="button" data-dashboard-tab="classic">มุมมองเดิม (สำรอง)</button>
     </section>
 
-    <section class="panel-block panel-insights" id="customer-insights" data-dashboard-section="behavior classic">
+    <section class="panel-block panel-insights" id="customer-insights" data-dashboard-section="behavior">
       <div class="panel-heading">
         <div>
           <h2>Customer Insights</h2>
@@ -781,6 +786,7 @@ const sampleNetwork = {
                 </ul>
               </div>
             </div>
+            <p class="chart-note">จำนวนข้อความเข้า-ออกและผู้ใช้ไม่ซ้ำในแต่ละวัน</p>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT date::date AS d,
@@ -811,6 +817,7 @@ GROUP BY 1 ORDER BY 1</code></pre>
                 </ul>
               </div>
             </div>
+            <p class="chart-note">ช่วงวันและเวลาที่ปริมาณแชทมากที่สุด (เข้ม=ข้อความมาก)</p>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT EXTRACT(DOW FROM timestamp) AS dow,
@@ -838,6 +845,7 @@ GROUP BY 1,2</code></pre>
                 </ul>
               </div>
             </div>
+            <p class="chart-note">สัดส่วนข้อความเชิงบวก/กลาง/ลบ พร้อมเทรนด์คะแนนสุทธิ 14 วัน</p>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT sentiment_label,
@@ -867,6 +875,7 @@ GROUP BY 1</code></pre>
                 </ul>
               </div>
             </div>
+            <p class="chart-note">เปรียบเทียบสัดส่วนข้อความแต่ละหมวด (Inquiry, Order, Complaint ฯลฯ) รายสัปดาห์</p>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT week_start, intent_category, COUNT(*)
@@ -882,6 +891,7 @@ GROUP BY 1,2</code></pre>
             <div class="chart-frame keyword">
               <div id="keyword-cloud" class="keyword-cloud" data-keyword-cloud='<%- keywordCloudJSON %>'></div>
             </div>
+            <p class="chart-note">คำสำคัญที่ถูกกล่าวถึงบ่อยในบทสนทนาล่าสุด ขนาดคำแสดงความถี่</p>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT keyword, SUM(weight) AS score
@@ -899,6 +909,7 @@ ORDER BY score DESC LIMIT 200</code></pre>
             <div class="chart-frame">
               <canvas id="consent-status-chart" height="240"></canvas>
             </div>
+            <p class="chart-note">สัดส่วนผู้ใช้ตามสถานะความยินยอมล่าสุดที่ระบบบันทึก</p>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT latest_status, COUNT(*)
@@ -920,6 +931,7 @@ GROUP BY 1</code></pre>
                 <div class="cloud-list"></div>
               </div>
             </div>
+            <p class="chart-note">คำที่มักปรากฏในข้อความเชิงบวกและเชิงลบ เพื่อระบุสาเหตุของความพึงพอใจ/ไม่พอใจ</p>
           </div>
         </div>
 
@@ -940,6 +952,7 @@ GROUP BY 1</code></pre>
                 </ul>
               </div>
             </div>
+            <p class="chart-note">ติดตามจำนวนเคสที่ไหลผ่านแต่ละขั้นจากคำถาม → ใบสั่งซื้อ → ส่งมอบ</p>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT stage, COUNT(*)
@@ -968,6 +981,7 @@ ORDER BY stage_order</code></pre>
                 </ul>
               </div>
             </div>
+            <p class="chart-note">เวลาเฉลี่ย/มัธยฐานการตอบกลับของแต่ละเอเจนต์ พร้อมสัดส่วนที่ทำ SLA ได้ทัน</p>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT agent_id,
@@ -1013,6 +1027,8 @@ GROUP BY agent_id</code></pre>
                 </tbody>
               </table>
             </div>
+            <p class="chart-note">ลูกค้าที่หายไปนานหรือมี sentiment ติดลบต่อเนื่อง ควรติดตามเชิงรุก</p>
+            <p class="chart-note">จัดอันดับจากจำนวนบทสนทนา ค่าเฉลี่ยตอบกลับ และคะแนนความรู้สึกโดยรวม</p>
           </div>
         </div>
 
@@ -1050,6 +1066,7 @@ GROUP BY agent_id</code></pre>
                 </tbody>
               </table>
             </div>
+            <p class="chart-note">ลูกค้าที่มีการมีส่วนร่วมสูงสุดโดยดูจากข้อความ จำนวนเซสชัน และคะแนน sentiment</p>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT user_id,
@@ -1085,6 +1102,7 @@ LIMIT 20</code></pre>
                 </ul>
               </div>
             </div>
+            <p class="chart-note">ติดตามสัดส่วนลูกค้าที่กลับมาคุยซ้ำหลัง onboarding ในแต่ละสัปดาห์</p>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT cohort_week,
@@ -1156,6 +1174,7 @@ FROM retention_cohorts</code></pre>
                 </tbody>
               </table>
             </div>
+            <p class="chart-note">สัญญาณผิดปกติจากคำร้องเรียนหรือข้อความเชิงลบที่พุ่งสูงกว่าค่าเฉลี่ย</p>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>INSERT INTO anomalies(date, metric, delta_sigma)
@@ -1189,6 +1208,7 @@ FROM complaint_spike_detector</code></pre>
                 <% } %>
               </ul>
             </div>
+            <p class="chart-note">จับคู่ลูกค้ากับเอเจนต์ที่สนทนาบ่อยที่สุด เพื่อวางแผนติดตามหรือหมุนเวียนทีม</p>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT user_id,
@@ -1360,7 +1380,7 @@ GROUP BY 1,2</code></pre>
       </div>
     </section>
 
-    <section class="summary-cards" data-dashboard-section="core classic">
+    <section class="summary-cards" data-dashboard-section="core">
       <article class="summary-card">
         <div class="summary-label">ปริมาณรวม</div>
         <div class="summary-value"><%= fmtTons(totals.totalTons, { max: 2 }) %><small>ตัน</small></div>
@@ -1383,7 +1403,7 @@ GROUP BY 1,2</code></pre>
       </article>
     </section>
 
-    <section class="panel-block" id="map-overview" data-dashboard-section="core classic">
+    <section class="panel-block" id="map-overview" data-dashboard-section="core">
       <div
         class="dashboard-map-card"
         data-province-map
@@ -1458,7 +1478,7 @@ GROUP BY 1,2</code></pre>
       </div>
     </section>
 
-    <section class="panel-block" id="excel" data-dashboard-section="core classic">
+    <section class="panel-block" id="excel" data-dashboard-section="core">
       <div class="panel-heading">
         <div>
           <h2>ภาพรวมสินค้า</h2>
@@ -1584,7 +1604,7 @@ GROUP BY 1,2</code></pre>
       </div>
     </section>
 
-    <section class="panel-block" id="companies" data-dashboard-section="core classic">
+    <section class="panel-block" id="companies" data-dashboard-section="core">
       <div class="panel-heading">
         <div>
           <h2>ข้อมูลตามบริษัท</h2>
@@ -1666,7 +1686,7 @@ GROUP BY 1,2</code></pre>
       </div>
     </section>
 
-    <section class="panel-block" id="tools" data-dashboard-section="core classic">
+    <section class="panel-block" id="tools" data-dashboard-section="core">
       <div class="panel-heading">
         <div>
           <h2>เครื่องมือด่วน</h2>
@@ -1717,7 +1737,7 @@ GROUP BY 1,2</code></pre>
 <script src="/static/js/dashboard_map.js"></script>
 <script>
   (function () {
-    const TAB_KEYS = ['core', 'behavior', 'classic'];
+    const TAB_KEYS = ['core', 'behavior'];
     const sections = Array.prototype.slice.call(document.querySelectorAll('[data-dashboard-section]'));
     const tabButtons = Array.prototype.slice.call(document.querySelectorAll('[data-dashboard-tab]'));
     const behaviorLink = document.querySelector('[data-tab-jump="behavior"]');
@@ -1736,7 +1756,7 @@ GROUP BY 1,2</code></pre>
       });
       sections.forEach((section) => {
         const groups = parseGroups(section);
-        const visible = target === 'classic' || groups.includes(target);
+        const visible = groups.includes(target) || (target === 'core' && groups.length === 0);
         section.classList.toggle('dashboard-tab-hidden', !visible);
       });
       try {

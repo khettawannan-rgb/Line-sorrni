@@ -1745,9 +1745,15 @@ body.auth{
   .panel-block .panel-heading h2{ color:#0f172a; }
   .panel-block .panel-heading p{ color:#4b5563; }
 
-  .card.glass{ background:linear-gradient(150deg,#ffffff 0%, #f4f5fb 100%); border-radius:22px; border:1px solid rgba(148,163,184,.28); box-shadow:0 20px 40px -28px rgba(15,23,42,.32); color:#111827; }
-  .card.glass .card-heading h3{ color:#0f172a; }
-  .card.glass .card-heading .muted{ color:#4b5563; }
+  .card.glass{
+    background:#ffffff;
+    border-radius:20px;
+    border:1px solid rgba(148,163,184,.24);
+    box-shadow:0 14px 32px -24px rgba(15,23,42,.28);
+    color:#0f172a;
+  }
+  .card.glass .card-heading h3{ color:#0f172a; font-size:1rem; letter-spacing:.01rem; }
+  .card.glass .card-heading .muted{ color:#64748b; font-size:.78rem; }
 
   .quick-actions .action-card{ background:#ffffff; border:1px solid rgba(209,213,219,.5); box-shadow:none; }
 

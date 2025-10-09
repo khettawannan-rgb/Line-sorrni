@@ -478,6 +478,14 @@ function initDailyLineChart() {
 function initCustomerInsightCharts() {
   if (typeof Chart === 'undefined') return;
 
+  Chart.defaults.font.family =
+    "'IBM Plex Sans Thai', 'Noto Sans Thai', 'Prompt', ui-sans-serif, system-ui";
+  Chart.defaults.font.size = 12;
+  Chart.defaults.color = '#475569';
+  Chart.defaults.plugins.legend.labels.font = { size: 11, family: Chart.defaults.font.family };
+  Chart.defaults.plugins.tooltip.titleFont = { size: 11, family: Chart.defaults.font.family };
+  Chart.defaults.plugins.tooltip.bodyFont = { size: 11, family: Chart.defaults.font.family };
+
   const parseDataset = (el, attr, fallback) => {
     try {
       const raw = el.getAttribute(attr);
@@ -519,23 +527,21 @@ function initCustomerInsightCharts() {
               {
                 label: 'ข้อความ',
                 data: messageSeries,
-                borderColor: '#6366f1',
-                backgroundColor: 'rgba(99,102,241,0.18)',
-                borderWidth: 3,
-                tension: 0.35,
-                fill: true,
-                pointRadius: 3,
+                borderColor: '#4f46e5',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: false,
+                pointRadius: 2,
                 yAxisID: 'y',
               },
               {
                 label: 'ผู้ใช้',
                 data: userSeries,
                 borderColor: '#ec4899',
-                backgroundColor: 'rgba(236,72,153,0.15)',
-                borderWidth: 3,
-                tension: 0.35,
+                borderWidth: 2,
+                tension: 0.3,
                 fill: false,
-                pointRadius: 3,
+                pointRadius: 2,
                 yAxisID: 'y1',
               },
             ],
