@@ -9,7 +9,7 @@ const CONSENT_SECRET =
 const PUBLIC_BASE_URL = (
   process.env.PUBLIC_BASE_URL ||
   process.env.BASE_URL ||
-  'http://localhost:3000'
+  'http://localhost:10000'
 ).replace(/\/$/, '');
 const PROMPT_COOLDOWN_MIN = Number(process.env.CONSENT_PROMPT_COOLDOWN_MIN || 360);
 
