@@ -830,12 +830,11 @@ GROUP BY 1,2</code></pre>
           </div>
           <div class="card glass insight-chart" data-sentiment='<%- sentimentTrendJSON %>' data-drilldown="sentiment-trend">
             <div class="card-heading">
-              <h3>Sentiment Distribution &amp; Trend</h3>
-              <span class="muted">Pie + 14-day mini trend</span>
+              <h3>Sentiment Distribution</h3>
+              <span class="muted">สัดส่วนข้อความเชิงบวก/กลาง/ลบ ล่าสุด 14 วัน</span>
             </div>
             <div class="chart-frame sentiment">
-              <canvas id="sentiment-pie-chart" height="180"></canvas>
-              <canvas id="sentiment-mini-chart" height="80"></canvas>
+              <canvas id="sentiment-pie-chart" height="220"></canvas>
               <div class="chart-fallback">
                 <strong>รวม 14 วัน</strong>
                 <ul>
@@ -845,7 +844,7 @@ GROUP BY 1,2</code></pre>
                 </ul>
               </div>
             </div>
-            <p class="chart-note">สัดส่วนข้อความเชิงบวก/กลาง/ลบ พร้อมเทรนด์คะแนนสุทธิ 14 วัน</p>
+            <p class="chart-note">สัดส่วนข้อความเชิงบวก/กลาง/ลบ ในรอบ 14 วันล่าสุด</p>
             <details class="card-foot query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT sentiment_label,
@@ -1510,7 +1509,7 @@ GROUP BY 1,2</code></pre>
                       <span class="donut-legend__dot" data-color-index="<%= idx %>"></span>
                       <div>
                         <strong><%= item.product %></strong>
-                        <span><%= qty.formatted %> <span class="muted"><%= qty.unit %></span> · <%= percent.toFixed(1) %>%</span>
+                        <span><%= `${qty.formatted} ${qty.unit} · ${percent.toFixed(1)}%` %></span>
                       </div>
                     </li>
                   <% }) %>

@@ -761,7 +761,6 @@ function initCustomerInsightCharts() {
     const payload = parseDataset(sentimentCard, 'data-sentiment', []);
     if (Array.isArray(payload) && payload.length) {
       const pieCtx = sentimentCard.querySelector('#sentiment-pie-chart')?.getContext('2d');
-      const miniCtx = sentimentCard.querySelector('#sentiment-mini-chart')?.getContext('2d');
       const totals = payload.reduce(
         (acc, row) => {
           acc.positive += Number(row.positive ?? row.pos ?? 0);
@@ -798,51 +797,7 @@ function initCustomerInsightCharts() {
         markReady(pieCtx.canvas);
       }
 
-      if (miniCtx) {
-        const labels = payload.map((row) => {
-          const iso = typeof row.date === 'string' ? row.date : '';
-          const date = iso ? new Date(`${iso}T00:00:00+07:00`) : null;
-          return date
-            ? date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
-            : row.date || '';
-        });
-        const series = payload.map((row) => {
-          const pos = Number(row.positive ?? 0);
-          const neg = Number(row.negative ?? 0);
-          const neu = Number(row.neutral ?? 0);
-          const total = pos + neg + neu;
-          return total ? (pos - neg) / total : 0;
-        });
-
-        new Chart(miniCtx, {
-          type: 'line',
-          data: {
-            labels,
-            datasets: [
-              {
-                label: 'Net Sentiment',
-                data: series,
-                borderColor: '#6366f1',
-                backgroundColor: 'rgba(99,102,241,0.2)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.3,
-                pointRadius: 0,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              x: { display: false },
-              y: { display: false, suggestedMin: -0.6, suggestedMax: 0.6 },
-            },
-            plugins: { legend: { display: false } },
-          },
-        });
-        markReady(miniCtx.canvas);
-      }
+      // mini trend removed to simplify layout
     }
   }
 

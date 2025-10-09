@@ -439,11 +439,12 @@ body.auth{
 .panel + .panel{ margin-top:26px; }
 .panel-header{
   display:flex;
+  flex-wrap:wrap;
   align-items:flex-start;
   justify-content:space-between;
   gap:1.5rem;
-  padding-bottom:18px;
-  margin-bottom:22px;
+  padding:0 clamp(10px,1vw,16px) 18px;
+  margin:0 0 22px;
   border-bottom:1px solid rgba(216,224,240,.65);
 }
 .panel-header h2,
@@ -486,6 +487,14 @@ body.auth{
   flex-direction:column;
   gap:6px;
   margin-bottom:18px;
+  padding:0 clamp(10px,1vw,16px);
+}
+.panel-heading{
+  padding:0 clamp(10px,1vw,18px) 16px;
+}
+.panel-heading h2,
+.panel-heading h3{
+  margin:0;
 }
 .card-heading h3{
   margin:0;
@@ -749,9 +758,17 @@ body.auth{
     color:var(--muted);
     font-size:.85rem;
   }
-  .input-lg{ min-width:220px; }
-  .input-md{ min-width:150px; }
-  .input-sm{ width:120px; }
+.input-lg{ min-width:220px; }
+.input-md{ min-width:150px; }
+.input-sm{ width:120px; }
+@media (max-width: 640px){
+  .input-lg,
+  .input-md,
+  .input-sm{
+    width:100% !important;
+    min-width:0 !important;
+  }
+}
   .form-stack{
     display:flex;
     flex-direction:column;
@@ -1388,8 +1405,8 @@ body.auth{
   min-height: 220px;
 }
 .donut-wrap canvas{
-  width:240px;
-  height:240px;
+  width:clamp(200px, 28vw, 260px);
+  height:clamp(200px, 28vw, 260px);
   max-width:100%;
   max-height:100%;
 }
@@ -1435,7 +1452,7 @@ body.auth{
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:40px;
+  gap:32px;
   flex-wrap:wrap;
   text-align:left;
 }
@@ -1446,11 +1463,13 @@ body.auth{
   margin-left:auto;
   margin-right:auto;
   transform:none;
+  min-width:240px;
 }
 
 .donut-legend{
   flex:1;
   min-width:260px;
+  max-width:320px;
   display:flex;
   justify-content:center;
 }
@@ -1471,14 +1490,13 @@ body.auth{
   padding:0;
   display:flex;
   flex-direction:column;
-  gap:12px;
+  gap:10px;
   width:100%;
-  max-width:240px;
 }
 
 .donut-legend li{
   display:flex;
-  gap:12px;
+  gap:10px;
   align-items:center;
   justify-content:flex-start;
 }
@@ -1487,7 +1505,7 @@ body.auth{
   width:12px;
   height:12px;
   border-radius:999px;
-  margin-top:6px;
+  margin-top:2px;
   background:#cbd5f5;
 }
 
@@ -1504,6 +1522,7 @@ body.auth{
   font-size:.85rem;
   color:#64748b;
   margin-top:2px;
+  word-break:break-word;
 }
 
 .panel-block + .panel-block{
@@ -2165,18 +2184,10 @@ body.auth{
 .insight-chart .chart-frame{ position:relative; min-height:260px; height:100%; display:flex; align-items:center; justify-content:center; padding:8px; }
 .insight-chart canvas{ position:absolute; inset:0; width:100%; height:100%; }
 .chart-frame.sentiment{
-  padding:12px 12px 80px;
+  padding:16px;
 }
 .chart-frame.sentiment #sentiment-pie-chart{
-  inset:12px 12px 108px 12px;
-}
-.chart-frame.sentiment #sentiment-mini-chart{
-  inset:auto 18px 16px 18px;
-  height:56px;
-  border-radius:14px;
-  background:rgba(99,102,241,.08);
-  box-shadow:0 12px 28px -20px rgba(99,102,241,.35);
-  pointer-events:none;
+  inset:16px 16px 16px 16px;
 }
 .chart-fallback{ position:relative; z-index:0; display:flex; flex-direction:column; gap:6px; width:100%; text-align:left; color:#6b7280; }
   .chart-fallback ul{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:4px; }
