@@ -123,10 +123,13 @@ app.get('/health', (req, res) => {
 
 // ===== Routes =====
 app.get('/', (req, res) => {
+  if (!req.session?.user) {
+    return res.redirect('/admin/login');
+  }
   res.render('dashboard', {
     title: 'Dashboard',
     active: 'dashboard',
-    user: req.session?.user || null,
+    user: req.session.user,
   });
 });
 app.use('/consent', consentRouter);
