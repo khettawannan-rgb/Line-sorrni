@@ -157,6 +157,7 @@
     display: grid;
     gap: 16px;
     margin-bottom: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   }
   .insight-row.row-timeseries {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -212,6 +213,84 @@
     padding: 0;
     margin: 0;
     line-height: 1.5;
+  }
+  .query-toggle {
+    margin-top: 0.75rem;
+    border-radius: 10px;
+    background: rgba(148, 163, 184, 0.12);
+    padding: 0.4rem 0.75rem;
+  }
+  .query-toggle summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #1d4ed8;
+    list-style: none;
+  }
+  .query-toggle summary::-webkit-details-marker {
+    display: none;
+  }
+  .query-toggle summary::before {
+    content: '▸';
+    margin-right: 6px;
+    transition: transform 0.2s ease;
+    display: inline-block;
+  }
+  .query-toggle[open] summary::before {
+    transform: rotate(90deg);
+  }
+  .query-toggle pre {
+    margin: 0.5rem 0 0;
+    background: rgba(15, 23, 42, 0.85);
+    color: #f8fafc;
+    padding: 0.65rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    overflow-x: auto;
+  }
+  @media (max-width: 1024px) {
+    .insight-filters {
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    }
+    .row-kpi {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+  }
+  @media (max-width: 768px) {
+    .dashboard-tabs {
+      flex-wrap: wrap;
+      justify-content: flex-start;
+    }
+    .insight-filters {
+      grid-template-columns: 1fr;
+    }
+    .insight-filters .filter-actions {
+      flex-wrap: wrap;
+    }
+    .row-kpi {
+      grid-template-columns: 1fr;
+    }
+    .insight-row {
+      grid-template-columns: 1fr !important;
+    }
+    .keyword-card,
+    .sentiment-cloud {
+      min-height: auto;
+    }
+  }
+  @media (max-width: 560px) {
+    .dashboard-top h1 {
+      font-size: 1.8rem;
+    }
+    .dashboard-tabs button {
+      flex: 1 0 45%;
+    }
+    .insight-filters .filter-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .insight-filters .filter-actions .btn {
+      width: 100%;
+    }
   }
 </style>
 
@@ -392,14 +471,15 @@
             <div class="chart-frame">
               <canvas id="chat-trend-chart" height="240"></canvas>
             </div>
-            <footer class="card-foot">
-              <code>SELECT date::date AS d,
+            <details class="card-foot query-toggle">
+              <summary>ดูสูตร / Query</summary>
+              <pre><code>SELECT date::date AS d,
 SUM(CASE WHEN direction='in' THEN 1 ELSE 0 END) AS inbound,
 SUM(CASE WHEN direction='out' THEN 1 ELSE 0 END) AS outbound
 FROM fact_chat_message
 WHERE timestamp BETWEEN $start AND $end
-GROUP BY 1 ORDER BY 1</code>
-            </footer>
+GROUP BY 1 ORDER BY 1</code></pre>
+            </details>
           </div>
           <div class="card glass insight-chart" data-heatmap='<%- heatmapJSON %>' data-drilldown="keyword-intent-heatmap">
             <div class="card-heading">
@@ -409,14 +489,15 @@ GROUP BY 1 ORDER BY 1</code>
             <div class="chart-frame">
               <canvas id="chat-heatmap-chart" height="240"></canvas>
             </div>
-            <footer class="card-foot">
-              <code>SELECT EXTRACT(DOW FROM timestamp) AS dow,
+            <details class="card-foot query-toggle">
+              <summary>ดูสูตร / Query</summary>
+              <pre><code>SELECT EXTRACT(DOW FROM timestamp) AS dow,
 EXTRACT(HOUR FROM timestamp) AS hour,
 COUNT(*) AS volume
 FROM fact_chat_message
 WHERE timestamp BETWEEN $start AND $end
-GROUP BY 1,2</code>
-            </footer>
+GROUP BY 1,2</code></pre>
+            </details>
           </div>
           <div class="card glass insight-chart" data-sentiment='<%- sentimentTrendJSON %>' data-drilldown="sentiment-trend">
             <div class="card-heading">
@@ -427,14 +508,15 @@ GROUP BY 1,2</code>
               <canvas id="sentiment-pie-chart" height="180"></canvas>
               <canvas id="sentiment-mini-chart" height="80"></canvas>
             </div>
-            <footer class="card-foot">
-              <code>SELECT sentiment_label,
+            <details class="card-foot query-toggle">
+              <summary>ดูสูตร / Query</summary>
+              <pre><code>SELECT sentiment_label,
 COUNT(*) AS cnt,
 AVG(sentiment_score) AS avg_score
 FROM fact_chat_message
 WHERE timestamp BETWEEN $start AND $end
-GROUP BY 1</code>
-            </footer>
+GROUP BY 1</code></pre>
+            </details>
           </div>
         </div>
 
@@ -447,9 +529,12 @@ GROUP BY 1</code>
             <div class="chart-frame">
               <canvas id="intent-stack-chart" height="260"></canvas>
             </div>
-            <footer class="card-foot">
-              <code>SELECT week_start, intent_category, COUNT(*) FROM fact_chat_message GROUP BY 1,2</code>
-            </footer>
+            <details class="card-foot query-toggle">
+              <summary>ดูสูตร / Query</summary>
+              <pre><code>SELECT week_start, intent_category, COUNT(*)
+FROM fact_chat_message
+GROUP BY 1,2</code></pre>
+            </details>
           </div>
           <div class="card glass keyword-card" data-keyword-cloud='<%- keywordCloudJSON %>' data-drilldown="top-keywords">
             <div class="card-heading">
@@ -459,12 +544,14 @@ GROUP BY 1</code>
             <div class="chart-frame keyword">
               <canvas id="keyword-cloud" height="260"></canvas>
             </div>
-            <footer class="card-foot">
-              <code>SELECT keyword, SUM(weight) AS score
+            <details class="card-foot query-toggle">
+              <summary>ดูสูตร / Query</summary>
+              <pre><code>SELECT keyword, SUM(weight) AS score
 FROM keyword_stats
 WHERE period='current'
-GROUP BY 1 ORDER BY score DESC LIMIT 200</code>
-            </footer>
+GROUP BY 1
+ORDER BY score DESC LIMIT 200</code></pre>
+            </details>
           </div>
           <div class="card glass insight-chart" data-consent-status='<%- consentStatusJSON %>' data-drilldown="consent-status">
             <div class="card-heading">
@@ -474,9 +561,12 @@ GROUP BY 1 ORDER BY score DESC LIMIT 200</code>
             <div class="chart-frame">
               <canvas id="consent-status-chart" height="240"></canvas>
             </div>
-            <footer class="card-foot">
-              <code>SELECT latest_status, COUNT(*) FROM consent_audit_latest GROUP BY 1</code>
-            </footer>
+            <details class="card-foot query-toggle">
+              <summary>ดูสูตร / Query</summary>
+              <pre><code>SELECT latest_status, COUNT(*)
+FROM consent_audit_latest
+GROUP BY 1</code></pre>
+            </details>
           </div>
           <div class="card glass sentiment-cloud" data-sentiment-cloud='<%- sentimentCloudJSON %>' data-drilldown="sentiment-wordcloud">
             <div class="card-heading">
@@ -492,9 +582,6 @@ GROUP BY 1 ORDER BY score DESC LIMIT 200</code>
                 <canvas id="sentiment-cloud-negative" height="140"></canvas>
               </div>
             </div>
-            <footer class="card-foot">
-              <code>SELECT term, SUM(weight) FROM sentiment_terms WHERE sentiment='positive'</code>
-            </footer>
           </div>
         </div>
 
@@ -507,11 +594,14 @@ GROUP BY 1 ORDER BY score DESC LIMIT 200</code>
             <div class="chart-frame">
               <canvas id="conversion-funnel-chart" height="260"></canvas>
             </div>
-            <footer class="card-foot">
-              <code>SELECT stage, COUNT(*) FROM conversion_events
+            <details class="card-foot query-toggle">
+              <summary>ดูสูตร / Query</summary>
+              <pre><code>SELECT stage, COUNT(*)
+FROM conversion_events
 WHERE event_ts BETWEEN $start AND $end
-GROUP BY stage ORDER BY stage_order</code>
-            </footer>
+GROUP BY stage
+ORDER BY stage_order</code></pre>
+            </details>
           </div>
           <div class="card glass insight-chart" data-agent-response='<%- agentResponseJSON %>' data-drilldown="agent-response">
             <div class="card-heading">
@@ -521,16 +611,17 @@ GROUP BY stage ORDER BY stage_order</code>
             <div class="chart-frame">
               <canvas id="agent-response-chart" height="260"></canvas>
             </div>
-            <footer class="card-foot">
-              <code>SELECT agent_id,
+            <details class="card-foot query-toggle">
+              <summary>ดูสูตร / Query</summary>
+              <pre><code>SELECT agent_id,
 AVG(first_reply_sec) AS avg,
 PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY first_reply_sec) AS median,
-PERCENTILE_CONT(0.9) WITHIN GROUP(...) AS p90,
+PERCENTILE_CONT(0.9) WITHIN GROUP(ORDER BY first_reply_sec) AS p90,
 AVG(CASE WHEN first_reply_sec &lt;= 300 THEN 1 ELSE 0 END) AS sla_pct
 FROM agent_metrics
 WHERE week_start BETWEEN $start AND $end
-GROUP BY agent_id</code>
-            </footer>
+GROUP BY agent_id</code></pre>
+            </details>
           </div>
           <div class="card glass" data-drilldown="agent-performance-table">
             <div class="card-heading">
@@ -602,16 +693,18 @@ GROUP BY agent_id</code>
                 </tbody>
               </table>
             </div>
-            <footer class="card-foot">
-              <code>SELECT user_id,
+            <details class="card-foot query-toggle">
+              <summary>ดูสูตร / Query</summary>
+              <pre><code>SELECT user_id,
 COUNT(*) AS messages,
 COUNT(DISTINCT conversation_id) AS sessions,
 AVG(sentiment_score) AS avg_sentiment,
 engagement_score
 FROM user_daily_metrics
 WHERE date BETWEEN $start AND $end
-ORDER BY engagement_score DESC LIMIT 20</code>
-            </footer>
+ORDER BY engagement_score DESC
+LIMIT 20</code></pre>
+            </details>
           </div>
         </div>
 
@@ -624,10 +717,13 @@ ORDER BY engagement_score DESC LIMIT 20</code>
             <div class="chart-frame">
               <canvas id="retention-cohort-chart" height="260"></canvas>
             </div>
-            <footer class="card-foot">
-              <code>SELECT cohort_week, week_offset, returning_users/total_users AS rate
-FROM retention_cohorts</code>
-            </footer>
+            <details class="card-foot query-toggle">
+              <summary>ดูสูตร / Query</summary>
+              <pre><code>SELECT cohort_week,
+week_offset,
+returning_users / total_users AS rate
+FROM retention_cohorts</code></pre>
+            </details>
           </div>
           <div class="card glass" data-drilldown="churn-risk">
             <div class="card-heading">
@@ -692,11 +788,12 @@ FROM retention_cohorts</code>
                 </tbody>
               </table>
             </div>
-            <footer class="card-foot">
-              <code>INSERT INTO anomalies(date, metric, delta_sigma)
+            <details class="card-foot query-toggle">
+              <summary>ดูสูตร / Query</summary>
+              <pre><code>INSERT INTO anomalies(date, metric, delta_sigma)
 SELECT day, 'complaints', z_score
-FROM complaint_spike_detector</code>
-            </footer>
+FROM complaint_spike_detector</code></pre>
+            </details>
           </div>
         </div>
 
@@ -709,12 +806,15 @@ FROM complaint_spike_detector</code>
             <div class="chart-frame">
               <canvas id="network-graph" height="340"></canvas>
             </div>
-            <footer class="card-foot">
-              <code>SELECT user_id, agent_id, COUNT(*) AS conversations
+            <details class="card-foot query-toggle">
+              <summary>ดูสูตร / Query</summary>
+              <pre><code>SELECT user_id,
+agent_id,
+COUNT(*) AS conversations
 FROM fact_conversation
 WHERE first_agent_reply_ts IS NOT NULL
-GROUP BY 1,2</code>
-            </footer>
+GROUP BY 1,2</code></pre>
+            </details>
           </div>
         </div>
 
