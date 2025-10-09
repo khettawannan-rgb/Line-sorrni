@@ -299,7 +299,7 @@ body.auth{
 .login-aside-brand img{ height:52px; border-radius:16px; box-shadow:0 16px 32px -20px rgba(37,99,235,.4); }
 .login-aside-brand span{ font-size:1.05rem; }
 .login-aside-body{ display:flex; flex-direction:column; gap:22px; }
-.login-aside-body h2{ margin:0; font-size:2rem; font-weight:700; }
+.login-aside-body h2{ margin:0; font-size:2rem; font-weight:700; color:#ffffff; }
 .login-aside-body p{ margin:0; line-height:1.6; color:rgba(226,232,250,.85); }
 .login-aside-stats{ display:flex; gap:16px; flex-wrap:wrap; }
 .login-aside-stats div{
