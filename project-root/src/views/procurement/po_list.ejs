@@ -6,7 +6,7 @@
     </p>
   </div>
   <div class="actions">
-    <a href="#po-create-form" class="btn btn-primary" data-dialog-open="po-create-dialog">+ สร้างใบสั่งซื้อ</a>
+    <a href="#po-create-form" class="btn primary" data-dialog-open="po-create-dialog">+ สร้างใบสั่งซื้อ</a>
   </div>
 </section>
 
@@ -70,10 +70,10 @@
                     <% }) %>
                   </select>
                   <input type="text" name="remark" placeholder="หมายเหตุ (เช่น Tracking)" />
-                  <button type="submit" class="btn btn-sm btn-primary">อัปเดต</button>
+                  <button type="submit" class="btn small primary">อัปเดต</button>
                 </form>
                 <% if (po.pdfUrl) { %>
-                  <a class="btn btn-sm btn-secondary" href="<%= po.pdfUrl %>" target="_blank">ดาวน์โหลด PDF</a>
+                  <a class="btn small secondary" href="<%= po.pdfUrl %>" target="_blank">ดาวน์โหลด PDF</a>
                 <% } %>
               </div>
             </details>
@@ -131,12 +131,12 @@
         </div>
       </fieldset>
       <div class="form-group">
-        <button type="button" class="btn btn-sm btn-secondary" data-add-row>+ เพิ่มรายการ</button>
+        <button type="button" class="btn small secondary" data-add-row>+ เพิ่มรายการ</button>
       </div>
 
       <footer class="dialog-footer">
-        <button type="submit" class="btn btn-primary">สร้างใบสั่งซื้อ</button>
-        <button type="button" class="btn btn-ghost" data-dialog-close>ยกเลิก</button>
+        <button type="submit" class="btn primary">สร้างใบสั่งซื้อ</button>
+        <button type="button" class="btn ghost" data-dialog-close>ยกเลิก</button>
       </footer>
     </form>
   </div>

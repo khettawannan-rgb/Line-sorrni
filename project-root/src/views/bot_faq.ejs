@@ -54,12 +54,12 @@
       <p class="muted">กำหนดคำถาม-คำตอบให้ LINE Bot ตอบอัตโนมัติ และนำเข้าชุดคำถามแนะนำ</p>
     </div>
     <form action="/admin/bot-faq/import-defaults" method="post" onsubmit="return confirm('นำเข้าคำตอบแนะนำ?');">
-      <button type="submit" class="btn btn-secondary">นำเข้าชุดคำถามแนะนำ</button>
+      <button type="submit" class="btn secondary">นำเข้าชุดคำถามแนะนำ</button>
     </form>
   </div>
 
   <% if (message) { %>
-    <div class="alert ok"><%= message %></div>
+    <div class="alert success"><%= message %></div>
   <% } %>
   <% if (error) { %>
     <div class="alert error"><%= error %></div>
@@ -73,7 +73,7 @@
             <h3>หัวข้อที่บอทตอบได้ตอนนี้</h3>
             <span class="muted">ตรวจสอบคำตอบที่มีอยู่ก่อนจะเพิ่มรายการใหม่</span>
           </div>
-          <button type="button" class="btn btn-sm ghost" data-action="toggle-intent-summary" aria-expanded="true">หุบหัวข้อ</button>
+          <button type="button" class="btn small ghost" data-action="toggle-intent-summary" aria-expanded="true">หุบหัวข้อ</button>
         </div>
         <div class="intent-summary-wrap" data-intent-summary>
           <div class="intent-summary">
@@ -181,7 +181,7 @@
           <dd><%= stats?.lastMatchedAt ? new Date(stats.lastMatchedAt).toLocaleString('th-TH') : 'ยังไม่มีการใช้งาน' %></dd>
         </div>
       </dl>
-      <p class="muted" style="margin-top:auto;">หากมีการเพิ่ม/แก้ไข ระบบจะรีเฟรชข้อมูลบอทอัตโนมัติในทุกข้อความถัดไป</p>
+      <p class="muted mt-auto">หากมีการเพิ่ม/แก้ไข ระบบจะรีเฟรชข้อมูลบอทอัตโนมัติในทุกข้อความถัดไป</p>
     </div>
   </div>
 
@@ -194,13 +194,13 @@
         <table class="table compact ghost">
           <thead>
             <tr>
-              <th style="width:160px;">Intent</th>
+              <th class="w-160">Intent</th>
               <th>คำหลัก</th>
               <th>คำตอบ</th>
               <th>คำแนะนำ</th>
-              <th style="width:120px;">สถานะ</th>
-              <th style="width:140px;">การใช้งาน</th>
-              <th style="width:140px;">จัดการ</th>
+              <th class="w-120">สถานะ</th>
+              <th class="w-140">การใช้งาน</th>
+              <th class="w-140">จัดการ</th>
             </tr>
           </thead>
           <tbody>
@@ -215,9 +215,9 @@
                     <code class="tag"><%= kw %></code>
                   <% }) %>
                   <% if (item.tags && item.tags.length) { %>
-                    <div class="muted" style="margin-top:6px;">
+                    <div class="muted mt-2">
                       <% item.tags.forEach(tag => { %>
-                        <code class="tag" style="background:rgba(148,163,184,.18); color:#475569;"><%= tag %></code>
+                        <code class="tag tag-muted"><%= tag %></code>
                       <% }) %>
                     </div>
                   <% } %>
@@ -243,17 +243,17 @@
                 </td>
                 <td>
                   <div><strong><%= item.usageCount || 0 %></strong> ครั้ง</div>
-                  <div class="muted" style="font-size:.75rem;">
+                  <div class="muted text-xs">
                     <%= item.lastMatchedAt ? new Date(item.lastMatchedAt).toLocaleString('th-TH') : '-' %>
                   </div>
                 </td>
                 <td>
                   <div class="table-actions">
                     <form action="/admin/bot-faq/<%= item._id %>/toggle" method="post">
-                      <button type="submit" class="btn btn-sm"><%= item.isActive ? 'ปิดการใช้' : 'เปิดใช้งาน' %></button>
+                      <button type="submit" class="btn small"><%= item.isActive ? 'ปิดการใช้' : 'เปิดใช้งาน' %></button>
                     </form>
                     <form action="/admin/bot-faq/<%= item._id %>/delete" method="post" onsubmit="return confirm('ลบรายการนี้?');">
-                      <button type="submit" class="btn btn-sm danger">ลบ</button>
+                      <button type="submit" class="btn small danger">ลบ</button>
                     </form>
                   </div>
                 </td>

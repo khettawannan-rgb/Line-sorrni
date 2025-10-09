@@ -1,28 +1,38 @@
 <div class="panel">
-  <div class="panel-header"><h3 class="panel-title">ส่งสรุปรายวัน (Manual)</h3></div>
+  <div class="panel-header">
+    <h2>ส่งสรุปรายวัน (Manual)</h2>
+  </div>
   <div class="panel-body">
-    <% if (result?.error) { %><div class="alert err"><%= result.error %></div><% } %>
+    <% if (result?.error) { %><div class="alert error"><%= result.error %></div><% } %>
     <% if (result?.ok) { %>
-      <div class="alert ok">ส่งสำเร็จบางส่วน/ทั้งหมด ดูรายละเอียดด้านล่าง</div>
+      <div class="alert success">ส่งสำเร็จบางส่วน/ทั้งหมด ดูรายละเอียดด้านล่าง</div>
       <pre class="code"><%= result.preview %></pre>
-      <div class="muted">picked date: <%= result.picked %> (<%= result.reason %>)</div>
+      <div class="form-help">picked date: <%= result.picked %> (<%= result.reason %>)</div>
       <hr class="sep"/>
-      <table>
-        <thead><tr><th>ผู้รับ</th><th>สถานะ</th><th>หมายเหตุ</th></tr></thead>
-        <tbody>
-          <% (result.sent||[]).forEach(s=>{ %>
+      <div class="table-scroll">
+        <table class="table compact">
+          <thead>
             <tr>
-              <td class="muted"><%= s.to %></td>
-              <td><span class="badge"><%= s.ok?'OK':'Fail' %></span></td>
-              <td class="muted"><%= s.error || '-' %></td>
+              <th>ผู้รับ</th>
+              <th>สถานะ</th>
+              <th>หมายเหตุ</th>
             </tr>
-          <% }) %>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <% (result.sent||[]).forEach(s=>{ %>
+              <tr>
+                <td class="muted"><%= s.to %></td>
+                <td><span class="badge <%= s.ok ? 'success' : 'danger' %>"><%= s.ok?'OK':'Fail' %></span></td>
+                <td class="muted"><%= s.error || '-' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
     <% } %>
 
-    <form method="post" style="margin-top:12px">
-      <div class="row">
+    <form class="form" method="post">
+      <div class="form-row">
         <label>บริษัท</label>
         <select name="companyId" required>
           <option value="">— เลือก —</option>
@@ -31,11 +41,13 @@
           <% }) %>
         </select>
       </div>
-      <div class="row">
+      <div class="form-row">
         <label>วันที่</label>
         <input type="date" name="date" value="<%= form?.date || '' %>" required />
       </div>
-      <button class="btn success" type="submit">ส่งเลย</button>
+      <div class="form-actions">
+        <button class="btn success" type="submit">ส่งเลย</button>
+      </div>
     </form>
   </div>
 </div>

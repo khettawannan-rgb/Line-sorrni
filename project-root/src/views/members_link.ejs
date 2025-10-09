@@ -23,8 +23,8 @@
     </div>
 
     <div class="form-actions">
-      <button class="btn" type="submit">ค้นหา</button>
-      <span class="muted" style="margin-left:8px;">ทั้งหมด: <%= (counters && counters.all) || 0 %> / ยังไม่ผูก: <%= (counters && counters.unlinked) || 0 %></span>
+      <button class="btn primary" type="submit">ค้นหา</button>
+      <span class="form-help form-meta">ทั้งหมด: <%= (counters && counters.all) || 0 %> / ยังไม่ผูก: <%= (counters && counters.unlinked) || 0 %></span>
     </div>
   </form>
 </div>
@@ -43,7 +43,7 @@
           <th>LINE userId</th>
           <th>Company</th>
           <th>Active</th>
-          <th style="width:220px;">Actions</th>
+          <th class="col-actions">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -62,11 +62,11 @@
                 <% }) %>
               </select>
             </td>
-            <td style="text-align:center">
+            <td class="center">
               <input type="checkbox" name="active" value="<%= i %>" <%= m.active ? 'checked' : '' %> />
             </td>
-            <td>
-              <form action="/admin/members/<%= m._id %>/refresh-profile" method="post" style="display:inline-block">
+            <td class="table-actions col-actions">
+              <form action="/admin/members/<%= m._id %>/refresh-profile" method="post">
                 <button class="btn small" type="submit">Refresh Profile</button>
               </form>
               <a class="btn small" href="/admin/members/<%= m._id %>/edit">Edit</a>

@@ -1,31 +1,39 @@
-<h2><%= (action==='update') ? 'Edit Keyword' : 'New Keyword' %></h2>
-
-<form method="post" action="<%= (action==='update') ? '/keywords/'+k._id : '/keywords' %>" style="max-width:680px;">
-  <label style="display:block;margin:10px 0;">Keyword (ตัวเล็ก)
-    <% if (action==='update') { %>
-      <input value="<%= k?.keyword || '' %>" disabled style="width:100%;padding:8px;">
-    <% } else { %>
-      <input name="keyword" value="<%= k?.keyword || '' %>" required style="width:100%;padding:8px;">
-    <% } %>
-  </label>
-
-  <label style="display:block;margin:10px 0;">Reply Type
-    <select name="replyType" style="width:100%;padding:8px;">
-      <option value="text" <%= (k?.replyType==='text') ? 'selected' : '' %>>text</option>
-      <option value="template" <%= (k?.replyType==='template') ? 'selected' : '' %>>template</option>
-    </select>
-  </label>
-
-  <label style="display:block;margin:10px 0;">Message (ถ้า replyType=text)
-    <textarea name="message" rows="6" style="width:100%;padding:8px;"><%= k?.message || '' %></textarea>
-  </label>
-
-  <label style="display:block;margin:10px 0;">Template Code (ถ้า replyType=template)
-    <input name="templateCode" value="<%= k?.templateCode || '' %>" placeholder="daily_summary" style="width:100%;padding:8px;">
-  </label>
-
-  <div style="display:flex;gap:8px;">
-    <button class="btn" type="submit"><%= (action==='update') ? 'Save' : 'Create' %></button>
-    <a class="secondary" href="/keywords">Cancel</a>
+<div class="panel panel-narrow">
+  <div class="panel-header">
+    <h2><%= (action==='update') ? 'Edit Keyword' : 'New Keyword' %></h2>
   </div>
-</form>
+
+  <form class="form" method="post" action="<%= (action==='update') ? '/keywords/'+k._id : '/keywords' %>">
+    <div class="form-row">
+      <label>Keyword (ตัวเล็ก)</label>
+      <% if (action==='update') { %>
+        <input value="<%= k?.keyword || '' %>" disabled />
+      <% } else { %>
+        <input name="keyword" value="<%= k?.keyword || '' %>" required />
+      <% } %>
+    </div>
+
+    <div class="form-row">
+      <label>Reply Type</label>
+      <select name="replyType">
+        <option value="text" <%= (k?.replyType==='text') ? 'selected' : '' %>>text</option>
+        <option value="template" <%= (k?.replyType==='template') ? 'selected' : '' %>>template</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <label>Message (ถ้า replyType=text)</label>
+      <textarea name="message" rows="6"><%= k?.message || '' %></textarea>
+    </div>
+
+    <div class="form-row">
+      <label>Template Code (ถ้า replyType=template)</label>
+      <input name="templateCode" value="<%= k?.templateCode || '' %>" placeholder="daily_summary" />
+    </div>
+
+    <div class="form-actions">
+      <button class="btn primary" type="submit"><%= (action==='update') ? 'Save' : 'Create' %></button>
+      <a class="btn ghost" href="/keywords">Cancel</a>
+    </div>
+  </form>
+</div>

@@ -9,7 +9,7 @@
     กรุณาตรวจสอบรายละเอียดและเลือกยินยอมหรือปฏิเสธการเก็บข้อมูลส่วนบุคคลเพื่อดำเนินการบริการของเรา
   </p>
 
-  <div class="panel" style="margin-bottom: 16px;">
+  <div class="panel mb-3">
     <h3>ขอบเขตการเก็บข้อมูล</h3>
     <ul class="clean">
       <li>บันทึกข้อความและคำสั่งที่คุณส่งถึงบัญชี LINE Official Account นี้</li>
@@ -22,15 +22,15 @@
     </p>
   </div>
 
-  <form method="post" class="actions" style="gap: .75rem;">
+  <form method="post" class="actions gap-md">
     <input type="hidden" name="userId" value="<%= userId %>" />
     <input type="hidden" name="token" value="<%= token %>" />
 
-    <button class="btn btn-secondary" type="submit" name="decision" value="decline">
+    <button class="btn secondary" type="submit" name="decision" value="decline">
       ไม่ยินยอม
     </button>
     <div class="spacer"></div>
-    <button class="btn btn-primary" type="submit" name="decision" value="accept">
+    <button class="btn primary" type="submit" name="decision" value="accept">
       ยินยอมและดำเนินการต่อ
     </button>
   </form>

@@ -15,7 +15,7 @@
           <th>ชื่อบริษัท</th>
           <th>Timezone</th>
           <th>Daily Time</th>
-          <th style="width:200px;">Actions</th>
+          <th class="col-actions">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -24,9 +24,9 @@
             <td><strong><%= c.name %></strong></td>
             <td><code><%= c.timezone || '-' %></code></td>
             <td><code><%= c.dailyTime || '-' %></code></td>
-            <td>
+            <td class="table-actions col-actions">
               <a class="btn small" href="/admin/companies/<%= c._id %>/edit">Edit</a>
-              <form action="/admin/companies/<%= c._id %>/delete" method="post" style="display:inline-block" onsubmit="return confirm('ลบบริษัทนี้?');">
+              <form action="/admin/companies/<%= c._id %>/delete" method="post" onsubmit="return confirm('ลบบริษัทนี้?');">
                 <button class="btn small danger" type="submit">Delete</button>
               </form>
             </td>

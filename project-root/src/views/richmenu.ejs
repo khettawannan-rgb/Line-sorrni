@@ -6,16 +6,16 @@
       <h3>Rich Menu</h3>
       <div class="toolbar">
         <!-- สร้าง + อัปโหลดรูป + ตั้ง Default -->
-        <form action="/admin/richmenu/create" method="post" style="display:inline">
-          <button type="submit" class="btn btn-primary">สร้าง + อัปโหลดรูป + ตั้ง Default</button>
+        <form action="/admin/richmenu/create" method="post">
+          <button type="submit" class="btn primary">สร้าง + อัปโหลดรูป + ตั้ง Default</button>
         </form>
 
         <!-- Debug -->
-        <a class="btn btn-secondary" href="/admin/richmenu/debug">Debug</a>
+        <a class="btn secondary" href="/admin/richmenu/debug">Debug</a>
 
         <!-- ลบทั้งหมด -->
-        <form action="/admin/richmenu/delete" method="post" style="display:inline" onsubmit="return confirm('ลบ Rich Menu ทั้งหมดหรือไม่?')">
-          <button type="submit" class="btn btn-danger">ลบทั้งหมด</button>
+        <form action="/admin/richmenu/delete" method="post" onsubmit="return confirm('ลบ Rich Menu ทั้งหมดหรือไม่?')">
+          <button type="submit" class="btn danger">ลบทั้งหมด</button>
         </form>
       </div>
     </div>
@@ -56,13 +56,13 @@
                   <% } %>
                 </td>
                 <td class="center">
-                  <form action="/admin/richmenu/default" method="post" style="display:inline">
+                  <form action="/admin/richmenu/default" method="post">
                     <input type="hidden" name="id" value="<%= m.richMenuId %>">
-                    <button class="btn btn-sm btn-primary" type="submit">ตั้ง Default</button>
+                    <button class="btn small primary" type="submit">ตั้ง Default</button>
                   </form>
-                  <form action="/admin/richmenu/delete" method="post" style="display:inline" onsubmit="return confirm('ลบเมนูนี้?')">
+                  <form action="/admin/richmenu/delete" method="post" onsubmit="return confirm('ลบเมนูนี้?')">
                     <input type="hidden" name="id" value="<%= m.richMenuId %>">
-                    <button class="btn btn-sm btn-danger" type="submit">ลบ</button>
+                    <button class="btn small danger" type="submit">ลบ</button>
                   </form>
                 </td>
               </tr>

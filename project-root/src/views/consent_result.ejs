@@ -6,18 +6,18 @@
   </div>
 
   <% if (accepted) { %>
-    <h2 style="margin-top: 0;">ขอบคุณสำหรับความยินยอม</h2>
+    <h2 class="mt-0">ขอบคุณสำหรับความยินยอม</h2>
     <p class="muted">
       เราได้บันทึกการยินยอมของคุณเรียบร้อยแล้ว คุณสามารถปิดหน้าต่างนี้และกลับไปที่ LINE ได้เลย
     </p>
   <% } else { %>
-    <h2 style="margin-top: 0;">คุณได้ปฏิเสธการยินยอม</h2>
+    <h2 class="mt-0">คุณได้ปฏิเสธการยินยอม</h2>
     <p class="muted">
       เราจะไม่เก็บและประมวลผลข้อมูลการสนทนาของคุณ หากต้องการเปลี่ยนใจ สามารถกดลิงก์ยืนยันอีกครั้งในภายหลังได้
     </p>
   <% } %>
 
-  <div class="note" style="margin-top: 16px;">
+  <div class="note mt-3">
     Timestamp: <strong><%= new Date(consent.updatedAt).toLocaleString('th-TH') %></strong>
   </div>
 </section>

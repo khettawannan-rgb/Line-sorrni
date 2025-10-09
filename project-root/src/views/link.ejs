@@ -20,7 +20,7 @@
   </div>
 <% } %>
 
-<div class="grid grid-2" style="align-items:start;">
+<div class="grid grid-2 align-start">
 
   <section class="panel">
     <div class="panel-header">
@@ -41,9 +41,9 @@
     <% if (profile) { %>
       <div class="card mt-3">
         <h4>โปรไฟล์</h4>
-        <div style="display:flex;gap:12px;align-items:center">
+        <div class="flex gap-md align-center">
           <% if (profile.pictureUrl) { %>
-            <img src="<%= profile.pictureUrl %>" alt="avatar" style="width:64px;height:64px;border-radius:50%">
+            <img src="<%= profile.pictureUrl %>" alt="avatar" class="avatar-md">
           <% } %>
           <div>
             <div><strong><%= profile.displayName %></strong></div>
@@ -102,7 +102,7 @@
               <th>UID</th>
               <th>Company</th>
               <th>Active</th>
-              <th style="width:120px;"></th>
+              <th class="col-actions"></th>
             </tr>
           </thead>
           <tbody>
@@ -111,9 +111,15 @@
                 <td><strong><%= m.displayName || '-' %></strong></td>
                 <td><code><%= m.lineUserId %></code></td>
                 <td><%= m.companyId ? m.companyId.name : '-' %></td>
-                <td><%= m.active ? 'Yes' : 'No' %></td>
                 <td>
-                  <form method="post" action="/admin/link/profile" style="display:inline-block">
+                  <% if (m.active) { %>
+                    <span class="badge success">Active</span>
+                  <% } else { %>
+                    <span class="badge gray">Inactive</span>
+                  <% } %>
+                </td>
+                <td class="table-actions col-actions">
+                  <form method="post" action="/admin/link/profile">
                     <input type="hidden" name="uid" value="<%= m.lineUserId %>">
                     <button class="btn small ghost" type="submit">ดู/แก้</button>
                   </form>

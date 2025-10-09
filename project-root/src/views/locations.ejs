@@ -72,7 +72,7 @@
           <span class="label">เวลา</span>
           <strong><%= fmtDate(latest.timestamp) %></strong>
         </div>
-        <a class="btn btn-secondary" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=<%= latest.location.latitude %>,<%= latest.location.longitude %>">เปิดใน Google Maps</a>
+        <a class="btn secondary" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=<%= latest.location.latitude %>,<%= latest.location.longitude %>">เปิดใน Google Maps</a>
       </div>
     </div>
   <% } else { %>
@@ -114,7 +114,7 @@
             <td><%= cons?.status || '-' %></td>
             <td>
               <% if (loc.location) { %>
-                <a class="btn btn-sm" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=<%= loc.location.latitude %>,<%= loc.location.longitude %>">แผนที่</a>
+                <a class="btn small ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=<%= loc.location.latitude %>,<%= loc.location.longitude %>">แผนที่</a>
               <% } %>
             </td>
           </tr>

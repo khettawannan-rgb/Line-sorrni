@@ -53,7 +53,7 @@
             <th>Type</th>
             <th>Text</th>
             <th>Template</th>
-            <th style="width:120px;">Actions</th>
+            <th class="col-actions">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -63,7 +63,7 @@
               <td><code><%= k.replyType %></code></td>
               <td class="wrap"><%= k.replyText || '-' %></td>
               <td><code><%= k.templateCode || '-' %></code></td>
-              <td>
+              <td class="table-actions col-actions">
                 <form action="/admin/keywords/<%= k._id %>/delete" method="post" onsubmit="return confirm('ลบคีย์เวิร์ดนี้?');">
                   <button class="btn small danger" type="submit">Delete</button>
                 </form>

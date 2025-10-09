@@ -15,7 +15,7 @@
           <th>Name</th>
           <th>Code</th>
           <th>Preview</th>
-          <th style="width:200px;">Actions</th>
+          <th class="col-actions">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -23,10 +23,10 @@
           <tr>
             <td><strong><%= t.name %></strong></td>
             <td><code><%= t.code %></code></td>
-            <td class="wrap"><pre class="mono" style="white-space:pre-wrap;"><%= (t.content || '').slice(0,300) %></pre></td>
-            <td>
+            <td class="wrap"><pre class="mono"><%= (t.content || '').slice(0,300) %></pre></td>
+            <td class="table-actions col-actions">
               <a class="btn small" href="/admin/templates/<%= t._id %>/edit">Edit</a>
-              <form action="/admin/templates/<%= t._id %>/delete" method="post" style="display:inline-block" onsubmit="return confirm('ลบเทมเพลตนี้?');">
+              <form action="/admin/templates/<%= t._id %>/delete" method="post" onsubmit="return confirm('ลบเทมเพลตนี้?');">
                 <button class="btn small danger" type="submit">Delete</button>
               </form>
             </td>

@@ -19,7 +19,7 @@
           <th>Company</th>
           <th>Role</th>
           <th>Active</th>
-          <th style="width:220px;">Actions</th>
+          <th class="col-actions">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -36,9 +36,9 @@
                 <span class="badge">inactive</span>
               <% } %>
             </td>
-            <td>
+            <td class="table-actions col-actions">
               <a class="btn small" href="/admin/members/<%= m._id %>/edit">Edit</a>
-              <form action="/admin/members/<%= m._id %>/delete" method="post" style="display:inline-block" onsubmit="return confirm('ลบสมาชิกนี้?');">
+              <form action="/admin/members/<%= m._id %>/delete" method="post" onsubmit="return confirm('ลบสมาชิกนี้?');">
                 <button class="btn small danger" type="submit">Delete</button>
               </form>
             </td>
