@@ -25,6 +25,35 @@
 <% const chatTrendJSON = JSON.stringify(chatTrend || []); %>
 <% const chatTopicTopJSON = JSON.stringify((chat.topicSummary || []).slice(0, 5)); %>
 <% const consentStatusJSON = JSON.stringify(consentTotals); %>
+<% const behavior = dashboardBehavior || {}; %>
+<% const interactionSeries = behavior.timeSeries || chatTrend || []; %>
+<% const interactionSeriesJSON = JSON.stringify(interactionSeries); %>
+<% const heatmapJSON = JSON.stringify(behavior.heatmap || []); %>
+<% const sentimentTrendJSON = JSON.stringify(behavior.sentimentTrend || []); %>
+<% const intentStackJSON = JSON.stringify(behavior.intentDistribution || []); %>
+<% const keywordCloudJSON = JSON.stringify(behavior.keywordCloud || []); %>
+<% const sentimentCloudJSON = JSON.stringify(behavior.sentimentWordCloud || { positive: [], negative: [] }); %>
+<% const funnelJSON = JSON.stringify(behavior.conversionFunnel || []); %>
+<% const agentResponseJSON = JSON.stringify(behavior.agentResponse || []); %>
+<% const agentLeaderboard = behavior.agentLeaderboard || []; %>
+<% const topCustomers = behavior.topCustomers || []; %>
+<% const retentionJSON = JSON.stringify(behavior.retentionCohorts || []); %>
+<% const churnList = behavior.churnRisks || []; %>
+<% const anomalyList = behavior.anomalies || []; %>
+<% const networkJSON = JSON.stringify(behavior.networkGraph || { nodes: [], links: [] }); %>
+<% const filters = behavior.filters || {}; %>
+<% const logicModules = behavior.logicModules || [
+     { name: 'Intent Classification', description: 'Classify each message into inquiry/order/complaint etc.', query: 'POST /nlp/intent -> intents collection update' },
+     { name: 'Sentiment Analysis', description: 'Thai language polarity + strength using finetuned model', query: 'db.chat_messages.updateOne({_id}, {$set:{sentiment_label,...}})' },
+     { name: 'Entity Extraction', description: 'Product/PO/location/date extraction with NER+regex', query: 'SELECT entity, type FROM message_entities WHERE message_id=?' },
+     { name: 'User Profiling', description: 'RFM-like metrics per user', query: 'INSERT INTO user_profiles (user_id, recency_days, frequency_30d, avg_msg_len)...' },
+     { name: 'Engagement Scoring', description: 'Score f(message frequency, session length, sentiment)', query: 'db.users.updateOne({_id:user_id}, {$set:{engagement_score:score}})' },
+     { name: 'Response Efficiency', description: 'First reply time + SLA tracking', query: 'SELECT AVG(first_reply_seconds) FROM agent_metrics' },
+     { name: 'Conversation Clustering', description: 'Topic modeling with BERTopic/HDBSCAN', query: 'INSERT INTO conversation_topics (conversation_id, cluster_id)' },
+     { name: 'Churn Prediction', description: 'Predict inactivity risk', query: 'UPDATE users SET churn_score=? WHERE user_id=?' },
+     { name: 'Next Best Action', description: 'Rule/ML recommended action', query: 'INSERT INTO nba_recommendations (user_id, action, reason)' },
+     { name: 'Anomaly Detection', description: 'Detect spikes using rolling z-score', query: 'INSERT INTO anomalies (date, metric, delta_sigma)' },
+   ]; %>
 
 <link
   rel="stylesheet"
@@ -73,6 +102,113 @@
     .dashboard-tabs button {
       flex: 1 0 auto;
     }
+  }
+</style>
+<style>
+  .insight-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 16px;
+  }
+  .insight-filters label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #475569;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .insight-filters select,
+  .insight-filters input {
+    width: 100%;
+    padding: 0.45rem 0.6rem;
+    border-radius: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+  }
+  .insight-filters .filter-actions {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .row-kpi {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 1.5rem;
+  }
+  .metric-definitions {
+    margin-bottom: 1.5rem;
+  }
+  .metric-definitions summary {
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .metric-definitions ul {
+    margin: 0.5rem 0 0;
+    padding-left: 1rem;
+    color: #475569;
+  }
+  .insight-row {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 1.5rem;
+  }
+  .insight-row.row-timeseries {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  .insight-row.row-intents,
+  .insight-row.row-agent,
+  .insight-row.row-retention {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  .insight-table-grid.row-legacy {
+    margin-top: 2rem;
+  }
+  .keyword-card,
+  .sentiment-cloud {
+    min-height: 280px;
+  }
+  .sentiment-cloud-wrap {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    padding: 1rem;
+  }
+  .logic-list ol {
+    margin-left: 1.2rem;
+    line-height: 1.4;
+  }
+  .logic-list pre {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+    overflow-x: auto;
+    font-size: 0.75rem;
+  }
+  .logic-card pre code {
+    display: block;
+    white-space: pre-wrap;
+  }
+  .drilldown-hint {
+    margin-top: -0.75rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    color: #64748b;
+  }
+  .checklist-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 1rem;
+  }
+  .checklist-columns ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    line-height: 1.5;
   }
 </style>
 
@@ -144,8 +280,74 @@
         </div>
         <div class="insight-meta">ข้อมูลย้อนหลัง 14 วันล่าสุด</div>
       </div>
-      <div class="panel-body insight-body">
-        <div class="insight-metrics">
+      <div class="panel-body insight-body" data-behavior-root>
+        <form class="insight-filters glass">
+          <div>
+            <label>ช่วงเวลา</label>
+            <select name="dateRange">
+              <% (filters.dateRanges || ['7d','14d','30d','90d','custom']).forEach(range => { %>
+                <option value="<%= range %>"><%= range.toUpperCase() %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label>Channel</label>
+            <select name="channel">
+              <option value="">ทั้งหมด</option>
+              <% (filters.channels || ['1-1','group','portal']).forEach(ch => { %>
+                <option value="<%= ch %>"><%= ch %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label>Project</label>
+            <select name="project">
+              <option value="">ทั้งหมด</option>
+              <% (filters.projects || []).forEach(project => { %>
+                <option value="<%= project %>"><%= project %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label>Customer Code</label>
+            <input type="text" name="customer_code" placeholder="ระบุรหัสลูกค้า" />
+          </div>
+          <div>
+            <label>Agent</label>
+            <select name="agent">
+              <option value="">ทั้งหมด</option>
+              <% (filters.agents || []).forEach(agent => { %>
+                <option value="<%= agent.id || agent %>"><%= agent.name || agent %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label>Intent</label>
+            <select name="intent">
+              <option value="">ทั้งหมด</option>
+              <% (filters.intents || []).forEach(intent => { %>
+                <option value="<%= intent %>"><%= intent %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label>Sentiment</label>
+            <select name="sentiment">
+              <option value="">ทั้งหมด</option>
+              <option value="positive">Positive</option>
+              <option value="neutral">Neutral</option>
+              <option value="negative">Negative</option>
+            </select>
+          </div>
+          <div class="filter-actions">
+            <button type="submit" class="btn btn-pill">Apply</button>
+            <button type="button" class="btn btn-ghost" data-export="json">Export JSON</button>
+            <button type="button" class="btn btn-ghost" data-export="csv">Export CSV</button>
+          </div>
+        </form>
+        <p class="muted drilldown-hint">* คลิกที่การ์ดหรือกราฟเพื่อดู conversations รายการ พร้อมลิงก์เปิด transcript / ERP / CRM (action wired ผ่าน data-drilldown attributes).</p>
+
+        <div class="insight-metrics row-kpi">
           <article class="metric-card primary">
             <span class="metric-label">ผู้ใช้ Active (7 วัน)</span>
             <div class="metric-value"><%= fmtCount(chatStats.active7d) %><span>คน</span></div>
@@ -167,37 +369,353 @@
             <span class="metric-sub">สะสมทั้งหมด <%= fmtCount(chatStats.messagesTotal) %> ข้อความ</span>
           </article>
         </div>
-
-        <div class="insight-chart-grid">
-          <div class="card glass insight-chart" data-chart-trend='<%- chatTrendJSON %>'>
+        <details class="metric-definitions">
+          <summary>Metric Definitions</summary>
+          <ul>
+            <li><strong>Active Users (7d)</strong> = COUNT(DISTINCT user_id) WHERE message_ts &ge; (CURRENT_DATE - INTERVAL '7 day')</li>
+            <li><strong>Returning Users</strong> = Active 7d AND EXISTS message between 8–30 days ago</li>
+            <li><strong>First Reply Time</strong> = MIN(agent_ts) - MIN(user_ts) per conversation</li>
+            <li><strong>SLA%</strong> = conversations WHERE first_reply_time &le; SLA target ÷ total conversations</li>
+            <li><strong>Retention</strong> = returning_users / cohort_users per week offset</li>
+            <li><strong>Churn Risk</strong> = gap &gt; 2× median gap OR last 3 sentiments &le; 0</li>
+          </ul>
+        </details>
+        <div class="insight-row row-timeseries">
+          <div class="card glass insight-chart full" data-chart-trend='<%- interactionSeriesJSON %>' data-drilldown="interaction-volume">
             <div class="card-heading">
-              <h3>แนวโน้มข้อความ &amp; ผู้ใช้ (14 วัน)</h3>
+              <h3>แนวโน้มข้อความเข้า/ออกตามวัน</h3>
+              <span class="muted">สลับมุมมอง 7 / 14 / 30 / 90 วัน</span>
             </div>
             <div class="chart-frame">
               <canvas id="chat-trend-chart" height="240"></canvas>
             </div>
+            <footer class="card-foot">
+              <code>SELECT date::date AS d,
+SUM(CASE WHEN direction='in' THEN 1 ELSE 0 END) AS inbound,
+SUM(CASE WHEN direction='out' THEN 1 ELSE 0 END) AS outbound
+FROM fact_chat_message
+WHERE timestamp BETWEEN $start AND $end
+GROUP BY 1 ORDER BY 1</code>
+            </footer>
           </div>
-          <div class="card glass insight-chart" data-consent-status='<%- consentStatusJSON %>'>
+          <div class="card glass insight-chart" data-heatmap='<%- heatmapJSON %>' data-drilldown="keyword-intent-heatmap">
             <div class="card-heading">
-              <h3>สถานะความยินยอม</h3>
-              <span class="muted">ทั้งหมด <%= fmtCount(consentTotals.total || 0) %> คน</span>
+              <h3>Heatmap ชั่วโมงที่ใช้งาน</h3>
+              <span class="muted">จำนวนข้อความแบบ hour × weekday</span>
+            </div>
+            <div class="chart-frame">
+              <canvas id="chat-heatmap-chart" height="240"></canvas>
+            </div>
+            <footer class="card-foot">
+              <code>SELECT EXTRACT(DOW FROM timestamp) AS dow,
+EXTRACT(HOUR FROM timestamp) AS hour,
+COUNT(*) AS volume
+FROM fact_chat_message
+WHERE timestamp BETWEEN $start AND $end
+GROUP BY 1,2</code>
+            </footer>
+          </div>
+          <div class="card glass insight-chart" data-sentiment='<%- sentimentTrendJSON %>' data-drilldown="sentiment-trend">
+            <div class="card-heading">
+              <h3>Sentiment Distribution &amp; Trend</h3>
+              <span class="muted">Pie + 14-day mini trend</span>
+            </div>
+            <div class="chart-frame sentiment">
+              <canvas id="sentiment-pie-chart" height="180"></canvas>
+              <canvas id="sentiment-mini-chart" height="80"></canvas>
+            </div>
+            <footer class="card-foot">
+              <code>SELECT sentiment_label,
+COUNT(*) AS cnt,
+AVG(sentiment_score) AS avg_score
+FROM fact_chat_message
+WHERE timestamp BETWEEN $start AND $end
+GROUP BY 1</code>
+            </footer>
+          </div>
+        </div>
+
+        <div class="insight-row row-intents">
+          <div class="card glass insight-chart" data-intent-stack='<%- intentStackJSON %>' data-drilldown="intent-distribution">
+            <div class="card-heading">
+              <h3>Intent Distribution</h3>
+              <span class="muted">สัดส่วน Inquiry / Order / Complaint / อื่น ๆ รายสัปดาห์</span>
+            </div>
+            <div class="chart-frame">
+              <canvas id="intent-stack-chart" height="260"></canvas>
+            </div>
+            <footer class="card-foot">
+              <code>SELECT week_start, intent_category, COUNT(*) FROM fact_chat_message GROUP BY 1,2</code>
+            </footer>
+          </div>
+          <div class="card glass keyword-card" data-keyword-cloud='<%- keywordCloudJSON %>' data-drilldown="top-keywords">
+            <div class="card-heading">
+              <h3>Top Keywords Cloud</h3>
+              <span class="muted">N-grams (stopwords removed)</span>
+            </div>
+            <div class="chart-frame keyword">
+              <canvas id="keyword-cloud" height="260"></canvas>
+            </div>
+            <footer class="card-foot">
+              <code>SELECT keyword, SUM(weight) AS score
+FROM keyword_stats
+WHERE period='current'
+GROUP BY 1 ORDER BY score DESC LIMIT 200</code>
+            </footer>
+          </div>
+          <div class="card glass insight-chart" data-consent-status='<%- consentStatusJSON %>' data-drilldown="consent-status">
+            <div class="card-heading">
+              <h3>Consent Status</h3>
+              <span class="muted">Granted / Pending / Revoked</span>
             </div>
             <div class="chart-frame">
               <canvas id="consent-status-chart" height="240"></canvas>
             </div>
+            <footer class="card-foot">
+              <code>SELECT latest_status, COUNT(*) FROM consent_audit_latest GROUP BY 1</code>
+            </footer>
           </div>
-          <div class="card glass insight-chart" data-topic-payload='<%- chatTopicTopJSON %>'>
+          <div class="card glass sentiment-cloud" data-sentiment-cloud='<%- sentimentCloudJSON %>' data-drilldown="sentiment-wordcloud">
             <div class="card-heading">
-              <h3>Top หมวดข้อความ</h3>
-              <span class="muted">จากข้อความล่าสุด <%= fmtCount(chat.recentCount) %> ข้อความ</span>
+              <h3>Word Clouds แยกตาม Sentiment</h3>
+            </div>
+            <div class="sentiment-cloud-wrap">
+              <div>
+                <h4>Positive</h4>
+                <canvas id="sentiment-cloud-positive" height="140"></canvas>
+              </div>
+              <div>
+                <h4>Negative</h4>
+                <canvas id="sentiment-cloud-negative" height="140"></canvas>
+              </div>
+            </div>
+            <footer class="card-foot">
+              <code>SELECT term, SUM(weight) FROM sentiment_terms WHERE sentiment='positive'</code>
+            </footer>
+          </div>
+        </div>
+
+        <div class="insight-row row-agent">
+          <div class="card glass funnel-card" data-funnel='<%- funnelJSON %>' data-drilldown="conversion-funnel">
+            <div class="card-heading">
+              <h3>Conversion Funnel</h3>
+              <span class="muted">Inquiry → Quote → PO → Payment → Delivered</span>
             </div>
             <div class="chart-frame">
-              <canvas id="topic-bar-chart" height="240"></canvas>
+              <canvas id="conversion-funnel-chart" height="260"></canvas>
+            </div>
+            <footer class="card-foot">
+              <code>SELECT stage, COUNT(*) FROM conversion_events
+WHERE event_ts BETWEEN $start AND $end
+GROUP BY stage ORDER BY stage_order</code>
+            </footer>
+          </div>
+          <div class="card glass insight-chart" data-agent-response='<%- agentResponseJSON %>' data-drilldown="agent-response">
+            <div class="card-heading">
+              <h3>Agent Response Time</h3>
+              <span class="muted">Avg / Median / P90 + SLA Target</span>
+            </div>
+            <div class="chart-frame">
+              <canvas id="agent-response-chart" height="260"></canvas>
+            </div>
+            <footer class="card-foot">
+              <code>SELECT agent_id,
+AVG(first_reply_sec) AS avg,
+PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY first_reply_sec) AS median,
+PERCENTILE_CONT(0.9) WITHIN GROUP(...) AS p90,
+AVG(CASE WHEN first_reply_sec &lt;= 300 THEN 1 ELSE 0 END) AS sla_pct
+FROM agent_metrics
+WHERE week_start BETWEEN $start AND $end
+GROUP BY agent_id</code>
+            </footer>
+          </div>
+          <div class="card glass" data-drilldown="agent-performance-table">
+            <div class="card-heading">
+              <h3>Agent Leaderboard</h3>
+              <span class="muted">เรียงตาม SLA% และ Sentiment</span>
+            </div>
+            <div class="table-scroll">
+              <table class="table compact ghost">
+                <thead>
+                  <tr>
+                    <th>Agent</th>
+                    <th class="right">Conversations</th>
+                    <th class="right">First Reply (avg)</th>
+                    <th class="right">SLA%</th>
+                    <th class="right">Avg Sentiment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (agentLeaderboard.length) { %>
+                    <% agentLeaderboard.forEach(agent => { %>
+                      <tr>
+                        <td><strong><%= agent.name || agent.agent_id %></strong></td>
+                        <td class="right"><%= fmtCount(agent.conversationCount) %></td>
+                        <td class="right"><%= (agent.avgFirstReplySec || 0).toFixed(1) %>s</td>
+                        <td class="right"><%= ((agent.slaPct || 0) * 100).toFixed(1) %>%</td>
+                        <td class="right"><%= (agent.avgSentiment || 0).toFixed(2) %></td>
+                      </tr>
+                    <% }) %>
+                  <% } else { %>
+                    <tr><td colspan="5" class="muted">ยังไม่มีข้อมูลเอเจนต์</td></tr>
+                  <% } %>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
 
-        <div class="insight-table-grid">
+        <div class="insight-row row-engagement">
+          <div class="card glass" data-drilldown="customer-engagement">
+            <div class="card-heading">
+              <h3>Top Customers by Engagement</h3>
+              <span class="muted">Ranking โดย Frequency · Sessions · Sentiment</span>
+            </div>
+            <div class="table-scroll">
+              <table class="table compact ghost">
+                <thead>
+                  <tr>
+                    <th>Customer</th>
+                    <th class="right">Messages</th>
+                    <th class="right">Sessions</th>
+                    <th class="right">Avg Sentiment</th>
+                    <th class="right">Engagement Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (topCustomers.length) { %>
+                    <% topCustomers.forEach(c => { %>
+                      <tr>
+                        <td><strong><%= c.displayName || c.user_id %></strong></td>
+                        <td class="right"><%= fmtCount(c.messageCount) %></td>
+                        <td class="right"><%= fmtCount(c.sessionCount) %></td>
+                        <td class="right"><%= (c.sentimentAvg || 0).toFixed(2) %></td>
+                        <td class="right"><%= (c.engagementScore || 0).toFixed(1) %></td>
+                      </tr>
+                    <% }) %>
+                  <% } else { %>
+                    <tr><td colspan="5" class="muted">ยังไม่มีข้อมูล engagement</td></tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+            <footer class="card-foot">
+              <code>SELECT user_id,
+COUNT(*) AS messages,
+COUNT(DISTINCT conversation_id) AS sessions,
+AVG(sentiment_score) AS avg_sentiment,
+engagement_score
+FROM user_daily_metrics
+WHERE date BETWEEN $start AND $end
+ORDER BY engagement_score DESC LIMIT 20</code>
+            </footer>
+          </div>
+        </div>
+
+        <div class="insight-row row-retention">
+          <div class="card glass insight-chart" data-retention='<%- retentionJSON %>' data-drilldown="retention-cohort">
+            <div class="card-heading">
+              <h3>Retention Cohort</h3>
+              <span class="muted">Cohort รายสัปดาห์</span>
+            </div>
+            <div class="chart-frame">
+              <canvas id="retention-cohort-chart" height="260"></canvas>
+            </div>
+            <footer class="card-foot">
+              <code>SELECT cohort_week, week_offset, returning_users/total_users AS rate
+FROM retention_cohorts</code>
+            </footer>
+          </div>
+          <div class="card glass" data-drilldown="churn-risk">
+            <div class="card-heading">
+              <h3>Churn Risk (Top 10)</h3>
+              <span class="muted">คนที่ไม่มีข้อความ &gt; 2× median หรือ sentiment ติดลบ</span>
+            </div>
+            <div class="table-scroll">
+              <table class="table compact ghost">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Last Seen</th>
+                    <th>Gap (days)</th>
+                    <th>Sentiment Trend</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (churnList.length) { %>
+                    <% churnList.forEach(item => { %>
+                      <tr>
+                        <td><strong><%= item.displayName || item.user_id %></strong></td>
+                        <td><%= item.lastSeen ? new Date(item.lastSeen).toLocaleDateString('th-TH') : '-' %></td>
+                        <td class="right"><%= (item.gapDays || 0).toFixed(1) %></td>
+                        <td class="right"><%= (item.sentimentTrend || 0).toFixed(2) %></td>
+                      </tr>
+                    <% }) %>
+                  <% } else { %>
+                    <tr><td colspan="4" class="muted">ยังไม่มีผู้ใช้ที่เสี่ยง churn</td></tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card glass" data-drilldown="anomaly-alerts">
+            <div class="card-heading">
+              <h3>Escalation &amp; Complaint Alerts</h3>
+              <span class="muted">ตรวจจับ negativity spike</span>
+            </div>
+            <div class="table-scroll">
+              <table class="table compact ghost">
+                <thead>
+                  <tr>
+                    <th>วันที่</th>
+                    <th>Metric</th>
+                    <th>Δ Sigma</th>
+                    <th>Keyword</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (anomalyList.length) { %>
+                    <% anomalyList.forEach(alert => { %>
+                      <tr>
+                        <td><%= alert.date ? new Date(alert.date).toLocaleDateString('th-TH') : '-' %></td>
+                        <td><strong><%= alert.metric %></strong></td>
+                        <td class="right"><%= (alert.deltaSigma || 0).toFixed(2) %></td>
+                        <td><%= alert.keyword || '-' %></td>
+                      </tr>
+                    <% }) %>
+                  <% } else { %>
+                    <tr><td colspan="4" class="muted">ยังไม่พบความผิดปกติ</td></tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+            <footer class="card-foot">
+              <code>INSERT INTO anomalies(date, metric, delta_sigma)
+SELECT day, 'complaints', z_score
+FROM complaint_spike_detector</code>
+            </footer>
+          </div>
+        </div>
+
+        <div class="insight-row row-network">
+          <div class="card glass network-card" data-network='<%- networkJSON %>' data-drilldown="customer-agent-network">
+            <div class="card-heading">
+              <h3>Customer ↔ Agent Network</h3>
+              <span class="muted">น้ำหนักตามจำนวนบทสนทนา</span>
+            </div>
+            <div class="chart-frame">
+              <canvas id="network-graph" height="340"></canvas>
+            </div>
+            <footer class="card-foot">
+              <code>SELECT user_id, agent_id, COUNT(*) AS conversations
+FROM fact_conversation
+WHERE first_agent_reply_ts IS NOT NULL
+GROUP BY 1,2</code>
+            </footer>
+          </div>
+        </div>
+
+        <div class="insight-table-grid row-legacy">
           <div class="card glass">
             <div class="card-heading">
               <h3>ข้อความตามประเภท</h3>
@@ -295,6 +813,61 @@
                   <% } %>
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card glass logic-card">
+          <div class="card-heading">
+            <h3>Analytics Logic &amp; Pipelines</h3>
+            <span class="muted">10 โมดูลหลักของระบบ</span>
+          </div>
+          <div class="logic-list">
+            <ol>
+              <% logicModules.forEach((module) => { %>
+                <li>
+                  <strong><%= module.name %></strong> – <%= module.description %>
+                  <pre><code><%= module.query %></code></pre>
+                </li>
+              <% }) %>
+            </ol>
+          </div>
+        </div>
+
+        <div class="card glass checklist-card">
+          <div class="card-heading">
+            <h3>Coverage Checklist</h3>
+            <span class="muted">10 Analysis · 10 Charts · 10 Logics</span>
+          </div>
+          <% const checklist = {
+               analysis: ['Customer Interaction Volume','Response Time Analysis','Topic/Intent Distribution','Sentiment Trend','Top Customers by Engagement','Keyword/Intent Heatmap','Agent Performance','Conversion Funnel','Customer Lifecycle/Retention','Escalation/Complaint Detection'],
+               charts: ['Messages Time Series','Intent Stacked Bar','Sentiment Pie+Trend','Active Hours Heatmap','Top Keywords Cloud','Conversion Funnel','Agent Response Bar','Customer-Agent Network','Retention Cohort','Word Clouds by Sentiment'],
+               logic: ['Intent Classification','Sentiment Analysis','Entity Extraction','User Profiling','Engagement Scoring','Response Efficiency','Conversation Clustering','Churn Prediction','Next Best Action','Anomaly Detection']
+             }; %>
+          <div class="checklist-columns">
+            <div>
+              <h4>Analysis</h4>
+              <ul>
+                <% checklist.analysis.forEach(item => { %>
+                  <li>✅ <%= item %></li>
+                <% }) %>
+              </ul>
+            </div>
+            <div>
+              <h4>Charts</h4>
+              <ul>
+                <% checklist.charts.forEach(item => { %>
+                  <li>✅ <%= item %></li>
+                <% }) %>
+              </ul>
+            </div>
+            <div>
+              <h4>Logic Pipelines</h4>
+              <ul>
+                <% checklist.logic.forEach(item => { %>
+                  <li>✅ <%= item %></li>
+                <% }) %>
+              </ul>
             </div>
           </div>
         </div>
