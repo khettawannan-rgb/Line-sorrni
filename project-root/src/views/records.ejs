@@ -1,50 +1,94 @@
-<%- include('partials/header', { title: title }) %>
+<div class="page-header">
+  <div>
+    <h1>Records Monitor</h1>
+    <p class="muted">ตรวจสอบข้อมูล Excel ที่นำเข้า ครอบคลุมจำนวนรายการและรายละเอียดล่าสุด</p>
+  </div>
+</div>
 
-<h2>Records Monitor</h2>
+<div class="panel">
+  <div class="panel-header">
+    <h3>ค้นหา</h3>
+  </div>
+  <form class="form" method="get" action="/admin/records">
+    <div class="form-row">
+      <label>Company ID</label>
+      <input type="text" name="companyId" value="<%= companyId || '' %>" placeholder="เช่น: 65f0f7c6ab..." />
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn primary">Filter</button>
+      <% if (companyId) { %>
+        <a class="btn ghost" href="/admin/records">ล้างตัวกรอง</a>
+      <% } %>
+    </div>
+  </form>
+</div>
 
-<form method="get" action="/admin/records" style="margin:12px 0;">
-  <label>Company ID:
-    <input type="text" name="companyId" value="<%= companyId || '' %>" style="width:320px;">
-  </label>
-  <button type="submit">Filter</button>
-</form>
+<div class="panel">
+  <div class="panel-header">
+    <h3>Counts by date (ล่าสุด 30 วัน)</h3>
+  </div>
+  <div class="table-scroll">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>dateStr (CE)</th>
+          <th>count</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% (counts||[]).forEach(c => { %>
+          <tr>
+            <td><%= c._id || '-' %></td>
+            <td><%= c.count %></td>
+          </tr>
+        <% }) %>
+        <% if (!counts || counts.length === 0) { %>
+          <tr>
+            <td colspan="2" class="muted center">ยังไม่มีข้อมูล</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
 
-<h3>Counts by date (ล่าสุด 30 วัน)</h3>
-<table class="table">
-  <thead><tr><th>dateStr (CE)</th><th>count</th></tr></thead>
-  <tbody>
-  <% (counts||[]).forEach(c => { %>
-    <tr>
-      <td><%= c._id || '-' %></td>
-      <td><%= c.count %></td>
-    </tr>
-  <% }) %>
-  </tbody>
-</table>
-
-<h3>Recent 50 records</h3>
-<table class="table">
-  <thead>
-    <tr>
-      <th>createdAt</th><th>dateStr</th><th>dateStrBE</th>
-      <th>type</th><th>product</th><th>tons</th>
-      <th>project</th><th>rowHash</th>
-    </tr>
-  </thead>
-  <tbody>
-  <% (rows||[]).forEach(r => { %>
-    <tr>
-      <td><%= new Date(r.createdAt).toISOString() %></td>
-      <td><%= r.dateStr || '' %></td>
-      <td><%= r.dateStrBE || '' %></td>
-      <td><%= r.type || '' %></td>
-      <td><%= r.product || '' %></td>
-      <td><%= (r.weightTons ?? (r.weightKg ? (r.weightKg/1000) : 0)).toFixed ? (r.weightTons ?? (r.weightKg ? (r.weightKg/1000) : 0)).toFixed(2) : (r.weightTons || 0) %></td>
-      <td><%= (r.projectName || '') + (r.projectCode ? ` (${r.projectCode})` : '') %></td>
-      <td><%= r.rowHash || '' %></td>
-    </tr>
-  <% }) %>
-  </tbody>
-</table>
-
-<%- include('partials/footer') %>
+<div class="panel">
+  <div class="panel-header">
+    <h3>Recent 50 records</h3>
+  </div>
+  <div class="table-scroll">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>createdAt</th>
+          <th>dateStr</th>
+          <th>dateStrBE</th>
+          <th>type</th>
+          <th>product</th>
+          <th>tons</th>
+          <th>project</th>
+          <th>rowHash</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% (rows||[]).forEach(r => { %>
+          <tr>
+            <td><%= new Date(r.createdAt).toISOString() %></td>
+            <td><%= r.dateStr || '' %></td>
+            <td><%= r.dateStrBE || '' %></td>
+            <td><%= r.type || '' %></td>
+            <td><%= r.product || '' %></td>
+            <td><%= (r.weightTons ?? (r.weightKg ? (r.weightKg/1000) : 0)).toFixed ? (r.weightTons ?? (r.weightKg ? (r.weightKg/1000) : 0)).toFixed(2) : (r.weightTons || 0) %></td>
+            <td><%= (r.projectName || '') + (r.projectCode ? ` (${r.projectCode})` : '') %></td>
+            <td><%= r.rowHash || '' %></td>
+          </tr>
+        <% }) %>
+        <% if (!rows || rows.length === 0) { %>
+          <tr>
+            <td colspan="8" class="muted center">ยังไม่มีข้อมูลล่าสุด</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,25 +1,45 @@
-<%- include('partials/header', { title: title || 'ผูก LINE ↔ Company' }) %>
-
-<h2>ผูก LINE ↔ Company</h2>
+<div class="page-header">
+  <div>
+    <h1>ผูก LINE ↔ Company</h1>
+    <p class="muted">เชื่อม LINE userId กับข้อมูลบริษัท เพื่อจัดส่งรายงานและข้อความอัตโนมัติ</p>
+  </div>
+  <div class="actions">
+    <a class="btn ghost" href="/admin/members">กลับไปยัง Members</a>
+  </div>
+</div>
 
 <% if (result && result.ok) { %>
-  <article class="success"><pre><%= result.message %></pre></article>
+  <div class="alert success">
+    <strong>สำเร็จ</strong>
+    <pre class="mono"><%= result.message %></pre>
+  </div>
 <% } else if (result && result.error) { %>
-  <article class="danger"><pre><%= result.error %></pre></article>
+  <div class="alert error">
+    <strong>เกิดข้อผิดพลาด</strong>
+    <pre class="mono"><%= result.error %></pre>
+  </div>
 <% } %>
 
-<div class="grid-2" style="align-items:start;gap:16px">
+<div class="grid grid-2" style="align-items:start;">
 
-  <section>
-    <h3>ค้นโปรไฟล์จาก UID</h3>
-    <form method="post" action="/admin/link/profile">
-      <label>LINE User ID (UID)</label>
-      <input name="uid" placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" value="<%= form.uid || '' %>" required>
-      <button type="submit">ดึงโปรไฟล์</button>
+  <section class="panel">
+    <div class="panel-header">
+      <h3>ค้นโปรไฟล์จาก UID</h3>
+    </div>
+
+    <form class="form" method="post" action="/admin/link/profile">
+      <div class="form-row">
+        <label>LINE User ID (UID)</label>
+        <input name="uid" placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" value="<%= form.uid || '' %>" required>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn primary">ดึงโปรไฟล์</button>
+      </div>
     </form>
 
     <% if (profile) { %>
-      <div class="card" style="margin-top:12px">
+      <div class="card mt-3">
         <h4>โปรไฟล์</h4>
         <div style="display:flex;gap:12px;align-items:center">
           <% if (profile.pictureUrl) { %>
@@ -35,26 +55,31 @@
         </div>
       </div>
 
-      <div class="card" style="margin-top:12px">
+      <div class="card mt-2">
         <h4>ผูกกับบริษัท</h4>
-        <form method="post" action="/admin/link/save">
+        <form class="form" method="post" action="/admin/link/save">
           <input type="hidden" name="uid" value="<%= profile.userId %>">
-          <label>Company</label>
-          <select name="companyId" required>
-            <% (companies||[]).forEach(c => { %>
-              <option value="<%= c._id %>" <%= (existing && existing.companyId && existing.companyId._id?.toString() === c._id?.toString()) || (form.companyId===c._id?.toString()) ? 'selected' : '' %>>
-                <%= c.name %>
-              </option>
-            <% }) %>
-          </select>
 
-          <label>Display Name (optional)</label>
-          <input name="displayName" placeholder="เว้นว่างเพื่อใช้ชื่อจาก LINE" value="<%= existing?.displayName || profile.displayName || '' %>">
+          <div class="form-row">
+            <label>Company</label>
+            <select name="companyId" required>
+              <% (companies||[]).forEach(c => { %>
+                <option value="<%= c._id %>" <%= (existing && existing.companyId && existing.companyId._id?.toString() === c._id?.toString()) || (form.companyId===c._id?.toString()) ? 'selected' : '' %>>
+                  <%= c.name %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
 
-          <div style="margin-top:8px">
-            <button type="submit">บันทึกการผูก</button>
+          <div class="form-row">
+            <label>Display Name (optional)</label>
+            <input name="displayName" placeholder="เว้นว่างเพื่อใช้ชื่อจาก LINE" value="<%= existing?.displayName || profile.displayName || '' %>">
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn primary">บันทึกการผูก</button>
             <% if (existing) { %>
-              <button class="secondary" formaction="/admin/link/unlink" formmethod="post" name="uid" value="<%= profile.userId %>" onclick="return confirm('ปิดการใช้งานผู้ใช้นี้?')">ปิดการใช้งาน</button>
+              <button class="btn danger" formaction="/admin/link/unlink" formmethod="post" name="uid" value="<%= profile.userId %>" onclick="return confirm('ปิดการใช้งานผู้ใช้นี้?')">ปิดการใช้งาน</button>
             <% } %>
           </div>
         </form>
@@ -62,41 +87,43 @@
     <% } %>
   </section>
 
-  <section>
-    <h3>รายการผู้ใช้ที่ผูกอยู่</h3>
+  <section class="panel">
+    <div class="panel-header">
+      <h3>รายการผู้ใช้ที่ผูกอยู่</h3>
+    </div>
     <% if (!members || members.length === 0) { %>
       <p class="muted">ยังไม่มีสมาชิก</p>
     <% } else { %>
-      <table role="grid">
-        <thead>
-          <tr>
-            <th>Display</th>
-            <th>UID</th>
-            <th>Company</th>
-            <th>Active</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <% members.forEach(m => { %>
+      <div class="table-scroll">
+        <table class="table">
+          <thead>
             <tr>
-              <td><%= m.displayName || '-' %></td>
-              <td><code><%= m.lineUserId %></code></td>
-              <td><%= m.companyId ? m.companyId.name : '-' %></td>
-              <td><%= m.active ? 'Yes' : 'No' %></td>
-              <td>
-                <form method="post" action="/admin/link/profile" style="display:inline-block">
-                  <input type="hidden" name="uid" value="<%= m.lineUserId %>">
-                  <button class="secondary" type="submit">ดู/แก้</button>
-                </form>
-              </td>
+              <th>Display</th>
+              <th>UID</th>
+              <th>Company</th>
+              <th>Active</th>
+              <th style="width:120px;"></th>
             </tr>
-          <% }) %>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <% members.forEach(m => { %>
+              <tr>
+                <td><strong><%= m.displayName || '-' %></strong></td>
+                <td><code><%= m.lineUserId %></code></td>
+                <td><%= m.companyId ? m.companyId.name : '-' %></td>
+                <td><%= m.active ? 'Yes' : 'No' %></td>
+                <td>
+                  <form method="post" action="/admin/link/profile" style="display:inline-block">
+                    <input type="hidden" name="uid" value="<%= m.lineUserId %>">
+                    <button class="btn small ghost" type="submit">ดู/แก้</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
     <% } %>
   </section>
 
 </div>
-
-<%- include('partials/footer') %>
