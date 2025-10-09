@@ -353,8 +353,8 @@ const sampleNetwork = {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 12px;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
     border-radius: 16px;
   }
   .insight-filters label {
@@ -384,8 +384,8 @@ const sampleNetwork = {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
-    padding: 0.25rem clamp(10px, 1vw, 16px);
-    margin-bottom: 0.75rem;
+    padding: 0 clamp(10px, 1vw, 16px);
+    margin-bottom: 0.25rem;
   }
   .filter-toolbar .btn {
     height: 32px;
@@ -394,7 +394,7 @@ const sampleNetwork = {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 16px;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
   }
   .metric-definitions {
     margin-bottom: 1.5rem;
@@ -416,6 +416,7 @@ const sampleNetwork = {
   }
   .insight-row.row-timeseries {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    margin-top: 1rem;
   }
   .insight-row.row-intents,
   .insight-row.row-agent,
@@ -747,8 +748,6 @@ const sampleNetwork = {
             <button type="button" class="btn ghost" data-export="csv">Export CSV</button>
           </div>
         </form>
-        <p class="muted drilldown-hint">* คลิกที่การ์ดหรือกราฟเพื่อดู conversations รายการ พร้อมลิงก์เปิด transcript / ERP / CRM (action wired ผ่าน data-drilldown attributes).</p>
-
         <div class="insight-metrics row-kpi">
           <article class="metric-card primary">
             <span class="metric-label">ผู้ใช้ Active (7 วัน)</span>

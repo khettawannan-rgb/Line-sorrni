@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime.js';
 import customParseFormat from 'dayjs/plugin/customParseFormat.js';
-import { replyText, replyQuickMenu, replyFlex, pushLineMessage, getUserProfile } from '../services/line.js';
+import { replyText, replyFlex, pushLineMessage, getUserProfile } from '../services/line.js';
 import LineChatLog from '../models/lineChatLog.model.js';
 import LineMedia from '../models/lineMedia.model.js';
 import Company from '../models/Company.js';
@@ -326,9 +326,15 @@ async function handleMessageEvent(ev) {
   if (msg.type === 'location') return handleLocation(ev);
 
   if (ev.replyToken) {
-    return replyQuickMenu(ev.replyToken, 'พิมพ์ "เมนู" เพื่อเริ่มต้น', [
-      { label: 'เมนู', text: 'เมนู' },
-    ]);
+    return replyActionCard(ev.replyToken, {
+      title: 'เริ่มต้นใช้งาน',
+      body: 'พิมพ์คำว่า "เมนู" เพื่อเลือกคำสั่งที่ต้องการ หรือแตะปุ่มด้านล่าง',
+      actions: [
+        { label: 'เปิดเมนู', text: 'เมนู' },
+      ],
+      color: '#1f2937',
+      altText: 'เริ่มต้นใช้งาน',
+    });
   }
 }
 
@@ -362,9 +368,13 @@ async function handlePostbackEvent(ev) {
     }
   }
 
-  return replyQuickMenu(ev.replyToken, 'พิมพ์ "เมนู" เพื่อเริ่มต้น', [
-    { label: 'เมนู', text: 'เมนู' },
-  ]);
+  return replyActionCard(ev.replyToken, {
+    title: 'เมนูหลัก',
+    body: 'แตะปุ่มเพื่อกลับไปยังเมนูหลัก',
+    actions: [{ label: 'กลับสู่เมนู', text: 'เมนู' }],
+    color: '#1f2937',
+    altText: 'เมนูหลัก',
+  });
 }
 
 async function handleText(ev) {
@@ -377,15 +387,21 @@ async function handleText(ev) {
   }
 
   if (text === 'เมนู') {
-    return replyQuickMenu(ev.replyToken, 'เลือกฟังก์ชันที่ต้องการ', [
-      { label: 'สถานะ PO', text: 'สถานะ' },
-      { label: 'สรุป วันนี้', text: 'สรุป วันนี้' },
-      { label: 'สรุป เมื่อวาน', text: 'สรุป เมื่อวาน' },
-      { label: 'สรุป สัปดาห์นี้', text: 'สรุป สัปดาห์นี้' },
-      { label: 'สรุป เดือนนี้', text: 'สรุป เดือนนี้' },
-      { label: 'สร้าง PO', text: 'สร้างใบสั่งซื้อ' },
-      { label: 'เปิด PR', text: 'เปิดใบขอซื้อ' },
-    ]);
+    return replyActionCard(ev.replyToken, {
+      title: 'เมนูหลัก',
+      subtitle: 'เลือกฟังก์ชันที่ต้องการ',
+      actions: [
+        { label: 'สถานะใบสั่งซื้อ', text: 'สถานะ' },
+        { label: 'สรุปวันนี้', text: 'สรุป วันนี้' },
+        { label: 'สรุปเมื่อวาน', text: 'สรุป เมื่อวาน' },
+        { label: 'สรุปสัปดาห์นี้', text: 'สรุป สัปดาห์นี้' },
+        { label: 'สรุปเดือนนี้', text: 'สรุป เดือนนี้' },
+        { label: 'สร้างใบสั่งซื้อ (PO)', text: 'สร้างใบสั่งซื้อ' },
+        { label: 'เปิดใบขอซื้อ (PR)', text: 'เปิดใบขอซื้อ' },
+      ],
+      color: '#1d4ed8',
+      altText: 'เมนูหลัก',
+    });
   }
 
   if (/^เช็คของ$/i.test(text) || /check stock/i.test(text)) {
@@ -471,12 +487,18 @@ async function handleText(ev) {
     return replyText(ev.replyToken, faqHit.reply);
   }
 
-  return replyQuickMenu(ev.replyToken, 'พิมพ์ "เมนู" เพื่อเริ่มต้น', [
-    { label: 'เมนู', text: 'เมนู' },
-    { label: 'สรุป วันนี้', text: 'สรุป วันนี้' },
-    { label: 'สถานะ PO', text: 'สถานะ' },
-    { label: 'สร้าง PO', text: 'สร้างใบสั่งซื้อ' },
-  ]);
+  return replyActionCard(ev.replyToken, {
+    title: 'ต้องการความช่วยเหลืออะไร?',
+    subtitle: 'เลือกคำสั่งที่ต้องการจากปุ่มด้านล่าง',
+    actions: [
+      { label: 'เปิดเมนูหลัก', text: 'เมนู' },
+      { label: 'สรุปรายวัน', text: 'สรุป วันนี้' },
+      { label: 'สถานะใบสั่งซื้อ', text: 'สถานะ' },
+      { label: 'สร้างใบสั่งซื้อ', text: 'สร้างใบสั่งซื้อ' },
+    ],
+    color: '#1d4ed8',
+    altText: 'เมนูการใช้งาน',
+  });
 }
 
 async function replyStockSummary(ev) {
@@ -725,6 +747,95 @@ function buildQuickReplyItems(items = []) {
     });
 }
 
+function buildActionCardBubble({
+  title,
+  subtitle = '',
+  body = '',
+  actions = [],
+  color = '#1d4ed8',
+}) {
+  const headerContents = [
+    { type: 'text', text: title || 'เมนู', size: 'lg', weight: 'bold', color: '#ffffff' },
+  ];
+  if (subtitle) {
+    headerContents.push({ type: 'text', text: subtitle, size: 'sm', color: '#dbeafe' });
+  }
+
+  const bodyContents = [];
+  if (Array.isArray(body)) {
+    body.forEach((line) => {
+      if (!line) return;
+      bodyContents.push({ type: 'text', text: String(line), wrap: true, color: '#0f172a', size: 'sm' });
+    });
+  } else if (body) {
+    bodyContents.push({ type: 'text', text: String(body), wrap: true, color: '#0f172a', size: 'sm' });
+  } else {
+    bodyContents.push({
+      type: 'text',
+      text: 'เลือกคำสั่งที่ต้องการจากปุ่มด้านล่าง',
+      wrap: true,
+      color: '#0f172a',
+      size: 'sm',
+    });
+  }
+
+  const footerContents = actions
+    .filter((action) => action && action.label && (action.text || action.postbackData))
+    .map((action, idx) => {
+      const style = action.style || (idx === 0 ? 'primary' : 'secondary');
+      const button = {
+        type: 'button',
+        style,
+        action: action.postbackData
+          ? {
+              type: 'postback',
+              label: action.label,
+              data: action.postbackData,
+              displayText: action.displayText || action.label,
+            }
+          : {
+              type: 'message',
+              label: action.label,
+              text: action.text,
+            },
+      };
+      if (action.color) button.color = action.color;
+      if (action.height) button.height = action.height;
+      return button;
+    });
+
+  return {
+    type: 'bubble',
+    header: {
+      type: 'box',
+      layout: 'vertical',
+      paddingAll: '20px',
+      backgroundColor: color,
+      contents: headerContents,
+    },
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'md',
+      paddingAll: '20px',
+      contents: bodyContents,
+    },
+    footer: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      paddingAll: '20px',
+      contents: footerContents,
+    },
+  };
+}
+
+function replyActionCard(replyToken, { title, subtitle, body, actions, color, altText }) {
+  if (!replyToken) return null;
+  const bubble = buildActionCardBubble({ title, subtitle, body, actions, color });
+  return replyFlex(replyToken, altText || title || 'เมนู', bubble);
+}
+
 async function replyPurchaseOrderStatus(ev, text = '', options = {}) {
   if (!ev.replyToken) return null;
   const userId = getUserId(ev);
@@ -737,10 +848,17 @@ async function replyPurchaseOrderStatus(ev, text = '', options = {}) {
     if (poNumber) {
       const po = await getPurchaseOrderByNumber(poNumber);
       if (!po) {
-        return replyQuickMenu(ev.replyToken, `ไม่พบใบสั่งซื้อ ${poNumber}`, [
-          { label: 'สถานะล่าสุด', text: 'สถานะ' },
-          { label: 'เมนู', text: 'เมนู' },
-        ]);
+        return replyActionCard(ev.replyToken, {
+          title: 'ไม่พบใบสั่งซื้อ',
+          subtitle: poNumber,
+          body: 'กรุณาตรวจสอบเลขใบสั่งซื้ออีกครั้ง หรือเลือกคำสั่งอื่นด้านล่าง',
+          actions: [
+            { label: 'ดูสถานะล่าสุด', text: 'สถานะ' },
+            { label: 'กลับเมนูหลัก', text: 'เมนู' },
+          ],
+          color: '#1f2937',
+          altText: `ไม่พบใบสั่งซื้อ ${poNumber}`,
+        });
       }
 
       const bubble = buildPoStatusBubble(po, { showCompany: true });
@@ -765,15 +883,20 @@ async function replyPurchaseOrderStatus(ev, text = '', options = {}) {
     }
 
     if (!targetCompanyId && !superAdmin) {
-      return replyQuickMenu(
-        ev.replyToken,
-        'ยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID ในระบบ จึงไม่สามารถดึงใบสั่งซื้อล่าสุดได้',
-        [
-          { label: 'สร้าง PO', text: 'สร้างใบสั่งซื้อ' },
-          { label: 'เปิด PR', text: 'เปิดใบขอซื้อ' },
-          { label: 'เมนู', text: 'เมนู' },
-        ]
-      );
+      return replyActionCard(ev.replyToken, {
+        title: 'ยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID',
+        body: [
+          'ระบบไม่พบบริษัทเริ่มต้นสำหรับการดึงสถานะใบสั่งซื้ออัตโนมัติ',
+          'เลือกคำสั่งอื่นหรือพิมพ์ชื่อบริษัทที่ต้องการตรวจสอบ',
+        ],
+        actions: [
+          { label: 'สร้างใบสั่งซื้อ', text: 'สร้างใบสั่งซื้อ' },
+          { label: 'เปิดใบขอซื้อ', text: 'เปิดใบขอซื้อ' },
+          { label: 'กลับเมนูหลัก', text: 'เมนู' },
+        ],
+        color: '#1f2937',
+        altText: 'ยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID',
+      });
     }
 
     let companyDoc = null;
@@ -781,10 +904,16 @@ async function replyPurchaseOrderStatus(ev, text = '', options = {}) {
       try {
         companyDoc = await Company.findById(targetCompanyId).lean();
         if (!companyDoc && superAdmin) {
-          return replyQuickMenu(ev.replyToken, 'ไม่พบบริษัทที่เลือก โปรดลองใหม่', [
-            { label: 'เลือกบริษัท', postbackData: 'po-status?company=menu', displayText: 'เลือกบริษัทอื่น' },
-            { label: 'เมนู', text: 'เมนู' },
-          ]);
+          return replyActionCard(ev.replyToken, {
+            title: 'ไม่พบบริษัทที่เลือก',
+            body: 'กรุณาเลือกบริษัทจากรายการ หรือค้นหาด้วยคำสั่งอื่น',
+            actions: [
+              { label: 'เลือกบริษัทอื่น', postbackData: 'po-status?company=menu', displayText: 'เลือกบริษัทอื่น' },
+              { label: 'กลับเมนูหลัก', text: 'เมนู' },
+            ],
+            color: '#1f2937',
+            altText: 'ไม่พบบริษัทที่เลือก',
+          });
         }
       } catch {
         // ignore parse errors
@@ -797,16 +926,29 @@ async function replyPurchaseOrderStatus(ev, text = '', options = {}) {
     const latest = await listPurchaseOrders(query, { limit: options.limit || 5 });
     if (!latest.length) {
       if (superAdmin) {
-        return replyQuickMenu(ev.replyToken, 'ยังไม่มีใบสั่งซื้อสำหรับบริษัทนี้', [
-          { label: 'บริษัทอื่น', postbackData: 'po-status?company=menu', displayText: 'เลือกบริษัทอื่น' },
-          { label: 'สร้าง PO', text: 'สร้างใบสั่งซื้อ' },
-          { label: 'เมนู', text: 'เมนู' },
-        ]);
+        return replyActionCard(ev.replyToken, {
+          title: 'ยังไม่มีใบสั่งซื้อ',
+          subtitle: companyDoc?.name || 'บริษัทที่เลือก',
+          body: 'คุณสามารถเลือกบริษัทอื่นหรือสร้างใบสั่งซื้อใหม่ได้ทันที',
+          actions: [
+            { label: 'เลือกบริษัทอื่น', postbackData: 'po-status?company=menu', displayText: 'เลือกบริษัทอื่น' },
+            { label: 'สร้างใบสั่งซื้อ', text: 'สร้างใบสั่งซื้อ' },
+            { label: 'กลับเมนูหลัก', text: 'เมนู' },
+          ],
+          color: '#1f2937',
+          altText: 'ยังไม่มีใบสั่งซื้อสำหรับบริษัทนี้',
+        });
       }
-      return replyQuickMenu(ev.replyToken, 'ยังไม่มีใบสั่งซื้อในระบบ', [
-        { label: 'สร้าง PO', text: 'สร้างใบสั่งซื้อ' },
-        { label: 'เมนู', text: 'เมนู' },
-      ]);
+      return replyActionCard(ev.replyToken, {
+        title: 'ยังไม่มีใบสั่งซื้อในระบบ',
+        body: 'เริ่มสร้างใบสั่งซื้อใหม่หรือกลับไปยังเมนูหลักได้เลย',
+        actions: [
+          { label: 'สร้างใบสั่งซื้อ', text: 'สร้างใบสั่งซื้อ' },
+          { label: 'กลับเมนูหลัก', text: 'เมนู' },
+        ],
+        color: '#1f2937',
+        altText: 'ยังไม่มีใบสั่งซื้อในระบบ',
+      });
     }
 
     const bubbles = latest.slice(0, 10).map((po) => buildPoStatusBubble(po, { showCompany: !targetCompanyId }));
@@ -855,10 +997,16 @@ async function replyPurchaseOrderStatus(ev, text = '', options = {}) {
     return replyFlex(ev.replyToken, altText, contents, [followUp]);
   } catch (err) {
     console.error('[WEBHOOK] replyPurchaseOrderStatus error:', err.message || err);
-    return replyQuickMenu(ev.replyToken, 'ไม่สามารถตรวจสอบสถานะใบสั่งซื้อได้ กรุณาลองใหม่', [
-      { label: 'สถานะล่าสุด', text: 'สถานะ' },
-      { label: 'เมนู', text: 'เมนู' },
-    ]);
+    return replyActionCard(ev.replyToken, {
+      title: 'เกิดข้อผิดพลาด',
+      body: 'ไม่สามารถตรวจสอบสถานะใบสั่งซื้อได้ กรุณาลองใหม่อีกครั้ง หรือเลือกคำสั่งอื่น',
+      actions: [
+        { label: 'ดูสถานะล่าสุด', text: 'สถานะ' },
+        { label: 'กลับเมนูหลัก', text: 'เมนู' },
+      ],
+      color: '#b91c1c',
+      altText: 'ตรวจสอบสถานะใบสั่งซื้อไม่สำเร็จ',
+    });
   }
 }
 
@@ -1172,9 +1320,13 @@ async function replyCompanyStatusMenu(ev) {
 
   const companies = await Company.find().sort({ name: 1 }).lean();
   if (!companies.length) {
-    return replyQuickMenu(ev.replyToken, 'ยังไม่มีบริษัทในระบบ', [
-      { label: 'เมนู', text: 'เมนู' },
-    ]);
+    return replyActionCard(ev.replyToken, {
+      title: 'ยังไม่มีบริษัทในระบบ',
+      body: 'กรุณาเพิ่มข้อมูลบริษัทในระบบก่อน เพื่อใช้งานฟังก์ชันนี้',
+      actions: [{ label: 'กลับเมนูหลัก', text: 'เมนู' }],
+      color: '#1f2937',
+      altText: 'ยังไม่มีบริษัทในระบบ',
+    });
   }
 
   const listContents = companies.slice(0, 10).map((company, idx) => ({
@@ -1333,18 +1485,30 @@ async function tryCreatePoFromFreeform(ev, rawText) {
   }
 
   if (!vendorName || hasPlaceholder(vendorName) || vendorName.toLowerCase().includes('ชื่อผู้จัดจำหน่าย')) {
-    await replyQuickMenu(ev.replyToken, 'กรุณาระบุชื่อผู้จัดจำหน่ายจริงก่อนส่ง', [
-      { label: 'ดูตัวอย่าง', postbackData: 'po-create?step=template', displayText: 'PO ตัวอย่าง' },
-      { label: 'เมนู', text: 'เมนู' },
-    ]);
+    await replyActionCard(ev.replyToken, {
+      title: 'ข้อมูลยังไม่ครบถ้วน',
+      body: 'กรุณาระบุชื่อผู้จัดจำหน่ายจริงก่อนส่ง เพื่อให้ระบบสร้างใบสั่งซื้อได้ถูกต้อง',
+      actions: [
+        { label: 'ดูตัวอย่างข้อความ', postbackData: 'po-create?step=template', displayText: 'PO ตัวอย่าง' },
+        { label: 'กลับเมนูหลัก', text: 'เมนู' },
+      ],
+      color: '#1f2937',
+      altText: 'กรุณาระบุชื่อผู้จัดจำหน่าย',
+    });
     return true;
   }
 
   if (!items.length) {
-    await replyQuickMenu(ev.replyToken, 'กรุณาระบุผู้จัดจำหน่ายและรายการสินค้าให้ครบถ้วน', [
-      { label: 'ดูตัวอย่าง', postbackData: 'po-create?step=template', displayText: 'PO ตัวอย่าง' },
-      { label: 'เมนู', text: 'เมนู' },
-    ]);
+    await replyActionCard(ev.replyToken, {
+      title: 'ยังไม่มีรายการสินค้า',
+      body: 'กรุณาใส่รายละเอียดสินค้า เช่น ชื่อ จำนวน และราคา ให้ครบถ้วนก่อนส่ง',
+      actions: [
+        { label: 'ดูตัวอย่างข้อความ', postbackData: 'po-create?step=template', displayText: 'PO ตัวอย่าง' },
+        { label: 'กลับเมนูหลัก', text: 'เมนู' },
+      ],
+      color: '#1f2937',
+      altText: 'กรุณาระบุรายการสินค้าให้ครบถ้วน',
+    });
     return true;
   }
 
@@ -1353,10 +1517,16 @@ async function tryCreatePoFromFreeform(ev, rawText) {
   let company = null;
   if (companyName) {
     if (hasPlaceholder(companyName) || companyName.toLowerCase().includes('ชื่อบริษัท')) {
-      await replyQuickMenu(ev.replyToken, 'กรุณาแทนที่ชื่อบริษัทในข้อความก่อนส่ง', [
-        { label: 'ดูตัวอย่าง', postbackData: 'po-create?step=template', displayText: 'PO ตัวอย่าง' },
-        { label: 'เมนู', text: 'เมนู' },
-      ]);
+      await replyActionCard(ev.replyToken, {
+        title: 'กรุณาระบุชื่อบริษัท',
+        body: 'ตรวจสอบให้แน่ใจว่าคุณได้เปลี่ยนชื่อบริษัทในข้อความแล้วก่อนส่ง',
+        actions: [
+          { label: 'ดูตัวอย่างข้อความ', postbackData: 'po-create?step=template', displayText: 'PO ตัวอย่าง' },
+          { label: 'กลับเมนูหลัก', text: 'เมนู' },
+        ],
+        color: '#1f2937',
+        altText: 'กรุณาแทนที่ชื่อบริษัท',
+      });
       return true;
     }
     const regex = new RegExp(`^${escapeRegex(companyName)}$`, 'i');
@@ -1366,10 +1536,16 @@ async function tryCreatePoFromFreeform(ev, rawText) {
     company = await Company.findById(DEFAULT_COMPANY_ID).lean();
   }
   if (!company) {
-    await replyQuickMenu(ev.replyToken, 'ไม่พบบริษัทที่ระบุ และยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID', [
-      { label: 'เลือกบริษัท', postbackData: 'po-status?company=menu', displayText: 'เลือกบริษัท' },
-      { label: 'เมนู', text: 'เมนู' },
-    ]);
+    await replyActionCard(ev.replyToken, {
+      title: 'ไม่พบบริษัทที่ระบุ',
+      body: 'ไม่พบบริษัทตามที่กรอกไว้ และยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID',
+      actions: [
+        { label: 'เลือกบริษัท', postbackData: 'po-status?company=menu', displayText: 'เลือกบริษัท' },
+        { label: 'กลับเมนูหลัก', text: 'เมนู' },
+      ],
+      color: '#1f2937',
+      altText: 'ไม่พบบริษัทที่ระบุ',
+    });
     return true;
   }
 
@@ -1405,10 +1581,16 @@ async function tryCreatePoFromFreeform(ev, rawText) {
     return true;
   } catch (err) {
     console.error('[LINE][PO CREATE ERR]', err);
-    await replyQuickMenu(ev.replyToken, 'สร้างใบสั่งซื้อไม่สำเร็จ กรุณาตรวจสอบข้อมูลอีกครั้ง', [
-      { label: 'ดูตัวอย่าง', postbackData: 'po-create?step=template', displayText: 'PO ตัวอย่าง' },
-      { label: 'เมนู', text: 'เมนู' },
-    ]);
+    await replyActionCard(ev.replyToken, {
+      title: 'สร้างใบสั่งซื้อไม่สำเร็จ',
+      body: 'กรุณาตรวจสอบข้อมูลให้ครบถ้วนก่อนลองอีกครั้ง หรือดูตัวอย่างข้อความเพื่อเปรียบเทียบ',
+      actions: [
+        { label: 'ดูตัวอย่างข้อความ', postbackData: 'po-create?step=template', displayText: 'PO ตัวอย่าง' },
+        { label: 'กลับเมนูหลัก', text: 'เมนู' },
+      ],
+      color: '#b91c1c',
+      altText: 'สร้างใบสั่งซื้อไม่สำเร็จ',
+    });
     return true;
   }
 }
