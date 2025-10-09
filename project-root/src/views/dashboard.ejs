@@ -36,6 +36,46 @@
   integrity="sha256-o9N1j7kC3U1JzDvsPWVn0AqfZbG9JQIvIDi64tT0+3s="
   crossorigin=""></script>
 
+<style>
+  .dashboard-tabs {
+    display: flex;
+    gap: 12px;
+    margin: 1.5rem 0 0;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    padding-bottom: 0.75rem;
+  }
+  .dashboard-tabs button {
+    border: none;
+    background: #f1f5f9;
+    color: #0f172a;
+    font-weight: 600;
+    padding: 0.5rem 1.25rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .dashboard-tabs button:hover {
+    background: #e2e8f0;
+  }
+  .dashboard-tabs button.is-active {
+    background: #1d4ed8;
+    color: #ffffff;
+    box-shadow: 0 6px 18px rgba(29, 78, 216, 0.25);
+  }
+  .dashboard-tab-hidden {
+    display: none !important;
+  }
+  @media (max-width: 960px) {
+    .dashboard-tabs {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .dashboard-tabs button {
+      flex: 1 0 auto;
+    }
+  }
+</style>
+
 <div class="dashboard-shell dashboard-light">
   <aside class="dashboard-sidebar">
     <div class="sidebar-brand">
@@ -57,7 +97,7 @@
         <span class="icon">🏢</span>
         <span>บริษัท</span>
       </a>
-      <a href="#customer-insights">
+      <a href="#customer-insights" data-tab-jump="behavior">
         <span class="icon">💬</span>
         <span>พฤติกรรมผู้ใช้</span>
       </a>
@@ -76,7 +116,7 @@
   </aside>
 
   <div class="dashboard-main">
-    <header class="dashboard-top" id="overview">
+    <header class="dashboard-top" id="overview" data-dashboard-section="core behavior classic">
       <div>
         <h1>รายงานภาพรวม</h1>
         <p>ข้อมูลสรุปการผลิต การจัดส่ง และการสนับสนุนลูกค้าจากทุกภูมิภาค</p>
@@ -90,7 +130,13 @@
       </div>
     </header>
 
-    <section class="panel-block panel-insights" id="customer-insights">
+    <section class="dashboard-tabs">
+      <button type="button" class="is-active" data-dashboard-tab="core">มุมมองหลัก</button>
+      <button type="button" data-dashboard-tab="behavior">พฤติกรรมผู้ใช้</button>
+      <button type="button" data-dashboard-tab="classic">มุมมองเดิม (สำรอง)</button>
+    </section>
+
+    <section class="panel-block panel-insights" id="customer-insights" data-dashboard-section="behavior classic">
       <div class="panel-heading">
         <div>
           <h2>Customer Insights</h2>
@@ -255,7 +301,7 @@
       </div>
     </section>
 
-    <section class="summary-cards">
+    <section class="summary-cards" data-dashboard-section="core classic">
       <article class="summary-card">
         <div class="summary-label">ปริมาณรวม</div>
         <div class="summary-value"><%= fmtTons(totals.totalTons, { max: 2 }) %><small>ตัน</small></div>
@@ -278,7 +324,7 @@
       </article>
     </section>
 
-    <section class="panel-block" id="map-overview">
+    <section class="panel-block" id="map-overview" data-dashboard-section="core classic">
       <div
         class="dashboard-map-card"
         data-province-map
@@ -353,7 +399,7 @@
       </div>
     </section>
 
-    <section class="panel-block" id="excel">
+    <section class="panel-block" id="excel" data-dashboard-section="core classic">
       <div class="panel-heading">
         <div>
           <h2>ภาพรวมสินค้า</h2>
@@ -479,7 +525,7 @@
       </div>
     </section>
 
-    <section class="panel-block" id="companies">
+    <section class="panel-block" id="companies" data-dashboard-section="core classic">
       <div class="panel-heading">
         <div>
           <h2>ข้อมูลตามบริษัท</h2>
@@ -561,7 +607,7 @@
       </div>
     </section>
 
-    <section class="panel-block" id="tools">
+    <section class="panel-block" id="tools" data-dashboard-section="core classic">
       <div class="panel-heading">
         <div>
           <h2>เครื่องมือด่วน</h2>
@@ -610,3 +656,59 @@
 </div>
 
 <script src="/static/js/dashboard_map.js"></script>
+<script>
+  (function () {
+    const TAB_KEYS = ['core', 'behavior', 'classic'];
+    const sections = Array.prototype.slice.call(document.querySelectorAll('[data-dashboard-section]'));
+    const tabButtons = Array.prototype.slice.call(document.querySelectorAll('[data-dashboard-tab]'));
+    const behaviorLink = document.querySelector('[data-tab-jump="behavior"]');
+
+    function parseGroups(section) {
+      return String(section.dataset.dashboardSection || '')
+        .split(/\s+/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+
+    function showTab(key) {
+      const target = TAB_KEYS.includes(key) ? key : 'core';
+      tabButtons.forEach((btn) => {
+        btn.classList.toggle('is-active', btn.dataset.dashboardTab === target);
+      });
+      sections.forEach((section) => {
+        const groups = parseGroups(section);
+        const visible = target === 'classic' || groups.includes(target);
+        section.classList.toggle('dashboard-tab-hidden', !visible);
+      });
+      try {
+        window.localStorage.setItem('dashboard-tab', target);
+      } catch (_) {
+        /* ignore storage errors */
+      }
+    }
+
+    tabButtons.forEach((btn) => {
+      btn.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        showTab(btn.dataset.dashboardTab);
+      });
+    });
+
+    if (behaviorLink) {
+      behaviorLink.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        showTab('behavior');
+        document.querySelector('#customer-insights')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+
+    let initial = 'core';
+    try {
+      const stored = window.localStorage.getItem('dashboard-tab');
+      if (TAB_KEYS.includes(stored)) initial = stored;
+    } catch (_) {
+      /* ignore storage errors */
+    }
+    showTab(initial);
+  })();
+</script>
