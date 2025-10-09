@@ -404,18 +404,17 @@ async function replyPrLink(ev) {
 
 async function replyPurchaseOrderStatus(ev, text = '') {
   if (!ev.replyToken) return null;
-  if (!DEFAULT_COMPANY_ID) {
-    return replyText(ev.replyToken, 'ยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID ในระบบ');
-  }
-
-  const poMatch = text.match(/(PO[-_\d]+)/i);
+  const poMatch = String(text || '').match(/(PO[-_\d]+)/i);
   const poNumber = poMatch ? poMatch[1].toUpperCase() : null;
 
   try {
     if (poNumber) {
       const po = await getPurchaseOrderByNumber(poNumber);
       if (!po) {
-        return replyText(ev.replyToken, `ไม่พบใบสั่งซื้อ ${poNumber}`);
+        return replyQuickMenu(ev.replyToken, `ไม่พบใบสั่งซื้อ ${poNumber}`, [
+          { label: 'สถานะล่าสุด', text: 'สถานะ' },
+          { label: 'เมนู', text: 'เมนู' },
+        ]);
       }
 
       const lines = [
@@ -433,23 +432,53 @@ async function replyPurchaseOrderStatus(ev, text = '') {
       if (po.pdfUrl) {
         lines.push(`ดาวน์โหลดใบสั่งซื้อ: ${po.pdfUrl}`);
       }
-      return replyText(ev.replyToken, lines.join('\n'));
+      lines.push('', 'เลือก "สถานะล่าสุด" เพื่อดูใบอื่น ๆ');
+      return replyQuickMenu(ev.replyToken, lines.join('\n'), [
+        { label: 'สถานะล่าสุด', text: 'สถานะ' },
+        { label: 'เมนู', text: 'เมนู' },
+      ]);
     }
 
-    const latest = await listPurchaseOrders({}, { limit: 3 });
+    if (!DEFAULT_COMPANY_ID) {
+      return replyQuickMenu(
+        ev.replyToken,
+        'ยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID ในระบบ จึงไม่สามารถดึงใบสั่งซื้อล่าสุดได้',
+        [
+          { label: 'สร้าง PO', text: 'สร้างใบสั่งซื้อ' },
+          { label: 'เปิด PR', text: 'เปิดใบขอซื้อ' },
+          { label: 'เมนู', text: 'เมนู' },
+        ]
+      );
+    }
+
+    const latest = await listPurchaseOrders({ companyId: DEFAULT_COMPANY_ID }, { limit: 3 });
     if (!latest.length) {
-      return replyText(ev.replyToken, 'ยังไม่มีใบสั่งซื้อในระบบ');
+      return replyQuickMenu(ev.replyToken, 'ยังไม่มีใบสั่งซื้อในระบบ', [
+        { label: 'สร้าง PO', text: 'สร้างใบสั่งซื้อ' },
+        { label: 'เมนู', text: 'เมนู' },
+      ]);
     }
 
     const lines = ['รายการสถานะใบสั่งซื้อล่าสุด:'];
     latest.forEach((po) => {
       lines.push(`• ${po.poNumber} · ${STATUS_LABELS[po.status] || po.status} · ${po.vendorId?.name || '-'}`);
     });
-    lines.push('', 'พิมพ์ "เช็คสถานะใบสั่งซื้อ PO-XXXX" เพื่อตรวจเฉพาะรายการ');
-    return replyText(ev.replyToken, lines.join('\n'));
+    lines.push('', 'แตะเมนูด้านล่างเพื่อดูรายละเอียดใบเฉพาะ หรือพิมพ์ "เช็คสถานะใบสั่งซื้อ PO-XXXX"');
+
+    const quickItems = latest.map((po) => ({
+      label: `${po.poNumber}`.slice(0, 20),
+      text: `เช็คสถานะใบสั่งซื้อ ${po.poNumber}`,
+    }));
+    quickItems.push({ label: 'สร้าง PO', text: 'สร้างใบสั่งซื้อ' });
+    quickItems.push({ label: 'เมนู', text: 'เมนู' });
+
+    return replyQuickMenu(ev.replyToken, lines.join('\n'), quickItems);
   } catch (err) {
     console.error('[WEBHOOK] replyPurchaseOrderStatus error:', err.message || err);
-    return replyText(ev.replyToken, 'ไม่สามารถตรวจสอบสถานะใบสั่งซื้อได้ กรุณาลองใหม่');
+    return replyQuickMenu(ev.replyToken, 'ไม่สามารถตรวจสอบสถานะใบสั่งซื้อได้ กรุณาลองใหม่', [
+      { label: 'สถานะล่าสุด', text: 'สถานะ' },
+      { label: 'เมนู', text: 'เมนู' },
+    ]);
   }
 }
 
