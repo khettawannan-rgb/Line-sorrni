@@ -10,6 +10,7 @@ import LineChatLog from '../models/lineChatLog.model.js';
 import LineMedia from '../models/lineMedia.model.js';
 import Company from '../models/Company.js';
 import Vendor from '../models/Vendor.js';
+import Member from '../models/Member.js';
 import {
   buildConsentUrl,
   ensureConsentRecord,
@@ -136,6 +137,7 @@ const RAW_SUPER_ADMIN_IDS = [
     .filter(Boolean),
 ];
 const SUPER_ADMIN_LINE_IDS = new Set(RAW_SUPER_ADMIN_IDS);
+const SUPER_ADMIN_CACHE = new Map();
 
 dayjs.extend(relativeTime);
 dayjs.extend(customParseFormat);
@@ -230,8 +232,29 @@ function getUserId(ev) {
   return ev?.source?.userId || null;
 }
 
-function isSuperAdminUser(userId) {
-  return userId ? SUPER_ADMIN_LINE_IDS.has(userId) : false;
+async function isSuperAdminUser(userId) {
+  if (!userId) return false;
+  if (SUPER_ADMIN_LINE_IDS.has(userId)) return true;
+
+  const cached = SUPER_ADMIN_CACHE.get(userId);
+  const now = Date.now();
+  if (cached && cached.expires > now) {
+    return cached.value;
+  }
+
+  try {
+    const member = await Member.findOne({ lineUserId: userId }).lean();
+    const isSuper = Boolean(member && member.role === 'super');
+    if (isSuper) {
+      SUPER_ADMIN_LINE_IDS.add(userId);
+    }
+    SUPER_ADMIN_CACHE.set(userId, { value: isSuper, expires: now + 5 * 60 * 1000 });
+    return isSuper;
+  } catch (err) {
+    console.warn(`[WEBHOOK] super admin lookup failed for ${userId}:`, err.message || err);
+    SUPER_ADMIN_CACHE.set(userId, { value: false, expires: now + 60 * 1000 });
+    return false;
+  }
 }
 
 function escapeRegex(input = '') {
@@ -416,7 +439,7 @@ async function handlePostbackEvent(ev) {
 
   if (action === 'po-status') {
     const userId = getUserId(ev);
-    if (!isSuperAdminUser(userId)) {
+    if (!(await isSuperAdminUser(userId))) {
       return replyText(ev.replyToken, 'ฟีเจอร์นี้ใช้ได้เฉพาะผู้ดูแลระบบ');
     }
     const target = params.get('company');
@@ -432,7 +455,7 @@ async function handlePostbackEvent(ev) {
   if (action === 'po-create') {
     const step = params.get('step') || '';
     const userId = getUserId(ev);
-    const superAdmin = isSuperAdminUser(userId);
+    const superAdmin = await isSuperAdminUser(userId);
     if (superAdmin) {
       if (step === 'super-company') {
         return replySuperAdminCompanySelect(ev);
@@ -492,7 +515,7 @@ async function handlePostbackEvent(ev) {
 async function handleText(ev) {
   const text = (ev.message?.text || '').trim();
   const userId = getUserId(ev);
-  const superAdmin = isSuperAdminUser(userId);
+  const superAdmin = await isSuperAdminUser(userId);
 
   if (/^ping$/i.test(text) || text === 'เทส') {
     return replyText(ev.replyToken, 'pong');
@@ -636,7 +659,7 @@ async function handleText(ev) {
 async function replyStockSummary(ev) {
   if (!ev.replyToken) return null;
   const userId = getUserId(ev);
-  const superAdmin = isSuperAdminUser(userId);
+  const superAdmin = await isSuperAdminUser(userId);
   if (!DEFAULT_COMPANY_ID && !superAdmin) {
     return replyText(ev.replyToken, 'ยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID ในระบบ');
   }
@@ -698,8 +721,21 @@ async function replyStockSummary(ev) {
 async function replyPrLink(ev) {
   if (!ev.replyToken) return null;
   const url = `${PORTAL_BASE}/admin/pr`;
-  const text = 'คลิกที่ลิงก์ด้านล่างเพื่อเปิดหน้าจัดการใบขอซื้อ (PR):\n' + url;
-  return replyText(ev.replyToken, text);
+  return replyActionCard(ev.replyToken, {
+    title: 'เปิดใบขอซื้อ (PR)',
+    subtitle: 'เปิดหน้าแดชบอร์ดในพอร์ทัล',
+    body: [
+      'แตะปุ่มด้านล่างเพื่อเปิดหน้าจัดการใบขอซื้อ',
+      url,
+      'ใช้บัญชีที่ได้รับสิทธิ์ในพอร์ทัล ERP เพื่อดำเนินการ',
+    ],
+    actions: [
+      { label: 'เปิดหน้า PR', uri: url, style: 'primary' },
+      { label: 'กลับเมนูหลัก', text: 'เมนู', style: 'secondary' },
+    ],
+    color: '#16a34a',
+    altText: 'เปิดหน้าจัดการใบขอซื้อ (PR)',
+  });
 }
 
 const STATUS_COLOR_MAP = {
@@ -944,25 +980,33 @@ function buildActionCardBubble({
   }
 
   const footerContents = actions
-    .filter((action) => action && action.label && (action.text || action.postbackData))
+    .filter((action) => action && action.label && (action.text || action.postbackData || action.uri))
     .map((action, idx) => {
       const style = action.style || (idx === 0 ? 'primary' : 'secondary');
-      const button = {
-        type: 'button',
-        style,
-        action: action.postbackData
-          ? {
-              type: 'postback',
-              label: action.label,
-              data: action.postbackData,
-              displayText: action.displayText || action.label,
-            }
-          : {
-              type: 'message',
-              label: action.label,
-              text: action.text,
-            },
-      };
+      const button = { type: 'button', style, action: null };
+      if (action.postbackData) {
+        button.action = {
+          type: 'postback',
+          label: action.label,
+          data: action.postbackData,
+          displayText: action.displayText || action.label,
+        };
+      } else if (action.uri) {
+        button.action = {
+          type: 'uri',
+          label: action.label,
+          uri: action.uri,
+        };
+        if (action.altUri) {
+          button.action.altUri = action.altUri;
+        }
+      } else {
+        button.action = {
+          type: 'message',
+          label: action.label,
+          text: action.text,
+        };
+      }
       if (action.color) button.color = action.color;
       if (action.height) button.height = action.height;
       return button;
@@ -1003,7 +1047,7 @@ function replyActionCard(replyToken, { title, subtitle, body, actions, color, al
 async function replyPurchaseOrderStatus(ev, text = '', options = {}) {
   if (!ev.replyToken) return null;
   const userId = getUserId(ev);
-  const superAdmin = isSuperAdminUser(userId);
+  const superAdmin = await isSuperAdminUser(userId);
 
   const poMatch = String(text || '').match(/(PO[-_\d]+)/i);
   const poNumber = options.poNumber || (poMatch ? poMatch[1].toUpperCase() : null);
@@ -1177,7 +1221,7 @@ async function replyPurchaseOrderStatus(ev, text = '', options = {}) {
 async function replyPoCreationFlex(ev) {
   if (!ev.replyToken) return null;
   const userId = getUserId(ev);
-  if (isSuperAdminUser(userId)) {
+  if (await isSuperAdminUser(userId)) {
     return replySuperAdminPoStart(ev);
   }
 
@@ -1904,7 +1948,7 @@ async function replyCompanyStatusMenu(ev) {
 
 async function tryCreatePoFromFreeform(ev, rawText) {
   const userId = getUserId(ev);
-  if (!isSuperAdminUser(userId)) return false;
+  if (!(await isSuperAdminUser(userId))) return false;
 
   const lines = String(rawText || '')
     .split(/\r?\n/)
