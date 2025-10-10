@@ -354,7 +354,7 @@ const sampleNetwork = {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 12px;
     padding: 0.75rem;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
     border-radius: 16px;
   }
   .insight-filters label {
@@ -380,21 +380,41 @@ const sampleNetwork = {
   .insight-filters.is-collapsed {
     display: none;
   }
-  .filter-toolbar {
+  .filter-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 0.5rem;
+  }
+  .filter-block .filter-toolbar {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
     padding: 0 clamp(10px, 1vw, 16px);
+  }
+  .filter-block .filter-toolbar .btn {
+    height: 32px;
+  }
+  .filter-block.is-collapsed {
     margin-bottom: 0.25rem;
   }
-  .filter-toolbar .btn {
-    height: 32px;
+  .filter-block.is-collapsed .filter-toolbar {
+    padding-bottom: 0;
+  }
+  .insight-body{
+    gap: 18px;
+  }
+  .insight-body[data-filters="collapsed"]{
+    gap: 12px;
   }
   .row-kpi {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 16px;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  .insight-body[data-filters="collapsed"] .row-kpi{
+    margin-bottom: 0.5rem;
   }
   .metric-definitions {
     margin-bottom: 1.5rem;
@@ -681,73 +701,75 @@ const sampleNetwork = {
         <div class="insight-meta">ข้อมูลย้อนหลัง 14 วันล่าสุด</div>
       </div>
       <div class="panel-body insight-body" data-behavior-root>
-        <div class="filter-toolbar">
-          <button type="button" class="btn ghost small" data-filter-toggle aria-expanded="true">ซ่อนฟิลเตอร์</button>
+        <div class="filter-block" data-filter-wrapper>
+          <div class="filter-toolbar">
+            <button type="button" class="btn ghost small" data-filter-toggle aria-expanded="true">ซ่อนฟิลเตอร์</button>
+          </div>
+          <form class="insight-filters glass" data-filter-section>
+            <div>
+              <label>ช่วงเวลา</label>
+              <select name="dateRange">
+                <% (filters.dateRanges || ['7d','14d','30d','90d','custom']).forEach(range => { %>
+                  <option value="<%= range %>"><%= range.toUpperCase() %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div>
+              <label>Channel</label>
+              <select name="channel">
+                <option value="">ทั้งหมด</option>
+                <% (filters.channels || ['1-1','group','portal']).forEach(ch => { %>
+                  <option value="<%= ch %>"><%= ch %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div>
+              <label>Project</label>
+              <select name="project">
+                <option value="">ทั้งหมด</option>
+                <% (filters.projects || []).forEach(project => { %>
+                  <option value="<%= project %>"><%= project %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div>
+              <label>Customer Code</label>
+              <input type="text" name="customer_code" placeholder="ระบุรหัสลูกค้า" />
+            </div>
+            <div>
+              <label>Agent</label>
+              <select name="agent">
+                <option value="">ทั้งหมด</option>
+                <% (filters.agents || []).forEach(agent => { %>
+                  <option value="<%= agent.id || agent %>"><%= agent.name || agent %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div>
+              <label>Intent</label>
+              <select name="intent">
+                <option value="">ทั้งหมด</option>
+                <% (filters.intents || []).forEach(intent => { %>
+                  <option value="<%= intent %>"><%= intent %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div>
+              <label>Sentiment</label>
+              <select name="sentiment">
+                <option value="">ทั้งหมด</option>
+                <option value="positive">Positive</option>
+                <option value="neutral">Neutral</option>
+                <option value="negative">Negative</option>
+              </select>
+            </div>
+            <div class="filter-actions">
+              <button type="submit" class="btn primary">Apply</button>
+              <button type="button" class="btn ghost" data-export="json">Export JSON</button>
+              <button type="button" class="btn ghost" data-export="csv">Export CSV</button>
+            </div>
+          </form>
         </div>
-        <form class="insight-filters glass" data-filter-section>
-          <div>
-            <label>ช่วงเวลา</label>
-            <select name="dateRange">
-              <% (filters.dateRanges || ['7d','14d','30d','90d','custom']).forEach(range => { %>
-                <option value="<%= range %>"><%= range.toUpperCase() %></option>
-              <% }) %>
-            </select>
-          </div>
-          <div>
-            <label>Channel</label>
-            <select name="channel">
-              <option value="">ทั้งหมด</option>
-              <% (filters.channels || ['1-1','group','portal']).forEach(ch => { %>
-                <option value="<%= ch %>"><%= ch %></option>
-              <% }) %>
-            </select>
-          </div>
-          <div>
-            <label>Project</label>
-            <select name="project">
-              <option value="">ทั้งหมด</option>
-              <% (filters.projects || []).forEach(project => { %>
-                <option value="<%= project %>"><%= project %></option>
-              <% }) %>
-            </select>
-          </div>
-          <div>
-            <label>Customer Code</label>
-            <input type="text" name="customer_code" placeholder="ระบุรหัสลูกค้า" />
-          </div>
-          <div>
-            <label>Agent</label>
-            <select name="agent">
-              <option value="">ทั้งหมด</option>
-              <% (filters.agents || []).forEach(agent => { %>
-                <option value="<%= agent.id || agent %>"><%= agent.name || agent %></option>
-              <% }) %>
-            </select>
-          </div>
-          <div>
-            <label>Intent</label>
-            <select name="intent">
-              <option value="">ทั้งหมด</option>
-              <% (filters.intents || []).forEach(intent => { %>
-                <option value="<%= intent %>"><%= intent %></option>
-              <% }) %>
-            </select>
-          </div>
-          <div>
-            <label>Sentiment</label>
-            <select name="sentiment">
-              <option value="">ทั้งหมด</option>
-              <option value="positive">Positive</option>
-              <option value="neutral">Neutral</option>
-              <option value="negative">Negative</option>
-            </select>
-          </div>
-          <div class="filter-actions">
-            <button type="submit" class="btn primary">Apply</button>
-            <button type="button" class="btn ghost" data-export="json">Export JSON</button>
-            <button type="button" class="btn ghost" data-export="csv">Export CSV</button>
-          </div>
-        </form>
         <div class="insight-metrics row-kpi">
           <article class="metric-card primary">
             <span class="metric-label">ผู้ใช้ Active (7 วัน)</span>

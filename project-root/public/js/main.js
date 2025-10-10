@@ -67,11 +67,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const filterToggle = document.querySelector('[data-filter-toggle]');
   const filterSection = document.querySelector('[data-filter-section]');
+  const filterWrapper = document.querySelector('[data-filter-wrapper]');
+  const insightRoot = document.querySelector('[data-behavior-root]');
+  if (insightRoot && !insightRoot.dataset.filters) {
+    insightRoot.dataset.filters = 'expanded';
+  }
   if (filterToggle && filterSection) {
     filterToggle.addEventListener('click', () => {
       const collapsed = filterSection.classList.toggle('is-collapsed');
       filterToggle.setAttribute('aria-expanded', String(!collapsed));
       filterToggle.textContent = collapsed ? 'แสดงฟิลเตอร์' : 'ซ่อนฟิลเตอร์';
+      if (filterWrapper) {
+        filterWrapper.classList.toggle('is-collapsed', collapsed);
+      }
+      if (insightRoot) {
+        insightRoot.dataset.filters = collapsed ? 'collapsed' : 'expanded';
+      }
     });
   }
 

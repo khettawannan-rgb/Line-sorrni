@@ -443,7 +443,7 @@ body.auth{
   align-items:flex-start;
   justify-content:space-between;
   gap:1.5rem;
-  padding:clamp(14px,1.5vw,22px) clamp(10px,1vw,16px) 18px;
+  padding:clamp(20px,2vw,30px) clamp(12px,1.2vw,18px) 18px;
   margin:0 0 22px;
   border-bottom:1px solid rgba(216,224,240,.65);
 }
