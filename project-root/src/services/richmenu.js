@@ -63,10 +63,10 @@ export async function createOrUpdateRichMenu() {
   if (!richMenuId) throw new Error('Create richmenu failed');
 
   // 2) อัปโหลดรูป
-  const imgPath = 'src/assets/richmenu.jpg';
+  const imgPath = 'src/assets/Rich menu1.png';
   await axios.post(`${LINE_API}/richmenu/${richMenuId}/content`,
     fs.createReadStream(imgPath),
-    { headers: { 'Content-Type': 'image/jpeg', ...auth() } }
+    { headers: { 'Content-Type': 'image/png', ...auth() } }
   );
 
   // 3) ตั้งเป็น default ให้ทุก user

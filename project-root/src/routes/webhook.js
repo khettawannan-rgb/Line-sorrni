@@ -52,6 +52,77 @@ const PORTAL_BASE_URL = process.env.PORTAL_BASE_URL || process.env.APP_PORTAL_UR
 const PORTAL_BASE = PORTAL_BASE_URL.replace(/\/$/, '');
 const PROCUREMENT_SAFETY_DAYS = Number(process.env.PROCUREMENT_SAFETY_DAYS || 3);
 
+const SUPER_ADMIN_SUPPLIER_CATALOG = [
+  {
+    id: 'tipco',
+    name: 'บริษัท ทิปโก้แอสฟัลท์ จำกัด (มหาชน)',
+    taxId: '0107535000044',
+    address:
+      '118/1 ถนนพระราม 6 แขวงพญาไท เขตพญาไท กรุงเทพมหานคร 10400',
+    phone: '+66-2273-6020',
+    category: 'ยางมะตอย',
+    products: [
+      { id: 'tipco-ac6070', name: 'ยาง AC-60/70', unit: 'ตัน', unitPrice: 32500 },
+      { id: 'tipco-ac4050', name: 'ยาง AC-40/50', unit: 'ตัน', unitPrice: 33000 },
+      { id: 'tipco-crs1', name: 'ยาง CRS-1', unit: 'ตัน', unitPrice: 28000 },
+      { id: 'tipco-pma', name: 'ยาง PMA', unit: 'ตัน', unitPrice: 36500 },
+    ],
+  },
+  {
+    id: 'quarry-a',
+    name: 'โรงโม่ A',
+    taxId: '0100000000001',
+    address: '99 หมู่ 4 ตำบลบางปลา อำเภอบางพลี จังหวัดสมุทรปราการ 10540',
+    phone: '+66-2100-1001',
+    category: 'หิน/ดิน',
+    products: [
+      { id: 'quarry-a-34', name: 'หิน 3/4"', unit: 'ตัน', unitPrice: 750 },
+      { id: 'quarry-a-38', name: 'หิน 3/8"', unit: 'ตัน', unitPrice: 720 },
+      { id: 'quarry-a-dust', name: 'หินฝุ่น', unit: 'ตัน', unitPrice: 680 },
+    ],
+  },
+  {
+    id: 'quarry-b',
+    name: 'โรงโม่ B',
+    taxId: '0100000000002',
+    address: '88 หมู่ 7 ตำบลบางโฉลง อำเภอบางพลี จังหวัดสมุทรปราการ 10540',
+    phone: '+66-2100-2002',
+    category: 'หิน/ดิน',
+    products: [
+      { id: 'quarry-b-base', name: 'หินคลุก', unit: 'ตัน', unitPrice: 690 },
+      { id: 'quarry-b-sand', name: 'ทรายถม', unit: 'ลูกบาศก์เมตร', unitPrice: 350 },
+      { id: 'quarry-b-crush', name: 'ดินลูกรัง', unit: 'ลูกบาศก์เมตร', unitPrice: 280 },
+    ],
+  },
+  {
+    id: 'quarry-c',
+    name: 'โรงโม่ C',
+    taxId: '0100000000003',
+    address: '55 หมู่ 2 ตำบลโพธิ์เสด็จ อำเภอเมือง จังหวัดนครศรีธรรมราช 80000',
+    phone: '+66-7535-3030',
+    category: 'หิน/ดิน',
+    products: [
+      { id: 'quarry-c-12', name: 'หิน 1/2"', unit: 'ตัน', unitPrice: 740 },
+      { id: 'quarry-c-fine', name: 'ทรายละเอียด', unit: 'ลูกบาศก์เมตร', unitPrice: 420 },
+    ],
+  },
+  {
+    id: 'ptt',
+    name: 'ปตท. น้ำมันและการค้าปลีก จำกัด (มหาชน)',
+    taxId: '0107546000376',
+    address: '555 ถนนวิภาวดีรังสิต แขวงจตุจักร เขตจตุจักร กรุงเทพมหานคร 10900',
+    phone: '+66-2140-8888',
+    category: 'น้ำมันเชื้อเพลิง',
+    products: [
+      { id: 'ptt-diesel', name: 'น้ำมันดีเซล B7', unit: 'ลิตร', unitPrice: 32.5 },
+      { id: 'ptt-gasohol', name: 'น้ำมันแก๊สโซฮอล์ 95', unit: 'ลิตร', unitPrice: 34.2 },
+      { id: 'ptt-lube', name: 'น้ำมันหล่อลื่นอุตสาหกรรม', unit: 'ลิตร', unitPrice: 180 },
+    ],
+  },
+];
+
+const SUPER_ADMIN_QUANTITY_OPTIONS = [1, 5, 10, 20, 40];
+
 const WEATHER_KEYWORDS = [/อากาศ/i, /weather/i, /ฝนตก/i, /พยากรณ์/i];
 
 const RAW_SUPER_ADMIN_IDS = [
@@ -360,6 +431,47 @@ async function handlePostbackEvent(ev) {
 
   if (action === 'po-create') {
     const step = params.get('step') || '';
+    const userId = getUserId(ev);
+    const superAdmin = isSuperAdminUser(userId);
+    if (superAdmin) {
+      if (step === 'super-company') {
+        return replySuperAdminCompanySelect(ev);
+      }
+      if (step === 'super-vendor') {
+        const companyId = params.get('company');
+        if (!companyId) {
+          return replySuperAdminCompanySelect(ev);
+        }
+        return replySuperAdminVendorSelect(ev, companyId);
+      }
+      if (step === 'super-product') {
+        const companyId = params.get('company');
+        const vendorId = params.get('vendor');
+        if (!companyId || !vendorId) {
+          return replySuperAdminPoStart(ev);
+        }
+        return replySuperAdminProductSelect(ev, companyId, vendorId);
+      }
+      if (step === 'super-qty') {
+        const companyId = params.get('company');
+        const vendorId = params.get('vendor');
+        const productId = params.get('product');
+        if (!companyId || !vendorId || !productId) {
+          return replySuperAdminPoStart(ev);
+        }
+        return replySuperAdminQuantitySelect(ev, companyId, vendorId, productId);
+      }
+      if (step === 'super-create') {
+        const companyId = params.get('company');
+        const vendorId = params.get('vendor');
+        const productId = params.get('product');
+        const qty = params.get('qty');
+        if (!companyId || !vendorId || !productId) {
+          return replySuperAdminPoStart(ev);
+        }
+        return handleSuperAdminPoCreate(ev, companyId, vendorId, productId, qty);
+      }
+    }
     if (step === 'start') {
       return replyPoDraftInstructions(ev);
     }
@@ -453,14 +565,34 @@ async function handleText(ev) {
       return replyText(ev.replyToken, 'เช่น "สรุป วันนี้" หรือ "สรุป 10/09/2025"');
     }
 
-    // NOTE: ตัวอย่างนี้อ่านบริษัทจาก ENV ก่อน
+    const date = range.dateFrom;
+    if (superAdmin) {
+      const companies = await Company.find().sort({ name: 1 }).lean();
+      if (!companies.length) {
+        return replyText(ev.replyToken, 'ยังไม่มีบริษัทในระบบสำหรับสรุปรายงาน');
+      }
+
+      const outputs = [];
+      for (const company of companies) {
+        try {
+          const summary = await buildDailySummary(company._id, date);
+          const rendered = renderDailySummaryMessage(summary);
+          outputs.push(`บริษัท ${company.name}\n${rendered}`);
+        } catch (err) {
+          console.error('[WEBHOOK] summary error (superAdmin):', err);
+          outputs.push(`บริษัท ${company.name}\nไม่สามารถดึงสรุปได้`);
+        }
+      }
+
+      return replyText(ev.replyToken, outputs.join('\n\n'));
+    }
+
     const companyId = process.env.DEFAULT_COMPANY_ID || '';
     if (!companyId) {
       console.warn('[WEBHOOK] DEFAULT_COMPANY_ID is missing in env');
       return replyText(ev.replyToken, 'ยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID');
     }
 
-    const date = range.dateFrom;
     console.log('[WEBHOOK] buildDailySummary', { companyId, date });
 
     try {
@@ -503,11 +635,43 @@ async function handleText(ev) {
 
 async function replyStockSummary(ev) {
   if (!ev.replyToken) return null;
-  if (!DEFAULT_COMPANY_ID) {
+  const userId = getUserId(ev);
+  const superAdmin = isSuperAdminUser(userId);
+  if (!DEFAULT_COMPANY_ID && !superAdmin) {
     return replyText(ev.replyToken, 'ยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID ในระบบ');
   }
 
   try {
+    if (superAdmin) {
+      const companies = await Company.find().sort({ name: 1 }).lean();
+      if (!companies.length) {
+        return replyText(ev.replyToken, 'ยังไม่มีบริษัทในระบบสำหรับตรวจสอบสต็อก');
+      }
+
+      const summaries = [];
+      for (const company of companies) {
+        const alerts = await getLowStockItems(company._id, {
+          safetyDays: PROCUREMENT_SAFETY_DAYS,
+        });
+        if (!alerts.length) continue;
+
+        const lines = alerts.slice(0, 5).map((item) => {
+          const eta = item.forecastDate
+            ? `หมดภายใน ${dayjs(item.forecastDate).fromNow(true)}`
+            : 'ไม่มีข้อมูลคาดการณ์';
+          return ` • ${item.itemName} คงเหลือ ${item.currentQuantity}${item.unit || ''} (รีออร์เดอร์ที่ ${item.reorderPoint}) · ${eta}`;
+        });
+        summaries.push([`บริษัท ${company.name}`, ...lines].join('\n'));
+      }
+
+      if (!summaries.length) {
+        return replyText(ev.replyToken, '✅ คงคลังทุกบริษัทยังอยู่ในระดับปลอดภัย ไม่มีสินค้าใกล้หมด');
+      }
+
+      summaries.push('\nพิมพ์ "สร้างใบสั่งซื้อ" เพื่อเปิดคำสั่งซื้อใหม่ได้ทันที');
+      return replyText(ev.replyToken, summaries.join('\n\n'));
+    }
+
     const items = await getLowStockItems(DEFAULT_COMPANY_ID, {
       safetyDays: PROCUREMENT_SAFETY_DAYS,
     });
@@ -1012,6 +1176,10 @@ async function replyPurchaseOrderStatus(ev, text = '', options = {}) {
 
 async function replyPoCreationFlex(ev) {
   if (!ev.replyToken) return null;
+  const userId = getUserId(ev);
+  if (isSuperAdminUser(userId)) {
+    return replySuperAdminPoStart(ev);
+  }
 
   const contents = {
     type: 'bubble',
@@ -1226,6 +1394,324 @@ async function replyPoDraftInstructions(ev) {
   };
 
   return replyFlex(ev.replyToken, 'สร้างใบสั่งซื้อผ่านแชท', contents, [followUp]);
+}
+
+function buildCatalogSummaryLines(vendor) {
+  const lines = vendor.products.map((product, idx) => `${idx + 1}. ${product.name}`);
+  return lines;
+}
+
+function findCatalogVendor(vendorId) {
+  return SUPER_ADMIN_SUPPLIER_CATALOG.find((entry) => entry.id === vendorId) || null;
+}
+
+function findCatalogProduct(vendorId, productId) {
+  const vendor = findCatalogVendor(vendorId);
+  if (!vendor) return null;
+  return vendor.products.find((item) => item.id === productId) || null;
+}
+
+async function ensureCatalogVendor(vendorInfo, actor = 'system') {
+  if (!vendorInfo) return null;
+  const existing = await Vendor.findOne({ name: vendorInfo.name }).lean();
+  if (existing) return existing;
+  return createVendor(
+    {
+      name: vendorInfo.name,
+      address: vendorInfo.address,
+      taxId: vendorInfo.taxId,
+      phone: vendorInfo.phone,
+      productCategories: vendorInfo.category ? [vendorInfo.category] : [],
+      meta: { source: 'super-admin-catalog' },
+    },
+    actor
+  );
+}
+
+async function replySuperAdminPoStart(ev) {
+  const actions = [
+    { label: 'เลือกบริษัท', postbackData: 'po-create?step=super-company', displayText: 'เลือกบริษัท' },
+    { label: 'ดูขั้นตอนแบบกรอกข้อความ', postbackData: 'po-create?step=start', displayText: 'สร้างแบบกรอกข้อความ' },
+    { label: 'ดูตัวอย่างข้อความ', postbackData: 'po-create?step=template', displayText: 'PO ตัวอย่าง' },
+  ];
+
+  return replyActionCard(ev.replyToken, {
+    title: 'สร้างใบสั่งซื้อ (Super Admin)',
+    subtitle: 'เลือกบริษัทและผู้จัดจำหน่ายจากรายการสำเร็จรูปได้ทันที',
+    actions,
+    color: '#1d4ed8',
+    altText: 'สร้างใบสั่งซื้อ (Super Admin)',
+  });
+}
+
+async function replySuperAdminCompanySelect(ev) {
+  if (!ev.replyToken) return null;
+  const companies = await Company.find().sort({ name: 1 }).lean();
+  if (!companies.length) {
+    return replyText(ev.replyToken, 'ยังไม่มีบริษัทในระบบสำหรับการสร้างใบสั่งซื้อ');
+  }
+
+  const topActions = companies.slice(0, 3).map((company) => ({
+    label: company.name.slice(0, 20),
+    postbackData: `po-create?step=super-vendor&company=${company._id.toString()}`,
+    displayText: `บริษัท ${company.name}`,
+  }));
+
+  const bubble = buildActionCardBubble({
+    title: 'เลือกบริษัท',
+    subtitle: 'Super Admin สามารถเลือกได้ทุกบริษัท',
+    body: companies.slice(0, 10).map((company, idx) => `${idx + 1}. ${company.name}`),
+    actions: topActions,
+    color: '#1d4ed8',
+  });
+
+  const quickReplyItems = buildQuickReplyItems(
+    companies.slice(0, 13).map((company) => ({
+      label: company.name.slice(0, 20),
+      postbackData: `po-create?step=super-vendor&company=${company._id.toString()}`,
+      displayText: `บริษัท ${company.name}`,
+    }))
+  );
+
+  const followUp = {
+    type: 'text',
+    text: 'เลือกบริษัทจากปุ่มลัดด้านล่าง หรือพิมพ์ชื่อบริษัทได้เลย',
+    quickReply: { items: quickReplyItems },
+  };
+
+  return replyFlex(ev.replyToken, 'เลือกบริษัทสำหรับสร้าง PO', bubble, [followUp]);
+}
+
+async function replySuperAdminVendorSelect(ev, companyId) {
+  if (!ev.replyToken) return null;
+  const company = await Company.findById(companyId).lean();
+  if (!company) {
+    return replyText(ev.replyToken, 'ไม่พบบริษัทที่เลือก โปรดลองใหม่');
+  }
+
+  const bubbles = SUPER_ADMIN_SUPPLIER_CATALOG.map((vendor) => ({
+    type: 'bubble',
+    header: {
+      type: 'box',
+      layout: 'vertical',
+      paddingAll: '18px',
+      backgroundColor: '#0f172a',
+      contents: [
+        { type: 'text', text: vendor.category, size: 'xs', color: '#dbeafe' },
+        { type: 'text', text: vendor.name, size: 'md', weight: 'bold', color: '#ffffff' },
+        { type: 'text', text: vendor.phone || '', size: 'xs', color: '#bfdbfe' },
+      ],
+    },
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      contents: buildCatalogSummaryLines(vendor).map((line) => ({
+        type: 'text',
+        text: line,
+        wrap: true,
+        color: '#0f172a',
+        size: 'sm',
+      })),
+    },
+    footer: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      contents: [
+        {
+          type: 'button',
+          style: 'primary',
+          action: {
+            type: 'postback',
+            label: 'เลือกผู้จัดจำหน่าย',
+            data: `po-create?step=super-product&company=${companyId}&vendor=${vendor.id}`,
+            displayText: `เลือก ${vendor.name}`,
+          },
+        },
+      ],
+    },
+  }));
+
+  const payload = bubbles.length === 1 ? bubbles[0] : { type: 'carousel', contents: bubbles };
+
+  const quickReplyItems = buildQuickReplyItems(
+    SUPER_ADMIN_SUPPLIER_CATALOG.map((vendor) => ({
+      label: vendor.name.slice(0, 20),
+      postbackData: `po-create?step=super-product&company=${companyId}&vendor=${vendor.id}`,
+      displayText: `ผู้จัดจำหน่าย ${vendor.name}`,
+    }))
+  );
+
+  const followUp = {
+    type: 'text',
+    text: `บริษัทที่เลือก: ${company.name}\nเลือกผู้จัดจำหน่ายที่ต้องการ`,
+    quickReply: { items: quickReplyItems },
+  };
+
+  return replyFlex(ev.replyToken, 'เลือกผู้จัดจำหน่าย', payload, [followUp]);
+}
+
+async function replySuperAdminProductSelect(ev, companyId, vendorId) {
+  if (!ev.replyToken) return null;
+  const vendor = findCatalogVendor(vendorId);
+  if (!vendor) {
+    return replyText(ev.replyToken, 'ไม่พบผู้จัดจำหน่ายที่เลือก');
+  }
+
+  const bubbles = vendor.products.map((product) => ({
+    type: 'bubble',
+    header: {
+      type: 'box',
+      layout: 'vertical',
+      paddingAll: '18px',
+      backgroundColor: '#1d4ed8',
+      contents: [
+        { type: 'text', text: vendor.name, size: 'xs', color: '#bfdbfe' },
+        { type: 'text', text: product.name, size: 'md', weight: 'bold', color: '#ffffff' },
+      ],
+    },
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      contents: [
+        { type: 'text', text: `หมวดหมู่: ${vendor.category}`, size: 'sm', color: '#0f172a' },
+        { type: 'text', text: `หน่วย: ${product.unit}`, size: 'sm', color: '#0f172a' },
+        { type: 'text', text: `ราคาโดยประมาณ: ${Number(product.unitPrice).toLocaleString('th-TH')} บาท`, size: 'sm', color: '#0f172a' },
+      ],
+    },
+    footer: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      contents: [
+        {
+          type: 'button',
+          style: 'primary',
+          action: {
+            type: 'postback',
+            label: 'เลือกสินค้า',
+            data: `po-create?step=super-qty&company=${companyId}&vendor=${vendorId}&product=${product.id}`,
+            displayText: `เลือก ${product.name}`,
+          },
+        },
+      ],
+    },
+  }));
+
+  const payload = bubbles.length === 1 ? bubbles[0] : { type: 'carousel', contents: bubbles };
+
+  const quickReplyItems = buildQuickReplyItems(
+    vendor.products.map((product) => ({
+      label: product.name.slice(0, 20),
+      postbackData: `po-create?step=super-qty&company=${companyId}&vendor=${vendorId}&product=${product.id}`,
+      displayText: `เลือก ${product.name}`,
+    }))
+  );
+
+  const followUp = {
+    type: 'text',
+    text: 'เลือกจำนวนที่ต้องการสั่งซื้อ',
+    quickReply: { items: quickReplyItems },
+  };
+
+  return replyFlex(ev.replyToken, 'เลือกสินค้า', payload, [followUp]);
+}
+
+async function replySuperAdminQuantitySelect(ev, companyId, vendorId, productId) {
+  if (!ev.replyToken) return null;
+  const product = findCatalogProduct(vendorId, productId);
+  const vendor = findCatalogVendor(vendorId);
+  if (!product || !vendor) {
+    return replyText(ev.replyToken, 'ไม่พบข้อมูลสินค้า โปรดลองใหม่');
+  }
+
+  const actions = SUPER_ADMIN_QUANTITY_OPTIONS.slice(0, 3).map((qty) => ({
+    label: `${qty} ${product.unit}`,
+    postbackData: `po-create?step=super-create&company=${companyId}&vendor=${vendorId}&product=${productId}&qty=${qty}`,
+    displayText: `${product.name} ${qty} ${product.unit}`,
+  }));
+
+  const bubble = buildActionCardBubble({
+    title: 'เลือกจำนวนสั่งซื้อ',
+    subtitle: `${product.name} · ${vendor.name}`,
+    body: [
+      `ราคาโดยประมาณ: ${Number(product.unitPrice).toLocaleString('th-TH')} บาท/ ${product.unit}`,
+      'เลือกจำนวนที่ต้องการจากปุ่มด้านล่าง',
+    ],
+    actions,
+    color: '#0f172a',
+  });
+
+  const quickReplyItems = buildQuickReplyItems(
+    SUPER_ADMIN_QUANTITY_OPTIONS.map((qty) => ({
+      label: `${qty} ${product.unit}`,
+      postbackData: `po-create?step=super-create&company=${companyId}&vendor=${vendorId}&product=${productId}&qty=${qty}`,
+      displayText: `${product.name} ${qty} ${product.unit}`,
+    }))
+  );
+
+  const followUp = {
+    type: 'text',
+    text: 'เลือกจำนวนจากปุ่มลัดด้านล่าง หากต้องการจำนวนอื่นสามารถปรับแก้ในระบบ ERP ได้ภายหลัง',
+    quickReply: { items: quickReplyItems },
+  };
+
+  return replyFlex(ev.replyToken, 'เลือกจำนวนสั่งซื้อ', bubble, [followUp]);
+}
+
+async function handleSuperAdminPoCreate(ev, companyId, vendorId, productId, qtyParam) {
+  if (!ev.replyToken) return null;
+  const product = findCatalogProduct(vendorId, productId);
+  const vendorInfo = findCatalogVendor(vendorId);
+  if (!product || !vendorInfo) {
+    return replyText(ev.replyToken, 'ไม่สามารถสร้างใบสั่งซื้อได้ (ไม่พบสินค้า/ผู้จัดจำหน่าย)');
+  }
+
+  const company = await Company.findById(companyId).lean();
+  if (!company) {
+    return replyText(ev.replyToken, 'ไม่พบบริษัทที่เลือก');
+  }
+
+  const quantity = qtyParam ? Number(qtyParam) : 1;
+  const safeQuantity = Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
+  const actor = `line:${getUserId(ev) || 'super-admin'}`;
+
+  const vendorDoc = await ensureCatalogVendor(vendorInfo, actor);
+  const vendorIdResolved = vendorDoc?._id ? vendorDoc._id.toString() : vendorDoc?.id;
+  if (!vendorIdResolved) {
+    return replyText(ev.replyToken, 'ไม่สามารถสร้างใบสั่งซื้อได้ (vendor)');
+  }
+
+  const expectedDeliveryDate = dayjs().add(3, 'day').toDate();
+
+  try {
+    const po = await createPurchaseOrder(
+      {
+        companyId: company._id,
+        vendorId: vendorIdResolved,
+        currency: 'THB',
+        items: [
+          {
+            itemName: product.name,
+            sku: product.id,
+            quantity: safeQuantity,
+            unit: product.unit,
+            unitPrice: Number(product.unitPrice) || 0,
+          },
+        ],
+        expectedDeliveryDate,
+        remarks: `สร้างจาก Super Admin (${vendorInfo.name})`,
+      },
+      actor
+    );
+
+    return replyPurchaseOrderStatus(ev, '', { poNumber: po.poNumber });
+  } catch (err) {
+    console.error('[WEBHOOK] super admin create PO failed:', err);
+    return replyText(ev.replyToken, 'ไม่สามารถสร้างใบสั่งซื้อได้ ลองใหม่อีกครั้งหรือตรวจสอบข้อมูล');
+  }
 }
 
 const PO_TEMPLATE_TEXT = [
