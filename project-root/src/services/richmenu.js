@@ -1,9 +1,13 @@
 // src/services/richmenu.js
 import axios from 'axios';
 import fs from 'fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const LINE_API = 'https://api.line.me/v2/bot';
 const TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN || '';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DEFAULT_RICHMENU_IMAGE = path.join(__dirname, '..', 'assets', 'richmenu.jpg');
 
 function auth() {
   if (!TOKEN) throw new Error('LINE_CHANNEL_ACCESS_TOKEN is empty');
@@ -63,7 +67,10 @@ export async function createOrUpdateRichMenu() {
   if (!richMenuId) throw new Error('Create richmenu failed');
 
   // 2) อัปโหลดรูป
-  const imgPath = 'src/assets/richmenu1.jpg';
+  const imgPath = DEFAULT_RICHMENU_IMAGE;
+  if (!fs.existsSync(imgPath)) {
+    throw new Error(`ไม่พบไฟล์รูปที่ ${imgPath}`);
+  }
   await axios.post(`${LINE_API}/richmenu/${richMenuId}/content`,
     fs.createReadStream(imgPath),
     { headers: { 'Content-Type': 'image/jpeg', ...auth() } }
