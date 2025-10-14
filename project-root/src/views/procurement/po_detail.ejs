@@ -1,25 +1,61 @@
-<section class="page-header">
-  <div>
-    <h1><%= po.poNumber %></h1>
-    <p class="text-muted">
-      สร้างเมื่อ <%= dayjs(po.createdAt).format('DD MMM YYYY HH:mm') %>
-      <% if (po.prId) { %>
-        · จาก PR <a href="/admin/pr/<%= po.prId._id || po.prId %>"><%= po.prId.prNumber %></a>
-      <% } %>
-    </p>
-  </div>
-  <div class="actions">
-    <a class="btn ghost" href="/admin/po">← กลับรายการ</a>
-    <a class="btn ghost" href="/admin/po/<%= po._id %>/pdf">Export PDF</a>
-  </div>
-</section>
+<%
+  const mobileView = typeof isLineMobile !== 'undefined' && isLineMobile;
+%>
+
+<% if (mobileView) { %>
+  <section class="line-mobile-hero">
+    <div class="line-mobile-hero__title">
+      <h1><%= po.poNumber %></h1>
+      <p>
+        สร้างเมื่อ <%= dayjs(po.createdAt).format('DD MMM YYYY HH:mm') %>
+        <% if (po.prId) { %>
+          · จาก PR <a href="/admin/pr/<%= po.prId._id || po.prId %>"><%= po.prId.prNumber %></a>
+        <% } %>
+      </p>
+    </div>
+    <div class="line-mobile-hero__stats compact">
+      <div>
+        <span class="label">สถานะ</span>
+        <strong><%= STATUS_LABELS[po.status] %></strong>
+      </div>
+      <div>
+        <span class="label">Vendor</span>
+        <strong><%= po.vendorId?.name || '-' %></strong>
+      </div>
+      <div>
+        <span class="label">ยอดรวม</span>
+        <strong>฿<%= po.totalAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></strong>
+      </div>
+    </div>
+    <div class="line-mobile-hero__cta-group">
+      <a class="btn ghost btn-block" href="/admin/po">← กลับรายการ</a>
+      <a class="btn ghost btn-block" href="/admin/po/<%= po._id %>/pdf">Export PDF</a>
+    </div>
+  </section>
+<% } else { %>
+  <section class="page-header">
+    <div>
+      <h1><%= po.poNumber %></h1>
+      <p class="text-muted">
+        สร้างเมื่อ <%= dayjs(po.createdAt).format('DD MMM YYYY HH:mm') %>
+        <% if (po.prId) { %>
+          · จาก PR <a href="/admin/pr/<%= po.prId._id || po.prId %>"><%= po.prId.prNumber %></a>
+        <% } %>
+      </p>
+    </div>
+    <div class="actions">
+      <a class="btn ghost" href="/admin/po">← กลับรายการ</a>
+      <a class="btn ghost" href="/admin/po/<%= po._id %>/pdf">Export PDF</a>
+    </div>
+  </section>
+<% } %>
 
 <% if (toast) { %>
   <div class="alert success"><%= toast %></div>
 <% } %>
 
-<section class="grid grid-2">
-  <article class="card">
+<section class="<%= mobileView ? 'line-mobile-stack' : 'grid grid-2' %>">
+  <article class="card <%= mobileView ? 'line-mobile-card' : '' %>">
     <header>
       <h2>รายละเอียด PO</h2>
     </header>
@@ -84,7 +120,7 @@
     </dl>
   </article>
 
-  <article class="card">
+  <article class="card <%= mobileView ? 'line-mobile-card' : '' %>">
     <header>
       <h2>Action</h2>
     </header>
@@ -92,7 +128,7 @@
       <form method="post" action="/admin/po/<%= po._id %>/approve" class="stack">
         <label>ข้อความถึง Vendor</label>
         <textarea name="remark" rows="3" placeholder="ข้อความที่จะบันทึกพร้อมการอนุมัติ"></textarea>
-        <button type="submit" class="btn success">Approve PO</button>
+      <button type="submit" class="btn success <%= mobileView ? 'btn-block btn-lg' : '' %>">Approve PO</button>
       </form>
     <% } %>
     <form method="post" action="/admin/po/<%= po._id %>/status" class="stack">
@@ -103,19 +139,19 @@
         <% }) %>
       </select>
       <textarea name="remark" rows="2" placeholder="หมายเหตุเพิ่มเติม"></textarea>
-      <button type="submit" class="btn secondary">Update Status</button>
+      <button type="submit" class="btn secondary <%= mobileView ? 'btn-block btn-lg' : '' %>">Update Status</button>
     </form>
     <% if (po.pdfUrl) { %>
-      <a class="btn ghost" href="<%= po.pdfUrl %>" target="_blank" rel="noopener">ดาวน์โหลดไฟล์ล่าสุด</a>
+    <a class="btn ghost <%= mobileView ? 'btn-block' : '' %>" href="<%= po.pdfUrl %>" target="_blank" rel="noopener">ดาวน์โหลดไฟล์ล่าสุด</a>
     <% } %>
   </article>
 </section>
 
-<section class="card">
+<section class="card <%= mobileView ? 'line-mobile-card' : '' %>">
   <header>
     <h2>รายการสินค้า</h2>
   </header>
-  <div class="responsive-table">
+  <div class="responsive-table <%= mobileView ? 'line-mobile-table' : '' %>">
     <table class="table">
       <thead>
         <tr>
@@ -131,18 +167,18 @@
       <tbody>
         <% po.items.forEach((item, idx) => { %>
           <tr>
-            <td><%= idx + 1 %></td>
-            <td><%= item.sku || '-' %></td>
-            <td>
+            <td data-label="#"><%= idx + 1 %></td>
+            <td data-label="SKU"><%= item.sku || '-' %></td>
+            <td data-label="รายละเอียด">
               <strong><%= item.itemName %></strong>
               <% if (item.note) { %>
                 <div class="text-muted text-xs"><%= item.note %></div>
               <% } %>
             </td>
-            <td><%= item.quantity %></td>
-            <td><%= item.unit %></td>
-            <td class="text-right">฿<%= item.unitPrice.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></td>
-            <td class="text-right">฿<%= item.lineTotal.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></td>
+            <td data-label="จำนวน"><%= item.quantity %></td>
+            <td data-label="หน่วย"><%= item.unit %></td>
+            <td data-label="ราคา/หน่วย" class="text-right">฿<%= item.unitPrice.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></td>
+            <td data-label="รวม" class="text-right">฿<%= item.lineTotal.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></td>
           </tr>
         <% }) %>
       </tbody>
@@ -150,7 +186,7 @@
   </div>
 </section>
 
-<section class="card">
+<section class="card <%= mobileView ? 'line-mobile-card' : '' %>">
   <header>
     <h2>ประวัติการเปลี่ยนสถานะ</h2>
   </header>

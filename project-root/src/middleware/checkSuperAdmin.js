@@ -55,6 +55,12 @@ export function isSuperAdminSession(req) {
   return false;
 }
 
+function ensureSessionUser(req) {
+  if (!req.session) return;
+  if (req.session.user?.superAdmin) return;
+  req.session.user = { username: 'Khet', role: 'Super Admin', superAdmin: true };
+}
+
 export default function checkSuperAdmin(req, res, next) {
   const userAgent = req.headers['user-agent'] || '';
   const queryUid = typeof req.query?.uid === 'string' ? req.query.uid : '';
@@ -68,10 +74,22 @@ export default function checkSuperAdmin(req, res, next) {
 
   console.log('[checkSuperAdmin]', { queryUid, sessionUid, cookieUid, userAgent, lineMobile, allowBypass });
 
+  if (isSuperAdminSession(req)) {
+    ensureSessionUser(req);
+    if (req.path === '/login') {
+      return res.redirect(resolveRedirectPath());
+    }
+    return next();
+  }
+
   if (allowBypass) {
     console.log('[checkSuperAdmin] Super Admin detected — bypassing login.');
     rememberSuperAdmin(req, res);
-    return res.redirect(resolveRedirectPath());
+    ensureSessionUser(req);
+    if (req.path === '/login') {
+      return res.redirect(resolveRedirectPath());
+    }
+    return next();
   }
 
   next();

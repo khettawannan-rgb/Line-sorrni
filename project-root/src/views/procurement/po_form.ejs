@@ -1,14 +1,42 @@
-<section class="page-header">
-  <div>
-    <h1>Create Purchase Order</h1>
-    <p class="text-muted">แปลง PR เป็น PO หรือสร้างใหม่เพื่อสั่งซื้อสินค้า</p>
-  </div>
-  <div class="actions">
-    <a href="/admin/po" class="btn ghost">← กลับรายการ PO</a>
-  </div>
-</section>
+<%
+  const mobileView = typeof isLineMobile !== 'undefined' && isLineMobile;
+%>
 
-<section class="card">
+<% if (mobileView) { %>
+  <section class="line-mobile-hero">
+    <div class="line-mobile-hero__title">
+      <h1>Create PO</h1>
+      <p>สร้างใบสั่งซื้อและระบุการจัดส่งผ่านมือถือ</p>
+    </div>
+    <div class="line-mobile-hero__stats compact">
+      <div>
+        <span class="label">ผู้ขาย</span>
+        <strong><%= vendors.length %></strong>
+      </div>
+      <div>
+        <span class="label">รายการ</span>
+        <strong><%= (form.items || form.lines || []).length || 1 %></strong>
+      </div>
+      <div>
+        <span class="label">ภาษี</span>
+        <strong><%= form.taxAmount || 0 %></strong>
+      </div>
+    </div>
+    <a href="/admin/po" class="btn ghost btn-block">← กลับรายการ PO</a>
+  </section>
+<% } else { %>
+  <section class="page-header">
+    <div>
+      <h1>Create Purchase Order</h1>
+      <p class="text-muted">แปลง PR เป็น PO หรือสร้างใหม่เพื่อสั่งซื้อสินค้า</p>
+    </div>
+    <div class="actions">
+      <a href="/admin/po" class="btn ghost">← กลับรายการ PO</a>
+    </div>
+  </section>
+<% } %>
+
+<section class="card <%= mobileView ? 'line-mobile-card' : '' %>">
   <% if (errors && errors.length) { %>
     <div class="alert danger">
       <strong>ตรวจสอบข้อมูลอีกครั้ง</strong>
@@ -20,7 +48,7 @@
     </div>
   <% } %>
 
-  <form method="post" action="/admin/po" class="form-grid">
+  <form method="post" action="/admin/po" class="form-grid <%= mobileView ? 'mobile' : '' %>">
     <input type="hidden" name="prId" value="<%= form.prId || '' %>" />
 
     <div class="form-group">
@@ -83,7 +111,7 @@
           </div>
         <% }) %>
       </div>
-      <button type="button" class="btn ghost small" data-add-row>+ เพิ่มแถว</button>
+      <button type="button" class="btn ghost small <%= mobileView ? 'btn-block' : '' %>" data-add-row>+ เพิ่มแถว</button>
     </div>
 
     <div class="form-group">
@@ -119,8 +147,8 @@
       <textarea id="remarks" name="remarks" rows="3"><%= form.remarks || '' %></textarea>
     </div>
 
-    <div class="form-actions form-full">
-      <button type="submit" class="btn primary">Create PO</button>
+    <div class="form-actions form-full <%= mobileView ? 'line-mobile-actions' : '' %>">
+      <button type="submit" class="btn primary <%= mobileView ? 'btn-block btn-lg' : '' %>">Create PO</button>
     </div>
   </form>
 </section>

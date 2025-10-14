@@ -131,14 +131,24 @@ app.use(
 );
 
 // ===== Super Admin bypass =====
-app.use('/admin/login', checkSuperAdmin);
+app.use('/admin', checkSuperAdmin);
 
 // ===== Locals defaults (กัน ReferenceError ใน EJS) =====
 app.use((req, res, next) => {
+  const userAgent = String(req.headers['user-agent'] || '');
+  const uaLower = userAgent.toLowerCase();
+  const isLineApp = uaLower.includes('line');
+  const isMobileDevice = /mobile|android|iphone|ipad|ipod/.test(uaLower);
+  const isLineMobile = isLineApp && isMobileDevice;
+
   res.locals.user = req.session?.user || null;
   res.locals.title = '';
   res.locals.active = '';
-  res.locals.noChrome = false;   // <— สำคัญ
+  if (typeof res.locals.noChrome !== 'boolean') res.locals.noChrome = false;   // <— สำคัญ
+  res.locals.isLineApp = isLineApp;
+  res.locals.isMobileDevice = isMobileDevice;
+  res.locals.isLineMobile = isLineMobile;
+  res.locals.bodyVariant = isLineMobile ? 'line-app-view' : '';
   next();
 });
 

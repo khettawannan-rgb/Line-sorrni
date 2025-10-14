@@ -13,11 +13,12 @@
 
 <%
   const isAuth = (typeof noChrome !== 'undefined' && !!noChrome) ? true : false;
+  const isLineMobile = typeof isLineMobile !== 'undefined' && !!isLineMobile;
   const bodyClasses = [];
   if (isAuth) bodyClasses.push('auth');
-  if (!isAuth) {
-    bodyClasses.push('app-shell');
-  }
+  if (!isAuth) bodyClasses.push('app-shell');
+  if (typeof bodyVariant === 'string' && bodyVariant) bodyClasses.push(bodyVariant);
+  if (isLineMobile) bodyClasses.push('line-app');
   if (!isAuth && typeof active === 'string') {
     bodyClasses.push(`active-${active}`);
     if (active === 'dashboard') bodyClasses.push('dashboard-mode');
@@ -25,7 +26,22 @@
 %>
 
 <body class="<%= bodyClasses.join(' ') %>">
-  <% if (!isAuth) { %>
+  <% if (isLineMobile) { %>
+    <header class="line-app-header">
+      <div class="line-app-header__brand">
+        <img src="/static/img/Nila_Flatcolour_Logo-.png" alt="NILA" />
+        <div>
+          <strong>NILA · Admin</strong>
+          <small>LINE mobile workspace</small>
+        </div>
+      </div>
+      <div class="line-app-header__user">
+        <span><%= (user && user.username) || 'guest' %></span>
+      </div>
+    </header>
+  <% } %>
+
+  <% if (!isAuth && !isLineMobile) { %>
     <header class="topbar">
       <a class="brand" href="/admin">
         <img src="/static/img/Nila_Flatcolour_Logo-.png" alt="NILA" />
@@ -137,8 +153,12 @@
     <%- body %>
   </main>
 
-  <footer class="footer">
-    © 2025 Nila Solutions · All rights reserved.
+  <% if (isLineMobile) { %>
+    <%- include('partials/mobile_nav', { active: typeof active === 'string' ? active : '' }) %>
+  <% } %>
+
+  <footer class="footer <%= isLineMobile ? 'line-app-footer' : '' %>">
+    © <%= new Date().getFullYear() %> Nila Solutions · All rights reserved.
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" crossorigin="anonymous"></script>

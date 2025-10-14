@@ -1,15 +1,43 @@
-<% const action = MODE === 'edit' ? `/admin/pr/${form._id}` : '/admin/pr'; %>
-<section class="page-header">
-  <div>
-    <h1><%= MODE === 'edit' ? `Edit ${form.prNumber}` : 'Create PR' %></h1>
-    <p class="text-muted">ระบุรายละเอียดผู้ขาย รายการสินค้า และแนบไฟล์ที่เกี่ยวข้อง</p>
-  </div>
-  <div class="actions">
-    <a href="/admin/pr" class="btn ghost">← กลับรายการ PR</a>
-  </div>
-</section>
+<%
+  const action = MODE === 'edit' ? `/admin/pr/${form._id}` : '/admin/pr';
+  const mobileView = typeof isLineMobile !== 'undefined' && isLineMobile;
+%>
 
-<section class="card">
+<% if (mobileView) { %>
+  <section class="line-mobile-hero">
+    <div class="line-mobile-hero__title">
+      <h1><%= MODE === 'edit' ? `แก้ไข ${form.prNumber}` : 'สร้างใบขอซื้อ' %></h1>
+      <p>กรอกข้อมูลสั้น ๆ เพื่อสร้างใบ PR จากมือถือ</p>
+    </div>
+    <div class="line-mobile-hero__stats compact">
+      <div>
+        <span class="label">ผู้ขาย</span>
+        <strong><%= vendors.length %></strong>
+      </div>
+      <div>
+        <span class="label">รายการ</span>
+        <strong><%= form.lines.length %></strong>
+      </div>
+      <div>
+        <span class="label">ภาษี</span>
+        <strong><%= Number(form.taxRate || 0) * 100 %>%</strong>
+      </div>
+    </div>
+    <a href="/admin/pr" class="btn ghost btn-block">← กลับรายการ PR</a>
+  </section>
+<% } else { %>
+  <section class="page-header">
+    <div>
+      <h1><%= MODE === 'edit' ? `Edit ${form.prNumber}` : 'Create PR' %></h1>
+      <p class="text-muted">ระบุรายละเอียดผู้ขาย รายการสินค้า และแนบไฟล์ที่เกี่ยวข้อง</p>
+    </div>
+    <div class="actions">
+      <a href="/admin/pr" class="btn ghost">← กลับรายการ PR</a>
+    </div>
+  </section>
+<% } %>
+
+<section class="card <%= mobileView ? 'line-mobile-card' : '' %>">
   <% if (errors && errors.length) { %>
     <div class="alert danger">
       <strong>ไม่สามารถบันทึกได้</strong>
@@ -21,7 +49,7 @@
     </div>
   <% } %>
 
-  <form method="post" action="<%= action %>" enctype="multipart/form-data" class="form-grid">
+  <form method="post" action="<%= action %>" enctype="multipart/form-data" class="form-grid <%= mobileView ? 'mobile' : '' %>">
     <div class="form-group">
       <label for="requester">ผู้ร้องขอ (Requester)</label>
       <input id="requester" name="requester" value="<%= form.requester || '' %>" required />
@@ -78,7 +106,7 @@
           </div>
         <% }) %>
       </div>
-      <button type="button" class="btn ghost small" data-add-row>+ เพิ่มแถว</button>
+      <button type="button" class="btn ghost small <%= mobileView ? 'btn-block' : '' %>" data-add-row>+ เพิ่มแถว</button>
     </div>
 
     <div class="form-group">
@@ -110,12 +138,12 @@
       <% } %>
     </div>
 
-    <div class="form-actions form-full">
-      <button type="submit" class="btn primary">
+    <div class="form-actions form-full <%= mobileView ? 'line-mobile-actions' : '' %>">
+      <button type="submit" class="btn primary <%= mobileView ? 'btn-block btn-lg' : '' %>">
         <%= MODE === 'edit' ? 'Save Changes' : 'Create PR' %>
       </button>
       <% if (MODE === 'edit' && form.status === PR_STATUSES.DRAFT) { %>
-        <button type="submit" formaction="/admin/pr/<%= form._id %>/submit" class="btn success">
+        <button type="submit" formaction="/admin/pr/<%= form._id %>/submit" class="btn success <%= mobileView ? 'btn-block btn-lg' : '' %>">
           Submit for Approval
         </button>
       <% } %>
