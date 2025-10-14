@@ -1,0 +1,112 @@
+<section class="page-header">
+  <div>
+    <h1>Purchase Orders</h1>
+    <p class="text-muted">อนุมัติ ส่ง และติดตามสถานะ PO ได้ในที่เดียว</p>
+  </div>
+  <div class="actions">
+    <a href="/admin/po/new" class="btn primary">+ Create PO</a>
+  </div>
+</section>
+
+<% if (toast) { %>
+  <div class="alert info"><%= toast %></div>
+<% } %>
+
+<section class="card filters-card">
+  <form class="filter-grid" method="get" action="/admin/po">
+    <div class="form-group">
+      <label for="status">สถานะ</label>
+      <select id="status" name="status">
+        <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>ทั้งหมด</option>
+        <% Object.values(PO_STATUSES).forEach((status) => { %>
+          <option value="<%= status %>" <%= filters.status === status ? 'selected' : '' %>>
+            <%= STATUS_LABELS[status] %>
+          </option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="vendorId">ผู้ขาย</label>
+      <select id="vendorId" name="vendorId">
+        <option value="">ทั้งหมด</option>
+        <% vendors.forEach((vendor) => { %>
+          <option value="<%= vendor._id %>" <%= String(filters.vendorId) === String(vendor._id) ? 'selected' : '' %>>
+            <%= vendor.name %>
+          </option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="search">ค้นหา</label>
+      <input id="search" name="search" value="<%= filters.search %>" placeholder="เลขที่ PO / รายการ / หมายเหตุ" />
+    </div>
+    <div class="form-group form-group--submit">
+      <label>&nbsp;</label>
+      <button type="submit" class="btn secondary">Apply</button>
+    </div>
+  </form>
+</section>
+
+<section class="card responsive-table">
+  <header>
+    <h2>รายการ PO</h2>
+  </header>
+  <table class="table table-stretched">
+    <thead>
+      <tr>
+        <th>PO</th>
+        <th>สถานะ</th>
+        <th>Vendor</th>
+        <th>ยอดรวม</th>
+        <th>วันที่ส่งของ</th>
+        <th>สร้างเมื่อ</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (!pos.length) { %>
+        <tr><td colspan="7" class="text-center text-muted">ยังไม่มีข้อมูล</td></tr>
+      <% } %>
+      <% pos.forEach((po) => { %>
+        <tr>
+          <td>
+            <a href="/admin/po/<%= po._id %>"><strong><%= po.poNumber %></strong></a>
+            <% if (po.prId) { %>
+              <div class="text-xs text-muted">จาก PR <a href="/admin/pr/<%= po.prId._id || po.prId %>"><%= po.prId.prNumber %></a></div>
+            <% } %>
+          </td>
+          <td>
+            <span class="badge status-<%= po.status %>"><%= STATUS_LABELS[po.status] %></span>
+          </td>
+          <td><%= po.vendorId?.name || '-' %></td>
+          <td>฿<%= po.totalAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></td>
+          <td><%= po.expectedDeliveryDate ? dayjs(po.expectedDeliveryDate).format('DD MMM YYYY') : '-' %></td>
+          <td><%= dayjs(po.createdAt).format('DD MMM YYYY HH:mm') %></td>
+          <td class="text-right">
+            <a class="btn ghost small" href="/admin/po/<%= po._id %>">View</a>
+            <% if (po.status === PO_STATUSES.DRAFT) { %>
+              <form class="inline" method="post" action="/admin/po/<%= po._id %>/approve">
+                <button type="submit" class="btn success small">Approve</button>
+              </form>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% if (pagination.hasPrev || pagination.hasNext) { %>
+    <div class="pagination">
+      <% if (pagination.hasPrev) { %>
+        <a class="btn ghost" href="?<%= new URLSearchParams({ ...filters, page: pagination.prev }).toString() %>">&larr; Prev</a>
+      <% } else { %>
+        <span></span>
+      <% } %>
+      <span>Page <%= pagination.current %></span>
+      <% if (pagination.hasNext) { %>
+        <a class="btn ghost" href="?<%= new URLSearchParams({ ...filters, page: pagination.next }).toString() %>">Next &rarr;</a>
+      <% } else { %>
+        <span></span>
+      <% } %>
+    </div>
+  <% } %>
+</section>

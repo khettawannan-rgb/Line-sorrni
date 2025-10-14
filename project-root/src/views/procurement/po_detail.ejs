@@ -1,0 +1,171 @@
+<section class="page-header">
+  <div>
+    <h1><%= po.poNumber %></h1>
+    <p class="text-muted">
+      สร้างเมื่อ <%= dayjs(po.createdAt).format('DD MMM YYYY HH:mm') %>
+      <% if (po.prId) { %>
+        · จาก PR <a href="/admin/pr/<%= po.prId._id || po.prId %>"><%= po.prId.prNumber %></a>
+      <% } %>
+    </p>
+  </div>
+  <div class="actions">
+    <a class="btn ghost" href="/admin/po">← กลับรายการ</a>
+    <a class="btn ghost" href="/admin/po/<%= po._id %>/pdf">Export PDF</a>
+  </div>
+</section>
+
+<% if (toast) { %>
+  <div class="alert success"><%= toast %></div>
+<% } %>
+
+<section class="grid grid-2">
+  <article class="card">
+    <header>
+      <h2>รายละเอียด PO</h2>
+    </header>
+    <dl class="definition-list">
+      <div>
+        <dt>สถานะ</dt>
+        <dd><span class="badge status-<%= po.status %>"><%= STATUS_LABELS[po.status] %></span></dd>
+      </div>
+      <div>
+        <dt>Vendor</dt>
+        <dd>
+          <% if (vendor) { %>
+            <strong><%= vendor.name %></strong><br />
+            <span class="text-muted"><%= vendor.email || '-' %></span>
+          <% } else { %>
+            -
+          <% } %>
+        </dd>
+      </div>
+      <div>
+        <dt>ยอดสุทธิ</dt>
+        <dd>฿<%= po.subtotal.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
+      </div>
+      <div>
+        <dt>ภาษี</dt>
+        <dd>฿<%= po.taxAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
+      </div>
+      <div>
+        <dt>ค่าขนส่ง</dt>
+        <dd>฿<%= po.shippingFee.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
+      </div>
+      <div>
+        <dt>ยอดรวม</dt>
+        <dd><strong>฿<%= po.totalAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></strong></dd>
+      </div>
+      <div>
+        <dt>Payment Terms</dt>
+        <dd><%= po.paymentTerms || '-' %></dd>
+      </div>
+      <div>
+        <dt>Incoterms</dt>
+        <dd><%= po.incoterms || '-' %></dd>
+      </div>
+      <div>
+        <dt>Ship To</dt>
+        <dd>
+          <strong><%= po.shipping?.shipTo || '-' %></strong><br />
+          <span class="text-muted"><%= po.shipping?.address || '' %></span><br />
+          <span class="text-muted"><%= po.shipping?.contact || '' %></span>
+        </dd>
+      </div>
+      <div>
+        <dt>กำหนดส่ง</dt>
+        <dd><%= po.expectedDeliveryDate ? dayjs(po.expectedDeliveryDate).format('DD MMM YYYY') : '-' %></dd>
+      </div>
+      <% if (po.remarks) { %>
+        <div class="span-2">
+          <dt>หมายเหตุ</dt>
+          <dd><%= po.remarks %></dd>
+        </div>
+      <% } %>
+    </dl>
+  </article>
+
+  <article class="card">
+    <header>
+      <h2>Action</h2>
+    </header>
+    <% if (po.status === PO_STATUSES.DRAFT) { %>
+      <form method="post" action="/admin/po/<%= po._id %>/approve" class="stack">
+        <label>ข้อความถึง Vendor</label>
+        <textarea name="remark" rows="3" placeholder="ข้อความที่จะบันทึกพร้อมการอนุมัติ"></textarea>
+        <button type="submit" class="btn success">Approve PO</button>
+      </form>
+    <% } %>
+    <form method="post" action="/admin/po/<%= po._id %>/status" class="stack">
+      <label>อัปเดตสถานะ</label>
+      <select name="status">
+        <% Object.values(PO_STATUSES).forEach((status) => { %>
+          <option value="<%= status %>" <%= po.status === status ? 'selected' : '' %>><%= STATUS_LABELS[status] %></option>
+        <% }) %>
+      </select>
+      <textarea name="remark" rows="2" placeholder="หมายเหตุเพิ่มเติม"></textarea>
+      <button type="submit" class="btn secondary">Update Status</button>
+    </form>
+    <% if (po.pdfUrl) { %>
+      <a class="btn ghost" href="<%= po.pdfUrl %>" target="_blank" rel="noopener">ดาวน์โหลดไฟล์ล่าสุด</a>
+    <% } %>
+  </article>
+</section>
+
+<section class="card">
+  <header>
+    <h2>รายการสินค้า</h2>
+  </header>
+  <div class="responsive-table">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>SKU</th>
+          <th>รายละเอียด</th>
+          <th>จำนวน</th>
+          <th>หน่วย</th>
+          <th class="text-right">ราคา/หน่วย</th>
+          <th class="text-right">รวม</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% po.items.forEach((item, idx) => { %>
+          <tr>
+            <td><%= idx + 1 %></td>
+            <td><%= item.sku || '-' %></td>
+            <td>
+              <strong><%= item.itemName %></strong>
+              <% if (item.note) { %>
+                <div class="text-muted text-xs"><%= item.note %></div>
+              <% } %>
+            </td>
+            <td><%= item.quantity %></td>
+            <td><%= item.unit %></td>
+            <td class="text-right">฿<%= item.unitPrice.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></td>
+            <td class="text-right">฿<%= item.lineTotal.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card">
+  <header>
+    <h2>ประวัติการเปลี่ยนสถานะ</h2>
+  </header>
+  <ul class="timeline">
+    <% (po.statusHistory || []).slice().reverse().forEach((entry) => { %>
+      <li>
+        <div class="timeline__time"><%= dayjs(entry.at).format('DD MMM YYYY HH:mm') %></div>
+        <div class="timeline__body">
+          <strong><%= STATUS_LABELS[entry.status] || entry.status %></strong>
+          <span class="text-muted">โดย <%= entry.actor %></span>
+          <% if (entry.remark) { %>
+            <div><%= entry.remark %></div>
+          <% } %>
+        </div>
+      </li>
+    <% }) %>
+  </ul>
+</section>

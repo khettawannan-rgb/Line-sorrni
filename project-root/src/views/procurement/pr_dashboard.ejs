@@ -1,0 +1,140 @@
+<section class="page-header">
+  <div>
+    <h1>Purchase Requisitions</h1>
+    <p class="text-muted">ติดตามสถานะ PR และดำเนินการได้ทันทีจากหน้ารวม</p>
+  </div>
+  <div class="actions">
+    <a href="/admin/pr/new" class="btn primary">+ Create PR</a>
+  </div>
+</section>
+
+<% if (toast) { %>
+  <div class="alert info"><%= toast %></div>
+<% } %>
+
+<section class="card filters-card" data-filter-section>
+  <form class="filter-grid" method="get" action="/admin/pr">
+    <div class="form-group">
+      <label for="status">สถานะ</label>
+      <select id="status" name="status">
+        <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>ทั้งหมด</option>
+        <% Object.values(PR_STATUSES).forEach((status) => { %>
+          <option value="<%= status %>" <%= filters.status === status ? 'selected' : '' %>>
+            <%= STATUS_LABELS[status] %>
+          </option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="vendor">ผู้ขาย</label>
+      <select id="vendor" name="vendorId">
+        <option value="">ทั้งหมด</option>
+        <% vendors.forEach((vendor) => { %>
+          <option value="<%= vendor._id %>" <%= String(filters.vendorId) === String(vendor._id) ? 'selected' : '' %>>
+            <%= vendor.name %>
+          </option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="search">ค้นหา</label>
+      <input id="search" type="search" name="search" value="<%= filters.search %>" placeholder="เลขที่ PR / รายการ / ผู้ร้องขอ" />
+    </div>
+    <div class="form-group form-group--submit">
+      <label>&nbsp;</label>
+      <button type="submit" class="btn secondary">Apply</button>
+    </div>
+  </form>
+</section>
+
+<section class="card responsive-table">
+  <header>
+    <h2>รายการ PR</h2>
+  </header>
+  <table class="table table-stretched">
+    <thead>
+      <tr>
+        <th>PR</th>
+        <th>สถานะ</th>
+        <th>Vendor</th>
+        <th>รายการ</th>
+        <th class="text-right">ยอดรวม</th>
+        <th>อัปเดตล่าสุด</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (!prs.length) { %>
+        <tr>
+          <td colspan="7" class="text-center text-muted">ยังไม่มีข้อมูล</td>
+        </tr>
+      <% } %>
+      <% prs.forEach((pr) => { %>
+        <tr>
+          <td data-label="PR">
+            <a href="/admin/pr/<%= pr._id %>"><strong><%= pr.prNumber %></strong></a>
+            <div class="text-xs text-muted"><%= pr.requester %></div>
+          </td>
+          <td data-label="สถานะ">
+            <span class="badge status-<%= pr.status %>"><%= STATUS_LABELS[pr.status] || pr.status %></span>
+          </td>
+          <td data-label="Vendor">
+            <%= pr.vendorId?.name || pr.vendorId?.displayName || '-' %>
+          </td>
+          <td data-label="รายการ">
+            <ul class="list-compact">
+              <% pr.lines.slice(0, 2).forEach((line) => { %>
+                <li><%= line.description %> · <%= line.quantity %> <%= line.uom %></li>
+              <% }) %>
+              <% if (pr.lines.length > 2) { %>
+                <li class="text-muted">+ <%= pr.lines.length - 2 %> รายการ</li>
+              <% } %>
+            </ul>
+          </td>
+          <td class="text-right" data-label="ยอดรวม">
+            ฿<%= pr.total.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %>
+          </td>
+          <td data-label="อัปเดตล่าสุด">
+            <%= dayjs(pr.updatedAt).format('DD MMM YYYY HH:mm') %>
+          </td>
+          <td data-label="Actions" class="text-right">
+            <div class="btn-group">
+              <a href="/admin/pr/<%= pr._id %>" class="btn ghost small">View</a>
+              <% if (pr.status === PR_STATUSES.DRAFT) { %>
+                <a href="/admin/pr/<%= pr._id %>/edit" class="btn ghost small">Edit</a>
+                <form method="post" action="/admin/pr/<%= pr._id %>/submit" class="inline">
+                  <button type="submit" class="btn primary small">Submit</button>
+                </form>
+              <% } %>
+              <% if (pr.status === PR_STATUSES.WAITING_APPROVAL) { %>
+                <form method="post" action="/admin/pr/<%= pr._id %>/approve" class="inline">
+                  <input type="hidden" name="remark" value="Approve via dashboard" />
+                  <button type="submit" class="btn success small">Approve</button>
+                </form>
+                <form method="post" action="/admin/pr/<%= pr._id %>/reject" class="inline">
+                  <input type="hidden" name="reason" value="Reject via dashboard" />
+                  <button type="submit" class="btn danger ghost small" data-confirm="ยืนยันปฏิเสธ PR นี้หรือไม่?">Reject</button>
+                </form>
+              <% } %>
+            </div>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% if (pagination.hasPrev || pagination.hasNext) { %>
+    <div class="pagination">
+      <% if (pagination.hasPrev) { %>
+        <a class="btn ghost" href="?<%= new URLSearchParams({ ...filters, page: pagination.prev }).toString() %>">&larr; Prev</a>
+      <% } else { %>
+        <span></span>
+      <% } %>
+      <span>Page <%= pagination.current %></span>
+      <% if (pagination.hasNext) { %>
+        <a class="btn ghost" href="?<%= new URLSearchParams({ ...filters, page: pagination.next }).toString() %>">Next &rarr;</a>
+      <% } else { %>
+        <span></span>
+      <% } %>
+    </div>
+  <% } %>
+</section>

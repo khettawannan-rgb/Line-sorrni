@@ -1,0 +1,126 @@
+<section class="page-header">
+  <div>
+    <h1>Create Purchase Order</h1>
+    <p class="text-muted">แปลง PR เป็น PO หรือสร้างใหม่เพื่อสั่งซื้อสินค้า</p>
+  </div>
+  <div class="actions">
+    <a href="/admin/po" class="btn ghost">← กลับรายการ PO</a>
+  </div>
+</section>
+
+<section class="card">
+  <% if (errors && errors.length) { %>
+    <div class="alert danger">
+      <strong>ตรวจสอบข้อมูลอีกครั้ง</strong>
+      <ul>
+        <% errors.forEach((err) => { %>
+          <li><%= err %></li>
+        <% }) %>
+      </ul>
+    </div>
+  <% } %>
+
+  <form method="post" action="/admin/po" class="form-grid">
+    <input type="hidden" name="prId" value="<%= form.prId || '' %>" />
+
+    <div class="form-group">
+      <label for="vendorId">ผู้ขาย (Vendor)</label>
+      <select id="vendorId" name="vendorId" required>
+        <option value="">เลือกผู้ขาย...</option>
+        <% vendors.forEach((vendor) => { %>
+          <option value="<%= vendor._id %>" <%= String(form.vendorId) === String(vendor._id) ? 'selected' : '' %>>
+            <%= vendor.name %>
+          </option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="companyId">บริษัท</label>
+      <input id="companyId" name="companyId" value="<%= form.companyId || '' %>" placeholder="Mongo ID หรือปล่อยว่าง" />
+    </div>
+    <div class="form-group">
+      <label for="currency">สกุลเงิน</label>
+      <input id="currency" name="currency" value="<%= form.currency || 'THB' %>" />
+    </div>
+    <div class="form-group">
+      <label for="paymentTerms">Payment Terms</label>
+      <input id="paymentTerms" name="paymentTerms" value="<%= form.paymentTerms || 'Credit 30 days' %>" />
+    </div>
+    <div class="form-group">
+      <label for="incoterms">Incoterms</label>
+      <input id="incoterms" name="incoterms" value="<%= form.incoterms || 'FOB' %>" />
+    </div>
+
+    <div class="form-group form-full">
+      <label>รายการสินค้า</label>
+      <div class="line-items" data-item-list>
+        <% (form.items || [{ description: '', quantity: '', unitPrice: '', uom: 'EA', sku: '', notes: '' }]).forEach((item) => { %>
+          <div class="item-row">
+            <div>
+              <label>SKU</label>
+              <input name="itemSku" value="<%= item.sku || '' %>" />
+            </div>
+            <div>
+              <label>รายละเอียด</label>
+              <input name="itemDescription" value="<%= item.description || item.itemName || '' %>" required />
+            </div>
+            <div>
+              <label>จำนวน</label>
+              <input name="itemQuantity" type="number" step="0.01" min="0" value="<%= item.quantity || '' %>" required />
+            </div>
+            <div>
+              <label>หน่วย</label>
+              <input name="itemUom" value="<%= item.uom || item.unit || 'EA' %>" />
+            </div>
+            <div>
+              <label>ราคา/หน่วย</label>
+              <input name="itemUnitPrice" type="number" step="0.01" min="0" value="<%= item.unitPrice || '' %>" />
+            </div>
+            <div>
+              <label>หมายเหตุ</label>
+              <input name="itemNote" value="<%= item.notes || item.note || '' %>" />
+            </div>
+          </div>
+        <% }) %>
+      </div>
+      <button type="button" class="btn ghost small" data-add-row>+ เพิ่มแถว</button>
+    </div>
+
+    <div class="form-group">
+      <label for="taxAmount">ภาษี (บาท)</label>
+      <input id="taxAmount" name="taxAmount" type="number" step="0.01" value="<%= form.taxAmount || '' %>" />
+    </div>
+    <div class="form-group">
+      <label for="shippingFee">ค่าขนส่ง</label>
+      <input id="shippingFee" name="shippingFee" type="number" step="0.01" value="<%= form.shippingFee || '' %>" />
+    </div>
+    <div class="form-group">
+      <label for="totalAmount">ยอดรวม</label>
+      <input id="totalAmount" name="totalAmount" type="number" step="0.01" value="<%= form.totalAmount || '' %>" />
+    </div>
+    <div class="form-group">
+      <label for="expectedDeliveryDate">กำหนดส่ง</label>
+      <input id="expectedDeliveryDate" name="expectedDeliveryDate" type="date" value="<%= form.expectedDeliveryDate ? dayjs(form.expectedDeliveryDate).format('YYYY-MM-DD') : '' %>" />
+    </div>
+    <div class="form-group">
+      <label for="shipTo">Ship To</label>
+      <input id="shipTo" name="shipTo" value="<%= form.shipping?.shipTo || '' %>" />
+    </div>
+    <div class="form-group">
+      <label for="shippingAddress">ที่อยู่จัดส่ง</label>
+      <textarea id="shippingAddress" name="shippingAddress" rows="2"><%= form.shipping?.address || '' %></textarea>
+    </div>
+    <div class="form-group">
+      <label for="shippingContact">ผู้ติดต่อ</label>
+      <input id="shippingContact" name="shippingContact" value="<%= form.shipping?.contact || '' %>" />
+    </div>
+    <div class="form-group form-full">
+      <label for="remarks">หมายเหตุ</label>
+      <textarea id="remarks" name="remarks" rows="3"><%= form.remarks || '' %></textarea>
+    </div>
+
+    <div class="form-actions form-full">
+      <button type="submit" class="btn primary">Create PO</button>
+    </div>
+  </form>
+</section>

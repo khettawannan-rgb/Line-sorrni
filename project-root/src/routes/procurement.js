@@ -2,39 +2,46 @@
 import express from 'express';
 import multer from 'multer';
 import dayjs from 'dayjs';
+import 'dayjs/locale/th.js';
 
 import {
-  listRequisitions,
-  createRequisition,
-  submitForApproval,
-  updateRequisitionStatus,
-  listPurchaseOrders,
-  createPurchaseOrder,
-  updatePurchaseOrderStatus,
-  listVendors,
-  createVendor,
-  updateVendor,
-  getVendorById,
-  ensureSeedVendors,
-  getLowStockItems,
-  generateSnapshot,
-  listStockItems,
   PR_STATUSES,
   PO_STATUSES,
   STATUS_LABELS,
+} from '../services/procurement/constants.js';
+import {
+  listRequisitions,
+  createRequisition,
   getRequisitionById,
+  submitForApproval,
+  rejectRequisition,
+  updateRequisition,
+} from '../services/procurement/prService.js';
+import { approvePrAndCreatePo } from '../services/procurement/workflowService.js';
+import {
+  listPurchaseOrders,
+  createPurchaseOrder,
+  approvePurchaseOrder,
   getPurchaseOrderById,
-  generatePurchaseOrderPdf,
+  updatePurchaseOrderStatus,
   markPdfGenerated,
-  markEmailSent,
-  sendPurchaseOrderEmail,
-  notifyPoStatus,
-} from '../services/procurement/index.js';
+} from '../services/procurement/poService.js';
+import { generatePurchaseOrderPdf } from '../services/procurement/pdfService.js';
+import {
+  listVendors,
+  getVendorById,
+  ensureSeedVendors,
+  createVendor,
+  updateVendor,
+} from '../services/procurement/vendorService.js';
 import { ensureStorageDirectories, saveAttachment } from '../services/procurement/storageService.js';
+import { safeNumber } from '../services/procurement/helpers.js';
+
+dayjs.locale('th');
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
-const DEFAULT_COMPANY_ID = process.env.DEFAULT_COMPANY_ID || null;
+const PAGE_SIZE = 10;
 
 ensureStorageDirectories();
 
@@ -52,25 +59,43 @@ function actorName(req) {
   return req.session?.user?.username || 'system';
 }
 
-function parseItems(body = {}) {
-  const names = Array.isArray(body.itemName) ? body.itemName : [body.itemName];
-  const qtys = Array.isArray(body.quantity) ? body.quantity : [body.quantity];
-  const units = Array.isArray(body.unit) ? body.unit : [body.unit];
-  const notes = Array.isArray(body.itemNote) ? body.itemNote : [body.itemNote];
-  const prices = Array.isArray(body.unitPrice) ? body.unitPrice : [body.unitPrice];
-
-  return names
-    .map((name, idx) => ({
-      itemName: name,
-      quantity: Number(qtys[idx] || 0),
-      unit: units[idx] || 'ตัน',
-      note: notes[idx] || '',
-      unitPrice: prices[idx] !== undefined && prices[idx] !== '' ? Number(prices[idx]) : undefined,
-    }))
-    .filter((item) => item.itemName && item.quantity > 0);
+function parseNumber(input, fallback = 0) {
+  if (typeof input === 'number') return Number.isFinite(input) ? input : fallback;
+  if (typeof input !== 'string') return fallback;
+  const normalized = input.replace(/[^\d,.-]/g, '').replace(/,/g, '');
+  const num = Number(normalized);
+  return Number.isFinite(num) ? num : fallback;
 }
 
-function extractAttachments(files = []) {
+function normaliseLines(body = {}) {
+  const descriptions = Array.isArray(body.lineDescription) ? body.lineDescription : [body.lineDescription];
+  const skus = Array.isArray(body.lineSku) ? body.lineSku : [body.lineSku];
+  const qtys = Array.isArray(body.lineQuantity) ? body.lineQuantity : [body.lineQuantity];
+  const uoms = Array.isArray(body.lineUom) ? body.lineUom : [body.lineUom];
+  const prices = Array.isArray(body.linePrice) ? body.linePrice : [body.linePrice];
+  const notes = Array.isArray(body.lineNote) ? body.lineNote : [body.lineNote];
+
+  return descriptions
+    .map((description, idx) => {
+      const desc = (description || '').trim();
+      if (!desc) return null;
+      const quantity = parseNumber(qtys[idx], 0);
+      const unitPrice = parseNumber(prices[idx], 0);
+      if (quantity <= 0) return null;
+      return {
+        description: desc,
+        sku: (skus[idx] || '').trim(),
+        quantity,
+        uom: (uoms[idx] || 'EA').trim() || 'EA',
+        unitPrice,
+        amount: Number((quantity * unitPrice).toFixed(2)),
+        notes: (notes[idx] || '').trim(),
+      };
+    })
+    .filter(Boolean);
+}
+
+function collectAttachments(files = []) {
   return files.map((file) => {
     const stored = saveAttachment(file.buffer, file.originalname);
     return {
@@ -83,27 +108,76 @@ function extractAttachments(files = []) {
   });
 }
 
+function buildPagination(totalFetched, page) {
+  const hasNext = totalFetched > PAGE_SIZE;
+  return {
+    current: page,
+    next: hasNext ? page + 1 : null,
+    prev: page > 1 ? page - 1 : null,
+    hasNext,
+    hasPrev: page > 1,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* PR Dashboard                                                        */
+/* ------------------------------------------------------------------ */
+
 router.get('/pr', requireAuth, async (req, res, next) => {
   try {
     res.locals.active = 'procurement-pr';
     await ensureSeedVendors();
-    const [prs, vendors, lowStock, stockItems] = await Promise.all([
-      listRequisitions({}, { limit: 25 }),
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const filters = {
+      status: req.query.status || 'all',
+      vendorId: req.query.vendorId || '',
+      search: req.query.search || '',
+    };
+
+    const [rawPrs, vendors] = await Promise.all([
+      listRequisitions(filters, { limit: PAGE_SIZE + 1, skip: (page - 1) * PAGE_SIZE }),
       listVendors({ activeOnly: true }),
-      DEFAULT_COMPANY_ID ? getLowStockItems(DEFAULT_COMPANY_ID) : [],
-      DEFAULT_COMPANY_ID ? listStockItems({ companyId: DEFAULT_COMPANY_ID }) : [],
     ]);
 
-    res.render('procurement/pr_list', {
-      title: 'Purchase Requisitions',
+    const pagination = buildPagination(rawPrs.length, page);
+    const prs = pagination.hasNext ? rawPrs.slice(0, PAGE_SIZE) : rawPrs;
+
+    const toast = req.query.missing ? 'ไม่พบ PR ที่ร้องขอแล้ว' : null;
+
+    res.render('procurement/pr_dashboard', {
+      title: 'PR Dashboard',
       prs,
       vendors,
-      lowStock,
-      stockItems,
-      PR_STATUSES,
+      filters,
+      pagination,
       STATUS_LABELS,
-      defaultCompanyId: DEFAULT_COMPANY_ID,
+      PR_STATUSES,
       dayjs,
+      toast,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/pr/new', requireAuth, async (req, res, next) => {
+  try {
+    res.locals.active = 'procurement-pr';
+    const vendors = await listVendors({ activeOnly: true });
+    res.render('procurement/pr_form', {
+      title: 'Create Purchase Requisition',
+      vendors,
+      form: {
+        status: PR_STATUSES.DRAFT,
+        lines: [
+          { sku: '', description: '', quantity: '', uom: 'EA', unitPrice: '', notes: '' },
+        ],
+        taxRate: 0.07,
+      },
+      errors: [],
+      dayjs,
+      MODE: 'create',
+      PR_STATUSES,
     });
   } catch (err) {
     next(err);
@@ -116,26 +190,158 @@ router.post(
   upload.array('attachments', 5),
   async (req, res, next) => {
     try {
-      const items = parseItems(req.body);
-      if (!items.length) {
-        return res.redirect('/admin/pr?error=no-item');
+      const vendorId = req.body.vendorId || null;
+      const requester = (req.body.requester || '').trim();
+      const lines = normaliseLines(req.body);
+      const taxRatePercent = parseNumber(req.body.taxRate, 0);
+      const taxRate = Number((taxRatePercent / 100).toFixed(4));
+      const taxAmount = parseNumber(req.body.taxAmount, 0);
+      const subtotal = lines.reduce((sum, line) => sum + safeNumber(line.amount, 0), 0);
+      const computedTax = Number((subtotal * taxRate).toFixed(2));
+      const total = Number((subtotal + (taxAmount || computedTax)).toFixed(2));
+
+      const errors = [];
+      if (!requester) errors.push('กรุณาระบุผู้ร้องขอ');
+      if (!vendorId) errors.push('กรุณาเลือกผู้ขาย');
+      if (!lines.length) errors.push('ต้องมีรายการสินค้าอย่างน้อย 1 รายการ');
+
+      if (errors.length) {
+        const vendors = await listVendors({ activeOnly: true });
+        return res.status(400).render('procurement/pr_form', {
+          title: 'Create Purchase Requisition',
+          vendors,
+          errors,
+          dayjs,
+          MODE: 'create',
+          PR_STATUSES,
+          form: {
+            ...req.body,
+            lines: lines.length ? lines : [
+              { sku: '', description: '', quantity: '', uom: 'EA', unitPrice: '', notes: '' },
+            ],
+            taxRate,
+            taxAmount: taxAmount || computedTax,
+            subtotal,
+            total,
+          },
+        });
       }
 
-      const attachments = extractAttachments(req.files || []);
-      await createRequisition(
+      const attachments = collectAttachments(req.files);
+      const pr = await createRequisition(
         {
-          companyId: req.body.companyId || DEFAULT_COMPANY_ID,
-          requestedBy: req.body.requestedBy || actorName(req),
-          note: req.body.note || '',
-          items,
+          requester,
+          companyId: req.body.companyId || null,
+          vendorId,
+          currency: req.body.currency || 'THB',
+          lines,
+          taxRate,
+          taxAmount: taxAmount || computedTax,
+          total,
+          notes: req.body.notes || '',
           attachments,
-          source: req.body.source || (req.body.autoGenerated ? 'auto-low-stock' : 'manual'),
-          autoGenerated: !!req.body.autoGenerated,
+          approvers: [],
         },
         actorName(req)
       );
 
-      return res.redirect('/admin/pr?created=1');
+      return res.redirect(`/admin/pr/${pr._id}?created=1`);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.get('/pr/:id', requireAuth, async (req, res, next) => {
+  try {
+    res.locals.active = 'procurement-pr';
+    const pr = await getRequisitionById(req.params.id);
+    if (!pr) return res.redirect('/admin/pr?missing=1');
+    const vendorId = pr.vendorId?._id || pr.vendorId || null;
+    const vendor = vendorId ? await getVendorById(vendorId) : null;
+    res.render('procurement/pr_detail', {
+      title: `PR ${pr.prNumber}`,
+      pr,
+      vendor,
+      STATUS_LABELS,
+      PR_STATUSES,
+      dayjs,
+      toast: req.query.created ? 'สร้าง PR สำเร็จ' : null,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/pr/:id/edit', requireAuth, async (req, res, next) => {
+  try {
+    res.locals.active = 'procurement-pr';
+    const [pr, vendors] = await Promise.all([
+      getRequisitionById(req.params.id),
+      listVendors({ activeOnly: true }),
+    ]);
+    if (!pr) return res.redirect('/admin/pr?missing=1');
+
+    res.render('procurement/pr_form', {
+      title: `แก้ไข ${pr.prNumber}`,
+      vendors,
+      dayjs,
+      MODE: 'edit',
+      errors: [],
+      PR_STATUSES,
+      form: {
+        ...pr,
+        requester: pr.requester,
+        vendorId: pr.vendorId?._id || pr.vendorId || '',
+        taxRate: pr.taxRate,
+        taxAmount: pr.taxAmount,
+        subtotal: pr.subtotal,
+        total: pr.total,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post(
+  '/pr/:id',
+  requireAuth,
+  upload.array('attachments', 5),
+  async (req, res, next) => {
+    try {
+      const original = await getRequisitionById(req.params.id);
+      if (!original) return res.redirect('/admin/pr?missing=1');
+
+      const vendorId = req.body.vendorId || null;
+      const requester = (req.body.requester || '').trim();
+      const lines = normaliseLines(req.body);
+      const taxRatePercent = parseNumber(req.body.taxRate, original.taxRate * 100);
+      const taxRate = Number((taxRatePercent / 100).toFixed(4));
+      const taxAmount = parseNumber(req.body.taxAmount, original.taxAmount);
+      const subtotal = lines.reduce((sum, line) => sum + safeNumber(line.amount, 0), 0);
+      const computedTax = Number((subtotal * taxRate).toFixed(2));
+      const total = Number((subtotal + (taxAmount || computedTax)).toFixed(2));
+      const attachments = [...(original.attachments || []), ...collectAttachments(req.files)];
+
+      await updateRequisition(
+        req.params.id,
+        {
+          requester,
+          vendorId,
+          companyId: req.body.companyId || original.companyId,
+          currency: req.body.currency || original.currency,
+          lines,
+          taxRate,
+          taxAmount: taxAmount || computedTax,
+          total,
+          notes: req.body.notes || '',
+          attachments,
+        },
+        actorName(req)
+      );
+
+      return res.redirect(`/admin/pr/${req.params.id}?updated=1`);
     } catch (err) {
       next(err);
     }
@@ -144,39 +350,119 @@ router.post(
 
 router.post('/pr/:id/submit', requireAuth, async (req, res, next) => {
   try {
-    await submitForApproval(req.params.id, actorName(req));
-    res.redirect('/admin/pr?submitted=1');
+    await submitForApproval(req.params.id, actorName(req), req.body.remark || '');
+    res.redirect(`/admin/pr/${req.params.id}?submitted=1`);
   } catch (err) {
     next(err);
   }
 });
 
-router.post('/pr/:id/status', requireAuth, async (req, res, next) => {
+router.post('/pr/:id/approve', requireAuth, async (req, res, next) => {
   try {
-    const status = req.body.status;
-    await updateRequisitionStatus(req.params.id, status, actorName(req), req.body.remark || '');
-    res.redirect('/admin/pr?status=updated');
+    const result = await approvePrAndCreatePo(req.params.id, actorName(req), {
+      remark: req.body.remark || '',
+      paymentTerms: req.body.paymentTerms || 'Credit 30 days',
+      incoterms: req.body.incoterms || 'FOB',
+      shipping: {
+        shipTo: req.body.shipTo || '',
+        address: req.body.shippingAddress || '',
+        contact: req.body.shippingContact || '',
+      },
+    });
+    const redirectTarget = result.po ? `/admin/po/${result.po._id}?from=pr&auto=1` : `/admin/pr/${req.params.id}?approved=1`;
+    res.redirect(redirectTarget);
   } catch (err) {
     next(err);
   }
 });
+
+router.post('/pr/:id/reject', requireAuth, async (req, res, next) => {
+  try {
+    await rejectRequisition(req.params.id, actorName(req), req.body.reason || '');
+    res.redirect(`/admin/pr/${req.params.id}?rejected=1`);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* PO Dashboard                                                        */
+/* ------------------------------------------------------------------ */
 
 router.get('/po', requireAuth, async (req, res, next) => {
   try {
     res.locals.active = 'procurement-po';
-    const [pos, vendors, prs] = await Promise.all([
-      listPurchaseOrders({}, { limit: 25 }),
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const filters = {
+      status: req.query.status || 'all',
+      vendorId: req.query.vendorId || '',
+      search: req.query.search || '',
+    };
+
+    const [rawPos, vendors] = await Promise.all([
+      listPurchaseOrders(filters, { limit: PAGE_SIZE + 1, skip: (page - 1) * PAGE_SIZE }),
       listVendors({ activeOnly: true }),
-      listRequisitions({ status: PR_STATUSES.APPROVED }),
     ]);
 
-    res.render('procurement/po_list', {
-      title: 'Purchase Orders',
+    const pagination = buildPagination(rawPos.length, page);
+    const pos = pagination.hasNext ? rawPos.slice(0, PAGE_SIZE) : rawPos;
+
+    const toast = req.query.auto
+      ? 'สร้าง PO จาก PR แล้ว'
+      : req.query.missing
+        ? 'ไม่พบ PO ที่ระบุ'
+        : null;
+
+    res.render('procurement/po_dashboard', {
+      title: 'PO Dashboard',
       pos,
       vendors,
-      prs,
-      PO_STATUSES,
+      filters,
+      pagination,
       STATUS_LABELS,
+      PO_STATUSES,
+      dayjs,
+      toast,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/po/new', requireAuth, async (req, res, next) => {
+  try {
+    res.locals.active = 'procurement-po';
+    const vendors = await listVendors({ activeOnly: true });
+    let seed = null;
+    if (req.query.fromPr) {
+      const pr = await getRequisitionById(req.query.fromPr);
+      if (pr) {
+        seed = {
+          vendorId: pr.vendorId?._id || pr.vendorId,
+          lines: pr.lines,
+          taxAmount: pr.taxAmount,
+          subtotal: pr.subtotal,
+          totalAmount: pr.total,
+          currency: pr.currency,
+          prId: pr._id,
+        };
+      }
+    }
+
+    res.render('procurement/po_form', {
+      title: 'Create Purchase Order',
+      vendors,
+      form: seed || {
+        items: [
+          { description: '', quantity: '', unitPrice: '', uom: 'EA', sku: '', notes: '' },
+        ],
+        taxAmount: '',
+        subtotal: '',
+        totalAmount: '',
+      },
+      errors: [],
+      PR_STATUSES,
+      PO_STATUSES,
       dayjs,
     });
   } catch (err) {
@@ -186,54 +472,99 @@ router.get('/po', requireAuth, async (req, res, next) => {
 
 router.post('/po', requireAuth, async (req, res, next) => {
   try {
-    const items = parseItems(req.body);
-    if (!items.length) {
-      return res.redirect('/admin/po?error=no-item');
+    const lines = normaliseLines({
+      lineDescription: req.body.itemDescription,
+      lineSku: req.body.itemSku,
+      lineQuantity: req.body.itemQuantity,
+      lineUom: req.body.itemUom,
+      linePrice: req.body.itemUnitPrice,
+      lineNote: req.body.itemNote,
+    });
+    const vendorId = req.body.vendorId || '';
+    const prId = req.body.prId || null;
+    const subtotal = lines.reduce((sum, line) => sum + safeNumber(line.amount, 0), 0);
+    const taxAmount = parseNumber(req.body.taxAmount, 0);
+    const shippingFee = parseNumber(req.body.shippingFee, 0);
+    const totalAmount = Number((subtotal + taxAmount + shippingFee).toFixed(2));
+    const errors = [];
+
+    if (!lines.length) errors.push('ต้องมีรายการสินค้าอย่างน้อยหนึ่งรายการ');
+    if (!vendorId) errors.push('กรุณาเลือกผู้ขาย');
+
+    if (errors.length) {
+      const vendors = await listVendors({ activeOnly: true });
+      return res.status(400).render('procurement/po_form', {
+        title: 'Create Purchase Order',
+        vendors,
+        errors,
+        dayjs,
+        form: {
+          ...req.body,
+          vendorId,
+          prId,
+          items: lines.length
+            ? lines
+            : [{ description: '', quantity: '', unitPrice: '', uom: 'EA', sku: '', notes: '' }],
+          subtotal,
+          taxAmount,
+          shippingFee,
+          totalAmount,
+        },
+      });
     }
 
-    const actor = actorName(req);
-    const created = await createPurchaseOrder(
+    const po = await createPurchaseOrder(
       {
-        prId: req.body.prId || null,
-        vendorId: req.body.vendorId,
-        companyId: req.body.companyId || DEFAULT_COMPANY_ID,
-        items,
-        expectedDeliveryDate: req.body.expectedDeliveryDate
-          ? new Date(req.body.expectedDeliveryDate)
-          : null,
-        paymentTerms: req.body.paymentTerms || 'Credit 30 days',
-        remarks: req.body.note || '',
+        prId,
+        vendorId,
+        companyId: req.body.companyId || null,
+        items: lines,
+        taxAmount,
+        shippingFee,
+        totalAmount,
         currency: req.body.currency || 'THB',
+        paymentTerms: req.body.paymentTerms || 'Credit 30 days',
+        incoterms: req.body.incoterms || 'FOB',
+        shipping: {
+          shipTo: req.body.shipTo || '',
+          address: req.body.shippingAddress || '',
+          contact: req.body.shippingContact || '',
+        },
+        remarks: req.body.remarks || '',
       },
-      actor
+      actorName(req)
     );
 
-    try {
-      const [po, vendor] = await Promise.all([
-        getPurchaseOrderById(created._id),
-        getVendorById(req.body.vendorId),
-      ]);
-      if (po && vendor) {
-        const pdf = await generatePurchaseOrderPdf(po, vendor);
-        await markPdfGenerated(po._id, pdf.pdfPath, pdf.pdfUrl);
-        const emailInfo = await sendPurchaseOrderEmail({
-          po: { ...po, pdfUrl: pdf.pdfUrl },
-          vendor,
-          pdfPath: pdf.pdfPath,
-          pdfUrl: pdf.pdfUrl,
-        });
-        await markEmailSent(po._id, {
-          provider: emailInfo?.envelope ? 'nodemailer' : 'stream',
-          messageId: emailInfo?.messageId || '',
-          actor,
-        });
-        await notifyPoStatus({ ...po, pdfUrl: pdf.pdfUrl });
-      }
-    } catch (automationErr) {
-      console.error('[PROCUREMENT] post-create automation failed:', automationErr);
-    }
+    res.redirect(`/admin/po/${po._id}?created=1`);
+  } catch (err) {
+    next(err);
+  }
+});
 
-    res.redirect('/admin/po?created=1');
+router.get('/po/:id', requireAuth, async (req, res, next) => {
+  try {
+    res.locals.active = 'procurement-po';
+    const po = await getPurchaseOrderById(req.params.id);
+    if (!po) return res.redirect('/admin/po?missing=1');
+    const vendor = po.vendorId ? await getVendorById(po.vendorId._id || po.vendorId) : null;
+    res.render('procurement/po_detail', {
+      title: `PO ${po.poNumber}`,
+      po,
+      vendor,
+      STATUS_LABELS,
+      PO_STATUSES,
+      dayjs,
+      toast: req.query.created ? 'สร้าง PO สำเร็จ' : null,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/po/:id/approve', requireAuth, async (req, res, next) => {
+  try {
+    await approvePurchaseOrder(req.params.id, actorName(req), req.body.remark || '');
+    res.redirect(`/admin/po/${req.params.id}?approved=1`);
   } catch (err) {
     next(err);
   }
@@ -243,17 +574,31 @@ router.post('/po/:id/status', requireAuth, async (req, res, next) => {
   try {
     const status = req.body.status;
     await updatePurchaseOrderStatus(req.params.id, status, actorName(req), req.body.remark || '');
-    try {
-      const po = await getPurchaseOrderById(req.params.id);
-      await notifyPoStatus(po);
-    } catch (notifyErr) {
-      console.error('[PROCUREMENT] notify status change failed:', notifyErr);
-    }
-    res.redirect('/admin/po?status=updated');
+    res.redirect(`/admin/po/${req.params.id}?status=${status}`);
   } catch (err) {
     next(err);
   }
 });
+
+router.get('/po/:id/pdf', requireAuth, async (req, res, next) => {
+  try {
+    const po = await getPurchaseOrderById(req.params.id);
+    if (!po) return res.redirect('/admin/po?missing=1');
+    const vendor = po.vendorId ? await getVendorById(po.vendorId._id || po.vendorId) : null;
+    if (!vendor) throw new Error('Vendor data is required for PDF export');
+
+    const pdf = await generatePurchaseOrderPdf(po, vendor);
+    await markPdfGenerated(po._id, pdf.pdfPath, pdf.pdfUrl);
+
+    res.download(pdf.pdfPath, `${po.poNumber}.pdf`);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* Vendor management                                                   */
+/* ------------------------------------------------------------------ */
 
 router.get('/vendors', requireAuth, async (req, res, next) => {
   try {
@@ -270,23 +615,25 @@ router.get('/vendors', requireAuth, async (req, res, next) => {
 
 router.post('/vendors', requireAuth, async (req, res, next) => {
   try {
-    const payload = {
-      name: req.body.name,
-      email: req.body.email,
-      phone: req.body.phone,
-      address: req.body.address,
-      productCategories: (req.body.productCategories || '')
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean),
-      contact: {
-        name: req.body.contactName,
-        email: req.body.contactEmail,
-        phone: req.body.contactPhone,
+    await createVendor(
+      {
+        name: req.body.name,
+        email: req.body.email,
+        phone: req.body.phone,
+        address: req.body.address,
+        productCategories: (req.body.productCategories || '')
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        contact: {
+          name: req.body.contactName,
+          email: req.body.contactEmail,
+          phone: req.body.contactPhone,
+        },
+        notes: req.body.notes || '',
       },
-      notes: req.body.notes || '',
-    };
-    await createVendor(payload, actorName(req));
+      actorName(req)
+    );
     res.redirect('/admin/vendors?created=1');
   } catch (err) {
     next(err);
@@ -295,75 +642,22 @@ router.post('/vendors', requireAuth, async (req, res, next) => {
 
 router.post('/vendors/:id', requireAuth, async (req, res, next) => {
   try {
-    const payload = {
-      name: req.body.name,
-      email: req.body.email,
-      phone: req.body.phone,
-      address: req.body.address,
-      productCategories: (req.body.productCategories || '')
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean),
-      notes: req.body.notes || '',
-    };
-    await updateVendor(req.params.id, payload, actorName(req));
+    await updateVendor(
+      req.params.id,
+      {
+        name: req.body.name,
+        email: req.body.email,
+        phone: req.body.phone,
+        address: req.body.address,
+        productCategories: (req.body.productCategories || '')
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        notes: req.body.notes || '',
+      },
+      actorName(req)
+    );
     res.redirect('/admin/vendors?saved=1');
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.get('/settings/procurement', requireAuth, async (req, res, next) => {
-  try {
-    res.locals.active = 'procurement-settings';
-    const config = {
-      defaultCompanyId: DEFAULT_COMPANY_ID,
-      emailProvider: process.env.PROCUREMENT_EMAIL_PROVIDER || 'nodemailer',
-      lineChannel: process.env.PROCUREMENT_LINE_CHANNEL || 'default',
-      notifyRoles: (process.env.PROCUREMENT_NOTIFY_ROLES || 'procurement,warehouse').split(','),
-      safetyStockDays: Number(process.env.PROCUREMENT_SAFETY_DAYS || 3),
-    };
-
-    res.render('procurement/settings', {
-      title: 'Procurement Settings',
-      config,
-      lastSnapshotAt: null,
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.post('/settings/procurement/snapshot', requireAuth, async (req, res, next) => {
-  try {
-    if (!DEFAULT_COMPANY_ID) {
-      return res.redirect('/admin/settings/procurement?error=no-company');
-    }
-
-    await generateSnapshot(DEFAULT_COMPANY_ID, {
-      safetyStockDays: req.body.safetyStockDays || 3,
-    });
-    res.redirect('/admin/settings/procurement?snapshot=1');
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.get('/pr/:id/json', requireAuth, async (req, res, next) => {
-  try {
-    const pr = await getRequisitionById(req.params.id);
-    if (!pr) return res.status(404).json({ error: 'PR not found' });
-    res.json({ data: pr });
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.get('/po/:id/json', requireAuth, async (req, res, next) => {
-  try {
-    const po = await getPurchaseOrderById(req.params.id);
-    if (!po) return res.status(404).json({ error: 'PO not found' });
-    res.json({ data: po });
   } catch (err) {
     next(err);
   }

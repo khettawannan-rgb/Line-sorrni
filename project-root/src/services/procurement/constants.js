@@ -1,31 +1,31 @@
 // project-root/src/services/procurement/constants.js
 export const PR_STATUSES = Object.freeze({
   DRAFT: 'draft',
-  PENDING_APPROVAL: 'pending_approval',
+  WAITING_APPROVAL: 'waiting_approval',
   APPROVED: 'approved',
   REJECTED: 'rejected',
-  CANCELLED: 'cancelled',
+  CLOSED: 'closed',
 });
 
 export const PO_STATUSES = Object.freeze({
-  PENDING: 'pending',
+  DRAFT: 'draft',
   APPROVED: 'approved',
-  IN_DELIVERY: 'in_delivery',
-  DELIVERED: 'delivered',
+  SENT: 'sent',
+  RECEIVED: 'received',
   CANCELLED: 'cancelled',
 });
 
 export const STATUS_LABELS = Object.freeze({
-  [PR_STATUSES.DRAFT]: 'ฉบับร่าง',
-  [PR_STATUSES.PENDING_APPROVAL]: 'รออนุมัติ',
-  [PR_STATUSES.APPROVED]: 'อนุมัติแล้ว',
-  [PR_STATUSES.REJECTED]: 'ถูกปฏิเสธ',
-  [PR_STATUSES.CANCELLED]: 'ยกเลิก',
-  [PO_STATUSES.PENDING]: 'รอดำเนินการ',
-  [PO_STATUSES.APPROVED]: 'อนุมัติแล้ว',
-  [PO_STATUSES.IN_DELIVERY]: 'กำลังจัดส่ง',
-  [PO_STATUSES.DELIVERED]: 'จัดส่งสำเร็จ',
-  [PO_STATUSES.CANCELLED]: 'ยกเลิก',
+  [PR_STATUSES.DRAFT]: 'Draft',
+  [PR_STATUSES.WAITING_APPROVAL]: 'Waiting Approval',
+  [PR_STATUSES.APPROVED]: 'Approved',
+  [PR_STATUSES.REJECTED]: 'Rejected',
+  [PR_STATUSES.CLOSED]: 'Closed',
+  [PO_STATUSES.DRAFT]: 'Draft',
+  [PO_STATUSES.APPROVED]: 'Approved',
+  [PO_STATUSES.SENT]: 'Sent',
+  [PO_STATUSES.RECEIVED]: 'Received',
+  [PO_STATUSES.CANCELLED]: 'Cancelled',
 });
 
 export const PR_NUMBER_PREFIX = 'PR';

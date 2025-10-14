@@ -45,8 +45,8 @@ const PurchaseOrderSchema = new Schema(
     companyId: { type: Schema.Types.ObjectId, ref: 'Company', index: true },
     status: {
       type: String,
-      enum: ['pending', 'approved', 'in_delivery', 'delivered', 'cancelled'],
-      default: 'pending',
+      enum: ['draft', 'approved', 'sent', 'received', 'cancelled'],
+      default: 'draft',
       index: true,
     },
     items: { type: [OrderItemSchema], default: [] },
@@ -56,6 +56,12 @@ const PurchaseOrderSchema = new Schema(
     totalAmount: { type: Number, default: 0 },
     currency: { type: String, default: 'THB' },
     paymentTerms: { type: String, default: 'Credit 30 days' },
+    incoterms: { type: String, default: 'FOB' },
+    shipping: {
+      shipTo: { type: String, default: '' },
+      address: { type: String, default: '' },
+      contact: { type: String, default: '' },
+    },
     expectedDeliveryDate: { type: Date, default: null },
     tracking: {
       trackingNumber: { type: String, default: '' },

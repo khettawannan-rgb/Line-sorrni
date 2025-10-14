@@ -1,0 +1,192 @@
+{
+  "info": {
+    "_postman_id": "f81f7fe3-1d5c-4a5d-9c7a-0c8ad7cbdeb6",
+    "name": "NILA Admin Procurement",
+    "description": "Collection สำหรับทดสอบ PR / PO workflow ของ NILA Admin",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Launch Admin via LIFF Wrapper",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/liff-open-admin?to=/admin",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "liff-open-admin"
+          ],
+          "query": [
+            {
+              "key": "to",
+              "value": "/admin"
+            }
+          ]
+        },
+        "description": "เปิดหน้า LIFF wrapper เพื่อพาออกจาก LINE ไปยังแดชบอร์ดแอดมิน"
+      }
+    },
+    {
+      "name": "Create PR",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Cookie",
+            "value": "{{session_cookie}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"requester\": \"คุณพิมพ์ใจ รุ่งเรือง\",\n  \"vendorId\": \"{{vendor_id}}\",\n  \"currency\": \"THB\",\n  \"lines\": [\n    {\n      \"description\": \"Bitumen 60/70\",\n      \"sku\": \"ASPH-6070\",\n      \"quantity\": 12,\n      \"uom\": \"ตัน\",\n      \"unitPrice\": 2450\n    },\n    {\n      \"description\": \"บริการขนส่ง (กรุงเทพ → ชลบุรี)\",\n      \"sku\": \"LOGI-BKK-CBI\",\n      \"quantity\": 1,\n      \"uom\": \"เที่ยว\",\n      \"unitPrice\": 16500\n    }\n  ],\n  \"taxRate\": 0.07,\n  \"notes\": \"สร้างผ่าน Postman demo\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/admin/pr",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "admin",
+            "pr"
+          ]
+        },
+        "description": "สร้าง PR ใหม่ผ่าน API (ต้องมี session cookie จากการล็อกอิน)"
+      }
+    },
+    {
+      "name": "Approve PR & Auto Create PO",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          },
+          {
+            "key": "Cookie",
+            "value": "{{session_cookie}}"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "remark",
+              "value": "อนุมัติผ่าน Postman"
+            },
+            {
+              "key": "shipTo",
+              "value": "NILA Warehouse EEC"
+            },
+            {
+              "key": "shippingAddress",
+              "value": "700/222 Amata Nakorn, Chonburi 20000"
+            },
+            {
+              "key": "shippingContact",
+              "value": "+66-81-555-8899"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/admin/pr/{{pr_id}}/approve",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "admin",
+            "pr",
+            "{{pr_id}}",
+            "approve"
+          ]
+        },
+        "description": "อนุมัติ PR และสร้าง PO draft อัตโนมัติ"
+      }
+    },
+    {
+      "name": "Create PO (manual)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Cookie",
+            "value": "{{session_cookie}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"vendorId\": \"{{vendor_id}}\",\n  \"paymentTerms\": \"Credit 30 days\",\n  \"incoterms\": \"FOB\",\n  \"items\": [\n    {\n      \"description\": \"Bitumen 60/70\",\n      \"sku\": \"ASPH-6070\",\n      \"quantity\": 10,\n      \"uom\": \"ตัน\",\n      \"unitPrice\": 2450\n    }\n  ],\n  \"taxAmount\": 1715,\n  \"shippingFee\": 2500,\n  \"totalAmount\": 26815,\n  \"shipping\": {\n    \"shipTo\": \"NILA Plant\",\n    \"address\": \"88 Rama 4 Rd, Bangkok\",\n    \"contact\": \"คุณธีรภัทร 089-999-8899\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/admin/po",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "admin",
+            "po"
+          ]
+        },
+        "description": "สร้าง PO ใหม่แบบ manual (เชื่อม vendor โดยใช้ ObjectId)"
+      }
+    },
+    {
+      "name": "Download PO PDF",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "{{session_cookie}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/admin/po/{{po_id}}/pdf",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "admin",
+            "po",
+            "{{po_id}}",
+            "pdf"
+          ]
+        },
+        "description": "สร้างและดาวน์โหลด PDF ของ PO"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://nila-admin.sorni.dev"
+    },
+    {
+      "key": "session_cookie",
+      "value": "connect.sid=<paste_from_login>"
+    },
+    {
+      "key": "vendor_id",
+      "value": ""
+    },
+    {
+      "key": "pr_id",
+      "value": ""
+    },
+    {
+      "key": "po_id",
+      "value": ""
+    }
+  ]
+}

@@ -4,13 +4,8 @@ import PurchaseOrder from '../../models/PurchaseOrder.js';
 import ProcurementAuditLog from '../../models/ProcurementAuditLog.js';
 
 import { PO_STATUSES } from './constants.js';
-import {
-  generateDocumentNumber,
-  computeLineTotal,
-  safeNumber,
-  toPlainObject,
-} from './helpers.js';
-import { attachPurchaseOrder, updateRequisitionStatus } from './prService.js';
+import { generateDocumentNumber, computeLineTotal, safeNumber, toPlainObject } from './helpers.js';
+import { attachPurchaseOrder } from './prService.js';
 
 function startOfDay(date = new Date()) {
   return dayjs(date).startOf('day').toDate();
@@ -25,19 +20,19 @@ function normalizeItems(items = [], currency = 'THB') {
     const quantity = safeNumber(item.quantity, 0);
     const unitPrice = safeNumber(item.unitPrice, 0);
     const lineTotal = safeNumber(
-      item.lineTotal !== undefined ? item.lineTotal : computeLineTotal(quantity, unitPrice),
+      item.amount !== undefined ? item.amount : computeLineTotal(quantity, unitPrice),
       0
     );
 
     return {
-      itemName: item.itemName,
-      sku: item.sku,
+      itemName: item.description || item.itemName,
+      sku: item.sku?.trim() || '',
       quantity,
-      unit: item.unit || 'ตัน',
+      unit: item.uom || item.unit || 'EA',
       unitPrice,
       currency: item.currency || currency,
       lineTotal,
-      note: item.note || '',
+      note: item.notes || item.note || '',
     };
   });
 }
@@ -62,7 +57,7 @@ export async function listPurchaseOrders(filter = {}, opts = {}) {
     query.$or = [
       { poNumber: { $regex: filter.search, $options: 'i' } },
       { 'items.itemName': { $regex: filter.search, $options: 'i' } },
-      { 'tracking.trackingNumber': { $regex: filter.search, $options: 'i' } },
+      { remarks: { $regex: filter.search, $options: 'i' } },
     ];
   }
 
@@ -98,15 +93,17 @@ export async function createPurchaseOrder(payload, actor = 'system') {
 
   const normalizedItems = normalizeItems(payload.items || [], currency);
   const subtotal = sum(normalizedItems, (item) => item.lineTotal);
-  const taxAmount = safeNumber(
-    payload.taxAmount !== undefined ? payload.taxAmount : subtotal * 0.07,
-    0
-  );
+  const taxAmount = safeNumber(payload.taxAmount ?? subtotal * 0.07, 0);
   const shippingFee = safeNumber(payload.shippingFee, 0);
-  const totalAmount = safeNumber(payload.totalAmount ?? subtotal + taxAmount + shippingFee, 0);
+  const totalAmount = safeNumber(
+    payload.totalAmount ?? subtotal + taxAmount + shippingFee,
+    subtotal + taxAmount + shippingFee
+  );
 
   const doc = await PurchaseOrder.create({
-    ...payload,
+    prId: payload.prId || null,
+    vendorId: payload.vendorId,
+    companyId: payload.companyId || null,
     poNumber,
     items: normalizedItems,
     subtotal,
@@ -114,10 +111,18 @@ export async function createPurchaseOrder(payload, actor = 'system') {
     shippingFee,
     totalAmount,
     currency,
-    status: payload.status || PO_STATUSES.PENDING,
+    paymentTerms: payload.paymentTerms || 'Credit 30 days',
+    incoterms: payload.incoterms || 'FOB',
+    shipping: payload.shipping || { shipTo: '', address: '', contact: '' },
+    expectedDeliveryDate: payload.expectedDeliveryDate ? new Date(payload.expectedDeliveryDate) : null,
+    tracking: payload.tracking || { trackingNumber: '', carrier: '', deliveredAt: null, deliveryProof: [] },
+    pdfPath: '',
+    pdfUrl: '',
+    remarks: payload.remarks || '',
+    status: payload.status || PO_STATUSES.DRAFT,
     statusHistory: [
       {
-        status: payload.status || PO_STATUSES.PENDING,
+        status: payload.status || PO_STATUSES.DRAFT,
         actor,
         remark: payload.remarks || '',
         at: new Date(),
@@ -127,7 +132,6 @@ export async function createPurchaseOrder(payload, actor = 'system') {
 
   if (payload.prId) {
     await attachPurchaseOrder(payload.prId, doc._id, actor);
-    await updateRequisitionStatus(payload.prId, 'approved', actor, 'สร้างใบสั่งซื้อแล้ว');
   }
 
   await ProcurementAuditLog.create({
@@ -142,6 +146,10 @@ export async function createPurchaseOrder(payload, actor = 'system') {
   return toPlainObject(doc);
 }
 
+export async function approvePurchaseOrder(poId, actor = 'system', remark = '') {
+  return updatePurchaseOrderStatus(poId, PO_STATUSES.APPROVED, actor, remark);
+}
+
 export async function updatePurchaseOrderStatus(poId, status, actor = 'system', remark = '') {
   if (!Object.values(PO_STATUSES).includes(status)) {
     throw new Error('Invalid PO status');
@@ -153,8 +161,11 @@ export async function updatePurchaseOrderStatus(poId, status, actor = 'system', 
   doc.status = status;
   doc.statusHistory.push({ status, actor, remark, at: new Date() });
 
-  if (status === PO_STATUSES.DELIVERED) {
-    doc.tracking.deliveredAt = doc.tracking.deliveredAt || new Date();
+  if (status === PO_STATUSES.RECEIVED) {
+    doc.tracking = {
+      ...doc.tracking,
+      deliveredAt: doc.tracking?.deliveredAt || new Date(),
+    };
   }
 
   await doc.save();
@@ -177,13 +188,16 @@ export async function updateTrackingInfo(poId, trackingPayload = {}, actor = 'sy
 
   doc.tracking = {
     ...doc.tracking,
-    trackingNumber: trackingPayload.trackingNumber || doc.tracking.trackingNumber,
-    carrier: trackingPayload.carrier || doc.tracking.carrier,
-    deliveredAt: trackingPayload.deliveredAt || doc.tracking.deliveredAt,
+    trackingNumber: trackingPayload.trackingNumber || doc.tracking?.trackingNumber || '',
+    carrier: trackingPayload.carrier || doc.tracking?.carrier || '',
+    deliveredAt: trackingPayload.deliveredAt || doc.tracking?.deliveredAt || null,
   };
 
   if (Array.isArray(trackingPayload.deliveryProof) && trackingPayload.deliveryProof.length) {
-    doc.tracking.deliveryProof.push(...trackingPayload.deliveryProof);
+    doc.tracking.deliveryProof = [
+      ...(doc.tracking.deliveryProof || []),
+      ...trackingPayload.deliveryProof,
+    ];
   }
 
   await doc.save();
@@ -218,21 +232,10 @@ export async function markEmailSent(poId, log = {}) {
         sentAt: log.sentAt || new Date(),
         provider: log.provider || '',
         messageId: log.messageId || '',
-        error: log.error || '',
       },
     },
     { new: true }
   );
-  if (!doc) throw new Error('PO not found');
-
-  await ProcurementAuditLog.create({
-    entityType: 'PO',
-    entityId: doc._id,
-    action: 'email_sent',
-    actor: log.actor || 'system',
-    message: `ส่งอีเมลใบสั่งซื้อ ${doc.poNumber}`,
-    metadata: log,
-  });
 
   return toPlainObject(doc);
 }

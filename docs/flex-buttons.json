@@ -1,0 +1,33 @@
+{
+  "buttons": [
+    {
+      "type": "button",
+      "style": "primary",
+      "color": "#22C55E",
+      "action": {
+        "type": "uri",
+        "label": "เปิด PR",
+        "uri": "https://liff.line.me/<LIFF_ID>?to=/admin/pr"
+      }
+    },
+    {
+      "type": "button",
+      "style": "secondary",
+      "color": "#F59E0B",
+      "action": {
+        "type": "uri",
+        "label": "สร้าง PO",
+        "uri": "https://liff.line.me/<LIFF_ID>?to=/admin/po/new"
+      }
+    },
+    {
+      "type": "button",
+      "style": "primary",
+      "action": {
+        "type": "uri",
+        "label": "อนุมัติ PR",
+        "uri": "https://liff.line.me/<LIFF_ID>?to=/line/approve/pr/{{PR_ID}}"
+      }
+    }
+  ]
+}

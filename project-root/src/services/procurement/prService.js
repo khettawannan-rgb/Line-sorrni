@@ -2,11 +2,14 @@
 import dayjs from 'dayjs';
 import PurchaseRequisition from '../../models/PurchaseRequisition.js';
 import ProcurementAuditLog from '../../models/ProcurementAuditLog.js';
+import { PR_STATUSES } from './constants.js';
+import { generateDocumentNumber, toPlainObject, safeNumber } from './helpers.js';
 
-import {
-  PR_STATUSES,
-} from './constants.js';
-import { generateDocumentNumber, now, toPlainObject } from './helpers.js';
+const STATUS_FLOW = Object.freeze({
+  [PR_STATUSES.DRAFT]: [PR_STATUSES.WAITING_APPROVAL, PR_STATUSES.CLOSED],
+  [PR_STATUSES.WAITING_APPROVAL]: [PR_STATUSES.APPROVED, PR_STATUSES.REJECTED],
+  [PR_STATUSES.APPROVED]: [PR_STATUSES.CLOSED],
+});
 
 function startOfDay(date = new Date()) {
   return dayjs(date).startOf('day').toDate();
@@ -16,9 +19,47 @@ function endOfDay(date = new Date()) {
   return dayjs(date).endOf('day').toDate();
 }
 
-async function logHistory(prDoc, action, actor = 'system', remark = '') {
-  prDoc.history.push({ action, actor, remark, at: new Date() });
+function normaliseLine(line = {}) {
+  const qty = safeNumber(line.quantity, 0);
+  const price = safeNumber(line.unitPrice, 0);
+  const amount = Number((qty * price).toFixed(2));
+  return {
+    sku: line.sku?.trim() || '',
+    description: line.description?.trim() || '',
+    quantity: qty,
+    uom: line.uom?.trim() || 'EA',
+    unitPrice: price,
+    amount,
+    notes: line.notes?.trim() || '',
+  };
+}
+
+function computeTotals(lines = [], taxRate = 0) {
+  const subtotal = lines.reduce((sum, line) => sum + safeNumber(line.amount, 0), 0);
+  const taxAmount = Number((subtotal * taxRate).toFixed(2));
+  const total = Number((subtotal + taxAmount).toFixed(2));
+  return { subtotal, taxAmount, total };
+}
+
+async function recordHistory(prDoc, action, actor = 'system', remark = '') {
+  prDoc.history.push({
+    action,
+    actor,
+    remark,
+    at: new Date(),
+  });
   await prDoc.save();
+}
+
+async function writeAuditLog({ entityId, actor, action, message, metadata = {} }) {
+  await ProcurementAuditLog.create({
+    entityType: 'PR',
+    entityId,
+    action,
+    actor,
+    message,
+    metadata,
+  });
 }
 
 export async function generateNextPrNumber(date = new Date()) {
@@ -28,23 +69,32 @@ export async function generateNextPrNumber(date = new Date()) {
   return generateDocumentNumber('PR', countToday + 1, date);
 }
 
-export async function listRequisitions(filter = {}, opts = {}) {
+export async function listRequisitions(filter = {}, options = {}) {
   const query = {};
-  if (filter.status && filter.status !== 'all') query.status = filter.status;
-  if (filter.companyId) query.companyId = filter.companyId;
+  if (filter.status && filter.status !== 'all') {
+    query.status = filter.status;
+  }
+  if (filter.vendorId) query.vendorId = filter.vendorId;
+  if (filter.requester) {
+    query.requester = { $regex: filter.requester, $options: 'i' };
+  }
   if (filter.search) {
+    const keyword = filter.search.trim();
     query.$or = [
-      { prNumber: { $regex: filter.search, $options: 'i' } },
-      { 'items.itemName': { $regex: filter.search, $options: 'i' } },
+      { prNumber: { $regex: keyword, $options: 'i' } },
+      { requester: { $regex: keyword, $options: 'i' } },
+      { 'lines.description': { $regex: keyword, $options: 'i' } },
+      { notes: { $regex: keyword, $options: 'i' } },
     ];
   }
 
   const cursor = PurchaseRequisition.find(query)
     .populate('linkedPurchaseOrder')
+    .populate('vendorId')
     .sort({ createdAt: -1 });
 
-  if (opts.limit) cursor.limit(opts.limit);
-  if (opts.skip) cursor.skip(opts.skip);
+  if (options.limit) cursor.limit(options.limit);
+  if (options.skip) cursor.skip(options.skip);
 
   return cursor.lean();
 }
@@ -53,37 +103,48 @@ export async function getRequisitionById(id) {
   if (!id) return null;
   return PurchaseRequisition.findById(id)
     .populate('linkedPurchaseOrder')
-    .lean();
-}
-
-export async function getRequisitionByNumber(prNumber) {
-  if (!prNumber) return null;
-  return PurchaseRequisition.findOne({ prNumber })
-    .populate('linkedPurchaseOrder')
+    .populate('vendorId')
     .lean();
 }
 
 export async function createRequisition(payload, actor = 'system') {
   const prNumber = payload.prNumber || (await generateNextPrNumber());
+  const taxRate = payload.taxRate !== undefined ? safeNumber(payload.taxRate, 0) : 0.07;
+  const lines = Array.isArray(payload.lines) ? payload.lines.map(normaliseLine) : [];
+  const { subtotal, taxAmount, total } = computeTotals(lines, taxRate);
+
   const doc = await PurchaseRequisition.create({
-    ...payload,
+    requester: payload.requester,
+    requesterId: payload.requesterId || null,
+    vendorId: payload.vendorId || null,
+    companyId: payload.companyId || null,
     prNumber,
+    currency: payload.currency || 'THB',
+    lines,
+    subtotal,
+    taxRate,
+    taxAmount: payload.taxAmount !== undefined ? safeNumber(payload.taxAmount, 0) : taxAmount,
+    total: payload.total !== undefined ? safeNumber(payload.total, total) : total,
     status: payload.status || PR_STATUSES.DRAFT,
+    source: payload.source || 'manual',
+    autoGenerated: !!payload.autoGenerated,
+    notes: payload.notes || '',
+    attachments: payload.attachments || [],
+    approvers: payload.approvers || [],
     history: [
       {
         action: 'create',
         actor,
-        remark: payload.note || '',
+        remark: payload.notes || '',
         at: new Date(),
       },
     ],
   });
 
-  await ProcurementAuditLog.create({
-    entityType: 'PR',
+  await writeAuditLog({
     entityId: doc._id,
-    action: 'create',
     actor,
+    action: 'create',
     message: `สร้างใบขอซื้อ ${prNumber}`,
     metadata: { prNumber },
   });
@@ -91,55 +152,145 @@ export async function createRequisition(payload, actor = 'system') {
   return toPlainObject(doc);
 }
 
-export async function submitForApproval(prId, actor = 'system') {
+export async function updateRequisition(prId, payload, actor = 'system') {
   const doc = await PurchaseRequisition.findById(prId);
   if (!doc) throw new Error('PR not found');
 
-  doc.status = PR_STATUSES.PENDING_APPROVAL;
+  const lines = Array.isArray(payload.lines) ? payload.lines.map(normaliseLine) : doc.lines;
+  const taxRate = payload.taxRate !== undefined ? safeNumber(payload.taxRate, doc.taxRate) : doc.taxRate;
+  const { subtotal, taxAmount, total } = computeTotals(lines, taxRate);
+
+  doc.requester = payload.requester || doc.requester;
+  doc.vendorId = payload.vendorId || doc.vendorId;
+  doc.companyId = payload.companyId || doc.companyId;
+  doc.currency = payload.currency || doc.currency;
+  doc.lines = lines;
+  doc.taxRate = taxRate;
+  doc.subtotal = subtotal;
+  doc.taxAmount = payload.taxAmount !== undefined ? safeNumber(payload.taxAmount, 0) : taxAmount;
+  doc.total = payload.total !== undefined ? safeNumber(payload.total, 0) : total;
+  doc.notes = payload.notes ?? doc.notes;
+  doc.attachments = payload.attachments ?? doc.attachments;
+  if (payload.source) doc.source = payload.source;
+  if (typeof payload.autoGenerated === 'boolean') doc.autoGenerated = payload.autoGenerated;
+  if (Array.isArray(payload.approvers)) {
+    doc.approvers = payload.approvers;
+  }
+  await doc.save();
+  await recordHistory(doc, 'update', actor, payload.notes || '');
+  await writeAuditLog({
+    entityId: doc._id,
+    actor,
+    action: 'update',
+    message: `ปรับปรุงใบขอซื้อ ${doc.prNumber}`,
+  });
+  return toPlainObject(doc);
+}
+
+export async function submitForApproval(prId, actor = 'system', remark = '') {
+  const doc = await PurchaseRequisition.findById(prId);
+  if (!doc) throw new Error('PR not found');
+  if (doc.status !== PR_STATUSES.DRAFT) {
+    throw new Error('PR is not in draft state');
+  }
+
+  doc.status = PR_STATUSES.WAITING_APPROVAL;
   doc.history.push({
     action: 'submit_for_approval',
     actor,
+    remark,
     at: new Date(),
   });
+  doc.approvers = doc.approvers.map((approver) => ({
+    ...approver,
+    status: approver.status === 'pending' ? 'pending' : approver.status,
+  }));
   await doc.save();
 
-  await ProcurementAuditLog.create({
-    entityType: 'PR',
+  await writeAuditLog({
     entityId: doc._id,
-    action: 'submit_for_approval',
     actor,
-    message: `ส่งขออนุมัติใบขอซื้อ ${doc.prNumber}`,
+    action: 'submit_for_approval',
+    message: `ส่งใบขอซื้อ ${doc.prNumber} เพื่ออนุมัติ`,
   });
 
   return toPlainObject(doc);
 }
 
-export async function updateRequisitionStatus(prId, status, actor = 'system', remark = '') {
-  if (!Object.values(PR_STATUSES).includes(status)) {
-    throw new Error('Invalid PR status');
-  }
-
+export async function approveRequisition(prId, actor = 'system', remark = '') {
   const doc = await PurchaseRequisition.findById(prId);
   if (!doc) throw new Error('PR not found');
-
-  doc.status = status;
-  if (status === PR_STATUSES.APPROVED) {
-    doc.approvedAt = new Date();
-    doc.approver = actor;
+  if (![PR_STATUSES.WAITING_APPROVAL, PR_STATUSES.DRAFT].includes(doc.status)) {
+    throw new Error('PR cannot be approved from current status');
   }
 
-  doc.history.push({ action: `status:${status}`, actor, remark, at: new Date() });
-  await doc.save();
+  doc.status = PR_STATUSES.APPROVED;
+  doc.approvedAt = new Date();
+  doc.approvedBy = actor;
+  doc.rejectionReason = '';
+  doc.approvers = doc.approvers.map((approver) => ({
+    ...approver,
+    status: approver.status === 'pending' ? 'approved' : approver.status,
+    actedAt: approver.status === 'pending' ? new Date() : approver.actedAt,
+    remark: approver.status === 'pending' ? remark : approver.remark,
+  }));
 
-  await ProcurementAuditLog.create({
-    entityType: 'PR',
+  await recordHistory(doc, 'approved', actor, remark);
+  await writeAuditLog({
     entityId: doc._id,
-    action: `status:${status}`,
     actor,
-    message: `อัปเดตสถานะ ${doc.prNumber} -> ${status}`,
-    metadata: { status },
+    action: 'approved',
+    message: `อนุมัติใบขอซื้อ ${doc.prNumber}`,
   });
 
+  return toPlainObject(doc);
+}
+
+export async function rejectRequisition(prId, actor = 'system', reason = '') {
+  const doc = await PurchaseRequisition.findById(prId);
+  if (!doc) throw new Error('PR not found');
+  if (doc.status !== PR_STATUSES.WAITING_APPROVAL) {
+    throw new Error('Only waiting approval PRs can be rejected');
+  }
+
+  doc.status = PR_STATUSES.REJECTED;
+  doc.rejectionReason = reason;
+  doc.approvedAt = null;
+  doc.approvedBy = '';
+  doc.approvers = doc.approvers.map((approver) => ({
+    ...approver,
+    status: approver.status === 'pending' ? 'rejected' : approver.status,
+    actedAt: approver.status === 'pending' ? new Date() : approver.actedAt,
+    remark: approver.status === 'pending' ? reason : approver.remark,
+  }));
+
+  await recordHistory(doc, 'rejected', actor, reason);
+  await writeAuditLog({
+    entityId: doc._id,
+    actor,
+    action: 'rejected',
+    message: `ปฏิเสธใบขอซื้อ ${doc.prNumber}`,
+    metadata: { reason },
+  });
+
+  return toPlainObject(doc);
+}
+
+export async function closeRequisition(prId, actor = 'system', remark = '') {
+  const doc = await PurchaseRequisition.findById(prId);
+  if (!doc) throw new Error('PR not found');
+  if (![PR_STATUSES.APPROVED, PR_STATUSES.REJECTED].includes(doc.status)) {
+    throw new Error('PR must be approved or rejected before closing');
+  }
+
+  doc.status = PR_STATUSES.CLOSED;
+  await recordHistory(doc, 'closed', actor, remark);
+  await writeAuditLog({
+    entityId: doc._id,
+    actor,
+    action: 'closed',
+    message: `ปิดใบขอซื้อ ${doc.prNumber}`,
+  });
   return toPlainObject(doc);
 }
 
@@ -148,23 +299,22 @@ export async function attachPurchaseOrder(prId, poId, actor = 'system') {
   if (!doc) throw new Error('PR not found');
 
   doc.linkedPurchaseOrder = poId;
-  doc.status = PR_STATUSES.APPROVED;
-  doc.approvedAt = doc.approvedAt || new Date();
-  doc.history.push({
-    action: 'linked_po',
-    actor,
-    remark: `linked PO ${poId}`,
-    at: new Date(),
-  });
-
-  await doc.save();
-  await ProcurementAuditLog.create({
-    entityType: 'PR',
+  if (doc.status !== PR_STATUSES.APPROVED) {
+    doc.status = PR_STATUSES.APPROVED;
+    doc.approvedAt = doc.approvedAt || new Date();
+    doc.approvedBy = doc.approvedBy || actor;
+  }
+  await recordHistory(doc, 'linked_po', actor, `linked PO ${poId}`);
+  await writeAuditLog({
     entityId: doc._id,
-    action: 'linked_po',
     actor,
-    message: `เชื่อมใบสั่งซื้อ ${poId} กับ ${doc.prNumber}`,
+    action: 'linked_po',
+    message: `เชื่อมใบสั่งซื้อกับ ${doc.prNumber}`,
+    metadata: { poId },
   });
-
   return toPlainObject(doc);
+}
+
+export function allowedTransitions(status) {
+  return STATUS_FLOW[status] || [];
 }

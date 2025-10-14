@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import express from 'express';
 import session from 'express-session';
 import mongoose from 'mongoose';
+import cors from 'cors';
 import expressLayouts from 'express-ejs-layouts';
 import bodyParser from 'body-parser';
 import morgan from 'morgan';
@@ -12,17 +13,51 @@ import morgan from 'morgan';
 import adminRouter from './routes/admin.js';
 import webhookRouter from './routes/webhook.js';
 import consentRouter from './routes/consent.js';
+import lineFormsRouter from './routes/lineForms.js';
 import { setupDailyCron } from './jobs/scheduler.js';
 
 const PORT = Number(process.env.PORT || 10000);
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/line-erp-notifier';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret';
+const BASE_URL = (process.env.BASE_URL || '').replace(/\/$/, '');
+const LIFF_ID = process.env.LIFF_ID || '';
+const TRUSTED_ORIGINS = [BASE_URL, 'https://liff.line.me'].filter(Boolean);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 app.set('trust proxy', 1);
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin) return callback(null, true);
+    const isAllowed = TRUSTED_ORIGINS.some((allowed) => {
+      if (!allowed) return false;
+      if (allowed === origin) return true;
+      return origin.startsWith(`${allowed}/`);
+    });
+    if (isAllowed) return callback(null, true);
+    return callback(null, false);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Authorization', 'Content-Type', 'X-Requested-With'],
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+app.use((req, res, next) => {
+  const protoHeader = req.get('x-forwarded-proto');
+  const forwardedProto = protoHeader ? protoHeader.split(',')[0].trim() : '';
+  if (forwardedProto && forwardedProto !== 'https') {
+    const host = req.get('host');
+    const redirectUrl = `https://${host}${req.originalUrl}`;
+    return res.redirect(301, redirectUrl);
+  }
+  return next();
+});
 
 let mongoReady = false;
 let mongoErrorMessage = '';
@@ -74,7 +109,12 @@ app.use(
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { httpOnly: true, sameSite: 'lax' },
+    cookie: {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    },
   })
 );
 
@@ -132,7 +172,22 @@ app.get('/', (req, res) => {
     user: req.session.user,
   });
 });
+
+app.get('/liff-open-admin', (req, res) => {
+  if (!LIFF_ID) {
+    return res.status(500).send('LIFF_ID is not configured');
+  }
+  const rawTo = typeof req.query.to === 'string' ? req.query.to : '';
+  const safePath = rawTo.startsWith('/') ? rawTo : '/admin';
+  res.render('liff_open_admin', {
+    title: 'NILA · Admin Launcher',
+    liffId: LIFF_ID,
+    targetPath: safePath,
+    baseUrl: BASE_URL || '',
+  });
+});
 app.use('/consent', consentRouter);
+app.use('/line', lineFormsRouter);
 app.use('/admin', adminRouter);
 
 // 404

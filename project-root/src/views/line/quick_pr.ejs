@@ -1,0 +1,80 @@
+<section class="lite-wrapper">
+  <header class="lite-header">
+    <h1>สร้าง PR ด่วน</h1>
+    <p>เลือกผู้ขายและกรอก 1-2 รายการเพื่อส่งให้ทีมจัดซื้อ</p>
+  </header>
+
+  <% if (errors && errors.length) { %>
+    <div class="lite-alert danger">
+      <% errors.forEach((err) => { %>
+        <div><%= err %></div>
+      <% }) %>
+    </div>
+  <% } %>
+
+  <% if (result && result.success) { %>
+    <div class="lite-alert success">
+      สร้าง PR เรียบร้อย: <strong><a href="/admin/pr/<%= result.pr._id %>" target="_blank" rel="noopener"><%= result.pr.prNumber %></a></strong>
+    </div>
+  <% } %>
+
+  <form method="post" action="/line/forms/quick-pr" class="lite-form">
+    <label>
+      ผู้ขอ
+      <input name="requester" placeholder="ชื่อผู้ขอ" value="<%= form.requester || '' %>" />
+    </label>
+    <label>
+      ผู้ขาย
+      <select name="vendorId" required>
+        <option value="">เลือกผู้ขาย...</option>
+        <% vendors.forEach((vendor) => { %>
+          <option value="<%= vendor._id %>" <%= String(form.vendorId) === String(vendor._id) ? 'selected' : '' %>>
+            <%= vendor.name %>
+          </option>
+        <% }) %>
+      </select>
+    </label>
+    <label>
+      รายการ 1
+      <input name="line1Desc" placeholder="สินค้า/บริการ" value="<%= form.line1Desc || '' %>" />
+    </label>
+    <div class="lite-grid">
+      <label>
+        จำนวน
+        <input name="line1Qty" type="number" step="0.01" value="<%= form.line1Qty || '' %>" />
+      </label>
+      <label>
+        ราคา/หน่วย
+        <input name="line1Price" type="number" step="0.01" value="<%= form.line1Price || '' %>" />
+      </label>
+      <label>
+        หน่วย
+        <input name="line1Uom" value="<%= form.line1Uom || 'EA' %>" />
+      </label>
+    </div>
+    <label>
+      รายการ 2 (ถ้ามี)
+      <input name="line2Desc" placeholder="สินค้า/บริการ" value="<%= form.line2Desc || '' %>" />
+    </label>
+    <div class="lite-grid">
+      <label>
+        จำนวน
+        <input name="line2Qty" type="number" step="0.01" value="<%= form.line2Qty || '' %>" />
+      </label>
+      <label>
+        ราคา/หน่วย
+        <input name="line2Price" type="number" step="0.01" value="<%= form.line2Price || '' %>" />
+      </label>
+      <label>
+        หน่วย
+        <input name="line2Uom" value="<%= form.line2Uom || 'EA' %>" />
+      </label>
+    </div>
+    <label>
+      หมายเหตุ
+      <textarea name="notes" rows="2"><%= form.notes || '' %></textarea>
+    </label>
+
+    <button type="submit" class="lite-submit">ส่งคำขอ</button>
+  </form>
+</section>

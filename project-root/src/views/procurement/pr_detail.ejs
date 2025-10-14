@@ -1,0 +1,180 @@
+<section class="page-header">
+  <div>
+    <h1><%= pr.prNumber %></h1>
+    <p class="text-muted">
+      สร้างเมื่อ <%= dayjs(pr.createdAt).format('DD MMM YYYY HH:mm') %> · โดย <%= pr.requester %>
+    </p>
+  </div>
+  <div class="actions">
+    <a class="btn ghost" href="/admin/pr">← กลับรายการ</a>
+    <% if (pr.status === PR_STATUSES.DRAFT) { %>
+      <a class="btn ghost" href="/admin/pr/<%= pr._id %>/edit">Edit</a>
+      <form class="inline" method="post" action="/admin/pr/<%= pr._id %>/submit">
+        <button type="submit" class="btn primary">Submit</button>
+      </form>
+    <% } %>
+  </div>
+</section>
+
+<% if (toast) { %>
+  <div class="alert success"><%= toast %></div>
+<% } %>
+
+<section class="grid grid-2">
+  <article class="card">
+    <header>
+      <h2>รายละเอียด</h2>
+    </header>
+    <dl class="definition-list">
+      <div>
+        <dt>สถานะ</dt>
+        <dd><span class="badge status-<%= pr.status %>"><%= STATUS_LABELS[pr.status] %></span></dd>
+      </div>
+      <div>
+        <dt>Vendor</dt>
+        <dd>
+          <% if (vendor) { %>
+            <strong><%= vendor.name %></strong><br />
+            <span class="text-muted"><%= vendor.email || '-' %></span>
+          <% } else { %>
+            -
+          <% } %>
+        </dd>
+      </div>
+      <div>
+        <dt>รวมก่อนภาษี</dt>
+        <dd>฿<%= pr.subtotal.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
+      </div>
+      <div>
+        <dt>VAT</dt>
+        <dd>
+          <%= (pr.taxRate * 100).toFixed(2) %>% · ฿<%= pr.taxAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %>
+        </dd>
+      </div>
+      <div>
+        <dt>ยอดรวม</dt>
+        <dd><strong>฿<%= pr.total.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></strong></dd>
+      </div>
+      <% if (pr.notes) { %>
+        <div class="span-2">
+          <dt>หมายเหตุ</dt>
+          <dd><%= pr.notes %></dd>
+        </div>
+      <% } %>
+    </dl>
+
+    <% if (Array.isArray(pr.attachments) && pr.attachments.length) { %>
+      <div class="divider"></div>
+      <h3>ไฟล์แนบ</h3>
+      <ul class="attachment-list">
+        <% pr.attachments.forEach((att) => { %>
+          <li>
+            <a href="<%= att.url %>" target="_blank" rel="noopener"><%= att.originalName || att.filename %></a>
+            <span class="text-muted"><%= dayjs(att.uploadedAt).format('DD MMM YYYY HH:mm') %></span>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </article>
+
+  <article class="card">
+    <header>
+      <h2>Action</h2>
+    </header>
+    <% if (pr.status === PR_STATUSES.WAITING_APPROVAL) { %>
+      <form method="post" action="/admin/pr/<%= pr._id %>/approve" class="stack">
+        <h3>Approve &amp; Create PO</h3>
+        <label>Remark
+          <textarea name="remark" rows="2" placeholder="เหตุผล/คอมเมนต์เพิ่มเติม"></textarea>
+        </label>
+        <label>Ship To
+          <input name="shipTo" placeholder="ชื่อผู้รับสินค้า" />
+        </label>
+        <label>Shipping Address
+          <textarea name="shippingAddress" rows="2" placeholder="ที่อยู่จัดส่ง"></textarea>
+        </label>
+        <label>Contact
+          <input name="shippingContact" placeholder="เบอร์ติดต่อ/อีเมล" />
+        </label>
+        <label>Payment Terms
+          <input name="paymentTerms" value="Credit 30 days" />
+        </label>
+        <label>Incoterms
+          <input name="incoterms" value="FOB" />
+        </label>
+        <button type="submit" class="btn success">Approve &amp; Create PO</button>
+      </form>
+
+      <form method="post" action="/admin/pr/<%= pr._id %>/reject" class="stack">
+        <h3>Reject PR</h3>
+        <label>เหตุผล</label>
+        <textarea name="reason" rows="2" required></textarea>
+        <button type="submit" class="btn danger">Reject</button>
+      </form>
+    <% } else { %>
+      <p class="text-muted">ไม่มี action ที่ต้องทำในสถานะปัจจุบัน</p>
+      <% if (pr.linkedPurchaseOrder) { %>
+        <a href="/admin/po/<%= pr.linkedPurchaseOrder._id %>" class="btn ghost small">เปิด PO <%= pr.linkedPurchaseOrder.poNumber %></a>
+      <% } %>
+    <% } %>
+  </article>
+</section>
+
+<section class="card">
+  <header>
+    <h2>รายการสินค้า</h2>
+  </header>
+  <div class="responsive-table">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>SKU</th>
+          <th>รายละเอียด</th>
+          <th>จำนวน</th>
+          <th>หน่วย</th>
+          <th class="text-right">ราคา/หน่วย</th>
+          <th class="text-right">รวม</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% pr.lines.forEach((line, idx) => { %>
+          <tr>
+            <td><%= idx + 1 %></td>
+            <td><%= line.sku || '-' %></td>
+            <td>
+              <strong><%= line.description %></strong>
+              <% if (line.notes) { %>
+                <div class="text-muted text-xs"><%= line.notes %></div>
+              <% } %>
+            </td>
+            <td><%= line.quantity %></td>
+            <td><%= line.uom %></td>
+            <td class="text-right">฿<%= line.unitPrice.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></td>
+            <td class="text-right">฿<%= line.amount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card">
+  <header>
+    <h2>บันทึกเหตุการณ์</h2>
+  </header>
+  <ul class="timeline">
+    <% pr.history.slice().reverse().forEach((entry) => { %>
+      <li>
+        <div class="timeline__time"><%= dayjs(entry.at).format('DD MMM YYYY HH:mm') %></div>
+        <div class="timeline__body">
+          <strong><%= entry.action %></strong>
+          <span class="text-muted">โดย <%= entry.actor %></span>
+          <% if (entry.remark) { %>
+            <div><%= entry.remark %></div>
+          <% } %>
+        </div>
+      </li>
+    <% }) %>
+  </ul>
+</section>
