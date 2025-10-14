@@ -165,7 +165,7 @@ app.use((req, res, next) => {
 });
 
 // ===== Health =====
-app.get('/healthz', (req, res) => res.send('OK'));
+app.get('/healthz', (req, res) => res.send('ok'));
 // --- HEALTH CHECK ROUTE ---
 app.get('/health', (req, res) => {
   console.log('✅ Health check pinged');
