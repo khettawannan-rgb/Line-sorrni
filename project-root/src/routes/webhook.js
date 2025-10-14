@@ -49,8 +49,8 @@ const STRICT_SIGNATURE =
 const DEFAULT_WEATHER_LAT = Number(process.env.DEFAULT_WEATHER_LATITUDE || 13.7563);
 const DEFAULT_WEATHER_LNG = Number(process.env.DEFAULT_WEATHER_LONGITUDE || 100.5018);
 const DEFAULT_COMPANY_ID = process.env.DEFAULT_COMPANY_ID || '';
-const PORTAL_BASE_URL = process.env.PORTAL_BASE_URL || process.env.APP_PORTAL_URL || 'https://nila-portal.example.com';
-const PORTAL_BASE = PORTAL_BASE_URL.replace(/\/$/, '');
+const BASE_URL = process.env.BASE_URL; // updated to use BASE_URL
+const BASE_URL_CLEAN = (BASE_URL || '').replace(/\/$/, '');
 const PROCUREMENT_SAFETY_DAYS = Number(process.env.PROCUREMENT_SAFETY_DAYS || 3);
 
 const SUPER_ADMIN_SUPPLIER_CATALOG = [
@@ -720,7 +720,7 @@ async function replyStockSummary(ev) {
 
 async function replyPrLink(ev) {
   if (!ev.replyToken) return null;
-  const url = `${PORTAL_BASE}/admin/pr`;
+  const url = `${BASE_URL_CLEAN}/admin/pr`; // updated to use BASE_URL
   return replyActionCard(ev.replyToken, {
     title: 'เปิดใบขอซื้อ (PR)',
     subtitle: 'เปิดหน้าแดชบอร์ดในพอร์ทัล',
