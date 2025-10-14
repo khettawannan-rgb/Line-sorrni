@@ -291,6 +291,8 @@ router.get('/login', (req, res) => {
     isLineMobile,
     isSuperAdminLocked: isSuperAdminSession(req),
     user: null,
+    lineHeaderTitle: 'เข้าสู่ระบบ',
+    lineHeaderSubtitle: 'ลงชื่อเข้าเพื่อสร้าง PR / PO',
   });
 });
 
@@ -310,6 +312,8 @@ router.post('/login', (req, res) => {
     noChrome: true,
     isLineMobile: /Line/i.test(req.headers['user-agent'] || '') && /Mobile/i.test(req.headers['user-agent'] || ''),
     user: null,
+    lineHeaderTitle: 'เข้าสู่ระบบ',
+    lineHeaderSubtitle: 'ตรวจสอบข้อมูลแล้วลองอีกครั้ง',
   });
 });
 
