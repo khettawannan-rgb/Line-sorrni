@@ -16,6 +16,7 @@ import consentRouter from './routes/consent.js';
 import lineFormsRouter from './routes/lineForms.js';
 import { setupDailyCron } from './jobs/scheduler.js';
 import { liffLink } from './utils/liff.js';
+import { checkSuperAdmin } from './middleware/checkSuperAdmin.js';
 
 const PORT = Number(process.env.PORT || 10000);
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/line-erp-notifier';
@@ -129,6 +130,9 @@ app.use(
   })
 );
 
+// ===== Super Admin bypass =====
+app.use('/admin/login', checkSuperAdmin);
+
 // ===== Locals defaults (กัน ReferenceError ใน EJS) =====
 app.use((req, res, next) => {
   res.locals.user = req.session?.user || null;
@@ -175,7 +179,8 @@ app.get('/health', (req, res) => {
 // ===== Routes =====
 app.get('/', (req, res) => {
   if (!req.session?.user) {
-    return res.redirect('/admin/login');
+    const target = BASE_URL ? `${BASE_URL}/admin/login` : '/admin/login'; // updated to use BASE_URL
+    return res.redirect(target);
   }
   res.render('dashboard', {
     title: 'Dashboard',
