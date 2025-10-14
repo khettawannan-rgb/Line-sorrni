@@ -1,0 +1,62 @@
+<section class="lite-wrapper">
+  <% if (!pr) { %>
+    <header class="lite-header">
+      <h1>ไม่พบเอกสาร PR</h1>
+      <p class="text-muted">เอกสารที่ต้องการอนุมัติอาจถูกลบหรือไม่มีอยู่ในระบบ</p>
+    </header>
+  <% } else { %>
+    <%
+      const guestMode = typeof isGuest !== 'undefined' ? !!isGuest : false;
+      const loginRedirect = `/admin/login?redirect=${encodeURIComponent('/line/approve/pr/' + pr._id)}`;
+    %>
+    <header class="lite-header">
+      <h1><%= pr.prNumber %></h1>
+      <p>สถานะปัจจุบัน: <span class="badge status-<%= pr.status %>"><%= STATUS_LABELS[pr.status] %></span></p>
+    </header>
+
+    <% if (message === 'approved') { %>
+      <div class="lite-alert success">อนุมัติเรียบร้อย และสร้าง PO Draft แล้ว</div>
+    <% } else if (message === 'rejected') { %>
+      <div class="lite-alert danger">ปฏิเสธใบขอซื้อเรียบร้อย</div>
+    <% } %>
+
+    <article class="lite-card">
+      <h2>Vendor</h2>
+      <p><strong><%= pr.vendorId?.name || '-' %></strong></p>
+      <h3>รายการสินค้า</h3>
+      <ul class="lite-list">
+        <% pr.lines.forEach((line) => { %>
+          <li>
+            <strong><%= line.description %></strong>
+            <span><%= line.quantity %> <%= line.uom %></span>
+            <span>฿<%= line.amount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></span>
+          </li>
+        <% }) %>
+      </ul>
+      <p class="lite-total">ยอดรวม ฿<%= pr.total.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></p>
+    </article>
+
+    <% if (pr.status === PR_STATUSES.WAITING_APPROVAL) { %>
+      <% if (guestMode) { %>
+        <div class="lite-alert neutral">โหมดผู้เยี่ยมชม: ต้องล็อกอินก่อนจึงจะอนุมัติหรือปฏิเสธ PR นี้ได้</div>
+        <a href="<%= loginRedirect %>" class="lite-submit">ล็อกอินเพื่ออนุมัติ</a>
+      <% } else { %>
+        <form method="post" action="/line/approve/pr/<%= pr._id %>" class="lite-form">
+          <input type="hidden" name="action" value="approve" />
+          <label>Remark (ถ้ามี)
+            <textarea name="remark" rows="2"></textarea>
+          </label>
+          <button type="submit" class="lite-submit success">อนุมัติและสร้าง PO Draft</button>
+        </form>
+        <form method="post" action="/line/approve/pr/<%= pr._id %>" class="lite-form">
+          <input type="hidden" name="action" value="reject" />
+          <label>เหตุผลการปฏิเสธ</label>
+          <textarea name="reason" rows="2" required></textarea>
+          <button type="submit" class="lite-submit danger">ปฏิเสธ PR</button>
+        </form>
+      <% } %>
+    <% } else { %>
+      <div class="lite-alert neutral">ไม่สามารถดำเนินการได้ในสถานะ <%= STATUS_LABELS[pr.status] %></div>
+    <% } %>
+  <% } %>
+</section>

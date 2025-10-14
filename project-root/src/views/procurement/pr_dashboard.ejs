@@ -1,108 +1,220 @@
 <%
-  const mobileView = typeof isLineMobile !== 'undefined' && isLineMobile;
+  const guestMode = typeof isGuest !== 'undefined' ? !!isGuest : false;
   const draftCount = prs.filter((pr) => pr.status === PR_STATUSES.DRAFT).length;
   const waitingCount = prs.filter((pr) => pr.status === PR_STATUSES.WAITING_APPROVAL).length;
   const approvedCount = prs.filter((pr) => pr.status === PR_STATUSES.APPROVED).length;
+  const redirectSelf = typeof locals.redirectTo === 'string' && locals.redirectTo.length
+    ? locals.redirectTo
+    : '/admin/pr';
+  const createHref = guestMode
+    ? `/admin/login?redirect=${encodeURIComponent('/admin/pr/new')}`
+    : '/admin/pr/new';
+  const loginForActions = `/admin/login?redirect=${encodeURIComponent(redirectSelf)}`;
+  const hasFilters =
+    filters.status !== 'all' ||
+    (filters.vendorId && filters.vendorId.length) ||
+    (filters.search && filters.search.length);
 %>
 
-<% if (mobileView) { %>
-  <section class="line-mobile-hero">
-    <div class="line-mobile-hero__title">
-      <h1>PR Dashboard</h1>
-      <p>ติดตามและอนุมัติใบขอซื้อจากมือถือ</p>
-    </div>
-    <div class="line-mobile-hero__stats">
-      <div>
-        <span class="label">Draft</span>
-        <strong><%= draftCount %></strong>
-      </div>
-      <div>
-        <span class="label">รออนุมัติ</span>
-        <strong><%= waitingCount %></strong>
-      </div>
-      <div>
-        <span class="label">อนุมัติแล้ว</span>
-        <strong><%= approvedCount %></strong>
-      </div>
-    </div>
-    <a href="/admin/pr/new" class="btn primary btn-block line-mobile-hero__cta">+ สร้างใบขอซื้อ</a>
-  </section>
+<section class="page-hero">
+  <div>
+    <h1>Purchase Requisitions</h1>
+    <p>ดูสถานะ PR ทั้งหมดและเริ่มดำเนินการจัดซื้อได้จากที่เดียว</p>
+  </div>
+  <div class="actions">
+    <a href="<%= createHref %>" class="btn primary">+ สร้าง PR</a>
+  </div>
+</section>
 
-  <% if (toast) { %>
-    <div class="alert info line-mobile-alert"><%= toast %></div>
+<section class="metrics-grid">
+  <article class="metric-card">
+    <span>ทั้งหมด</span>
+    <strong><%= prs.length %></strong>
+  </article>
+  <article class="metric-card">
+    <span>Draft</span>
+    <strong><%= draftCount %></strong>
+  </article>
+  <article class="metric-card">
+    <span>รออนุมัติ</span>
+    <strong><%= waitingCount %></strong>
+  </article>
+  <article class="metric-card">
+    <span>อนุมัติแล้ว</span>
+    <strong><%= approvedCount %></strong>
+  </article>
+</section>
+
+<% if (typeof toast !== 'undefined' && toast) { %>
+  <div class="alert success"><%= toast %></div>
+<% } %>
+
+<section class="card filters-card">
+  <details <%= hasFilters ? 'open' : '' %>>
+    <summary>ปรับฟิลเตอร์</summary>
+    <form class="filter-grid" method="get" action="/admin/pr">
+      <div class="form-group">
+        <label for="status">สถานะ</label>
+        <select id="status" name="status">
+          <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>ทั้งหมด</option>
+          <% Object.values(PR_STATUSES).forEach((status) => { %>
+            <option value="<%= status %>" <%= filters.status === status ? 'selected' : '' %>><%= STATUS_LABELS[status] %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="vendor">ผู้ขาย</label>
+        <select id="vendor" name="vendorId">
+          <option value="">ทั้งหมด</option>
+          <% vendors.forEach((vendor) => { %>
+            <option value="<%= vendor._id %>" <%= String(filters.vendorId) === String(vendor._id) ? 'selected' : '' %>><%= vendor.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="search">ค้นหา</label>
+        <input id="search" type="search" name="search" value="<%= filters.search %>" placeholder="เลขที่ PR / รายการ / ผู้ร้องขอ" />
+      </div>
+      <div class="form-group form-full form-actions">
+        <button type="submit" class="btn primary">ใช้ฟิลเตอร์</button>
+        <% if (hasFilters) { %>
+          <a href="/admin/pr" class="btn ghost">เคลียร์ฟิลเตอร์</a>
+        <% } %>
+      </div>
+    </form>
+  </details>
+</section>
+
+<section class="card data-table desktop-only">
+  <header>
+    <h2>รายการ PR</h2>
+  </header>
+  <div class="responsive-table">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>PR</th>
+          <th>สถานะ</th>
+          <th>Vendor</th>
+          <th>รายการ</th>
+          <th class="text-right">ยอดรวม</th>
+          <th>อัปเดตล่าสุด</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!prs.length) { %>
+          <tr>
+            <td colspan="7" class="text-center text-muted">ยังไม่มีใบขอซื้อในระบบ</td>
+          </tr>
+        <% } %>
+        <% prs.forEach((pr) => { %>
+          <tr>
+            <td data-label="PR">
+              <a href="/admin/pr/<%= pr._id %>"><strong><%= pr.prNumber %></strong></a>
+              <div class="text-xs text-muted">โดย <%= pr.requester || '-' %></div>
+            </td>
+            <td data-label="สถานะ">
+              <span class="badge status-<%= pr.status %>"><%= STATUS_LABELS[pr.status] || pr.status %></span>
+            </td>
+            <td data-label="Vendor"><%= pr.vendorId?.name || '-' %></td>
+            <td data-label="รายการ">
+              <ul>
+                <% pr.lines.slice(0, 2).forEach((line) => { %>
+                  <li><%= line.description %> · <%= line.quantity %> <%= line.uom %></li>
+                <% }) %>
+                <% if (pr.lines.length > 2) { %>
+                  <li class="text-muted">+ <%= pr.lines.length - 2 %> รายการ</li>
+                <% } %>
+              </ul>
+            </td>
+            <td class="text-right" data-label="ยอดรวม">฿<%= pr.total.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></td>
+            <td data-label="อัปเดตล่าสุด"><%= dayjs(pr.updatedAt).format('DD MMM YYYY HH:mm') %></td>
+            <td data-label="การดำเนินการ" class="text-right">
+              <div class="btn-group">
+                <a href="/admin/pr/<%= pr._id %>" class="btn ghost small">รายละเอียด</a>
+                <% if (!guestMode) { %>
+                  <% if (pr.status === PR_STATUSES.DRAFT) { %>
+                    <form method="post" action="/admin/pr/<%= pr._id %>/submit">
+                      <button type="submit" class="btn primary small">ส่งอนุมัติ</button>
+                    </form>
+                  <% } %>
+                  <% if (pr.status === PR_STATUSES.WAITING_APPROVAL) { %>
+                    <form method="post" action="/admin/pr/<%= pr._id %>/approve" class="inline">
+                      <input type="hidden" name="remark" value="Approve via dashboard" />
+                      <button type="submit" class="btn success small">อนุมัติ</button>
+                    </form>
+                    <form method="post" action="/admin/pr/<%= pr._id %>/reject" class="inline">
+                      <input type="hidden" name="reason" value="Reject via dashboard" />
+                      <button type="submit" class="btn danger ghost small" data-confirm="ยืนยันปฏิเสธ PR นี้หรือไม่?">ปฏิเสธ</button>
+                    </form>
+                  <% } %>
+                <% } else { %>
+                  <a href="<%= loginForActions %>" class="btn ghost small">ล็อกอินเพื่อดำเนินการ</a>
+                <% } %>
+              </div>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% if (pagination.hasPrev || pagination.hasNext) { %>
+    <div class="pagination">
+      <% if (pagination.hasPrev) { %>
+        <a class="btn ghost" href="?<%= new URLSearchParams({ ...filters, page: pagination.prev }).toString() %>">&larr; ก่อนหน้า</a>
+      <% } else { %>
+        <span></span>
+      <% } %>
+      <span>หน้า <%= pagination.current %></span>
+      <% if (pagination.hasNext) { %>
+        <a class="btn ghost" href="?<%= new URLSearchParams({ ...filters, page: pagination.next }).toString() %>">ถัดไป &rarr;</a>
+      <% } else { %>
+        <span></span>
+      <% } %>
+    </div>
   <% } %>
+</section>
 
-  <section class="card line-mobile-filter">
-    <details>
-      <summary>ปรับฟิลเตอร์</summary>
-      <form class="filter-grid mobile" method="get" action="/admin/pr">
-        <label class="form-group">
-          <span>สถานะ</span>
-          <select name="status">
-            <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>ทั้งหมด</option>
-            <% Object.values(PR_STATUSES).forEach((status) => { %>
-              <option value="<%= status %>" <%= filters.status === status ? 'selected' : '' %>>
-                <%= STATUS_LABELS[status] %>
-              </option>
-            <% }) %>
-          </select>
-        </label>
-        <label class="form-group">
-          <span>ผู้ขาย</span>
-          <select name="vendorId">
-            <option value="">ทั้งหมด</option>
-            <% vendors.forEach((vendor) => { %>
-              <option value="<%= vendor._id %>" <%= String(filters.vendorId) === String(vendor._id) ? 'selected' : '' %>>
-                <%= vendor.name %>
-              </option>
-            <% }) %>
-          </select>
-        </label>
-        <label class="form-group">
-          <span>ค้นหา</span>
-          <input type="search" name="search" value="<%= filters.search %>" placeholder="ค้นหาเลขที่ / รายการ" />
-        </label>
-        <button type="submit" class="btn primary btn-block">Apply</button>
-      </form>
-    </details>
-  </section>
-
-  <section class="line-mobile-list">
-    <% if (!prs.length) { %>
-      <p class="text-muted text-center">ยังไม่มีใบขอซื้อ</p>
-    <% } %>
-    <% prs.forEach((pr) => { %>
-      <article class="mobile-card pr-card">
-        <header class="mobile-card__header">
-          <div>
-            <h3><%= pr.prNumber %></h3>
-            <small>Requester: <%= pr.requester %></small>
-          </div>
-          <span class="mobile-tag status-<%= pr.status %>"><%= STATUS_LABELS[pr.status] || pr.status %></span>
-        </header>
-        <div class="mobile-card__body">
-          <ul class="mobile-card__items">
-            <% pr.lines.slice(0, 3).forEach((line) => { %>
-              <li>
-                <strong><%= line.quantity %> <%= line.uom %></strong>
-                <span><%= line.description %></span>
-              </li>
-            <% }) %>
-            <% if (pr.lines.length > 3) { %>
-              <li class="more">+ <%= pr.lines.length - 3 %> รายการ</li>
-            <% } %>
-          </ul>
-          <div class="mobile-card__meta">
-            <span>ยอดรวม</span>
-            <strong>฿<%= pr.total.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></strong>
-          </div>
-          <div class="mobile-card__meta secondary">
-            <span>อัปเดตล่าสุด</span>
-            <time><%= dayjs(pr.updatedAt).format('DD MMM YYYY HH:mm') %></time>
-          </div>
+<section class="mobile-card-list mobile-only">
+  <% if (!prs.length) { %>
+    <div class="card empty-state">ยังไม่มีใบขอซื้อ</div>
+  <% } %>
+  <% prs.forEach((pr) => { %>
+    <article class="mobile-card">
+      <header class="mobile-card__header">
+        <div>
+          <h3><%= pr.prNumber %></h3>
+          <small>โดย <%= pr.requester || '-' %></small>
         </div>
-        <footer class="mobile-card__actions">
-          <a href="/admin/pr/<%= pr._id %>" class="btn ghost btn-sm">รายละเอียด</a>
+        <span class="badge status-<%= pr.status %>"><%= STATUS_LABELS[pr.status] || pr.status %></span>
+      </header>
+      <div class="mobile-card__meta secondary">
+        <span>Vendor</span>
+        <span><%= pr.vendorId?.name || '-' %></span>
+      </div>
+      <ul class="mobile-card__items">
+        <% pr.lines.slice(0, 3).forEach((line) => { %>
+          <li>
+            <span><%= line.description %></span>
+            <strong><%= line.quantity %> <%= line.uom %></strong>
+          </li>
+        <% }) %>
+        <% if (pr.lines.length > 3) { %>
+          <li class="text-muted">+ <%= pr.lines.length - 3 %> รายการ</li>
+        <% } %>
+      </ul>
+      <div class="mobile-card__meta">
+        <span>ยอดรวม</span>
+        <strong>฿<%= pr.total.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></strong>
+      </div>
+      <div class="mobile-card__meta secondary">
+        <span>อัปเดต</span>
+        <time><%= dayjs(pr.updatedAt).format('DD MMM YYYY HH:mm') %></time>
+      </div>
+      <footer class="mobile-card__actions">
+        <a href="/admin/pr/<%= pr._id %>" class="btn ghost btn-sm">รายละเอียด</a>
+        <% if (!guestMode) { %>
           <% if (pr.status === PR_STATUSES.DRAFT) { %>
             <form method="post" action="/admin/pr/<%= pr._id %>/submit">
               <button type="submit" class="btn primary btn-sm">ส่งอนุมัติ</button>
@@ -118,160 +230,22 @@
               <button type="submit" class="btn danger ghost btn-sm">ปฏิเสธ</button>
             </form>
           <% } %>
-        </footer>
-      </article>
-    <% }) %>
-  </section>
-
-  <% if (pagination.hasPrev || pagination.hasNext) { %>
-    <div class="line-mobile-pagination">
-      <% if (pagination.hasPrev) { %>
-        <a class="btn ghost btn-sm" href="?<%= new URLSearchParams({ ...filters, page: pagination.prev }).toString() %>">&larr; ก่อนหน้า</a>
-      <% } %>
-      <span>หน้า <%= pagination.current %></span>
-      <% if (pagination.hasNext) { %>
-        <a class="btn ghost btn-sm" href="?<%= new URLSearchParams({ ...filters, page: pagination.next }).toString() %>">ถัดไป &rarr;</a>
-      <% } %>
-    </div>
-  <% } %>
-<% } else { %>
-  <section class="page-header">
-    <div>
-      <h1>Purchase Requisitions</h1>
-      <p class="text-muted">ติดตามสถานะ PR และดำเนินการได้ทันทีจากหน้ารวม</p>
-    </div>
-    <div class="actions">
-      <a href="/admin/pr/new" class="btn primary">+ Create PR</a>
-    </div>
-  </section>
-
-  <% if (toast) { %>
-    <div class="alert info"><%= toast %></div>
-  <% } %>
-
-  <section class="card filters-card" data-filter-section>
-    <form class="filter-grid" method="get" action="/admin/pr">
-      <div class="form-group">
-        <label for="status">สถานะ</label>
-        <select id="status" name="status">
-          <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>ทั้งหมด</option>
-          <% Object.values(PR_STATUSES).forEach((status) => { %>
-            <option value="<%= status %>" <%= filters.status === status ? 'selected' : '' %>>
-              <%= STATUS_LABELS[status] %>
-            </option>
-          <% }) %>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="vendor">ผู้ขาย</label>
-        <select id="vendor" name="vendorId">
-          <option value="">ทั้งหมด</option>
-          <% vendors.forEach((vendor) => { %>
-            <option value="<%= vendor._id %>" <%= String(filters.vendorId) === String(vendor._id) ? 'selected' : '' %>>
-              <%= vendor.name %>
-            </option>
-          <% }) %>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="search">ค้นหา</label>
-        <input id="search" type="search" name="search" value="<%= filters.search %>" placeholder="เลขที่ PR / รายการ / ผู้ร้องขอ" />
-      </div>
-      <div class="form-group form-group--submit">
-        <label>&nbsp;</label>
-        <button type="submit" class="btn secondary">Apply</button>
-      </div>
-    </form>
-  </section>
-
-  <section class="card responsive-table">
-    <header>
-      <h2>รายการ PR</h2>
-    </header>
-    <table class="table table-stretched">
-      <thead>
-        <tr>
-          <th>PR</th>
-          <th>สถานะ</th>
-          <th>Vendor</th>
-          <th>รายการ</th>
-          <th class="text-right">ยอดรวม</th>
-          <th>อัปเดตล่าสุด</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% if (!prs.length) { %>
-          <tr>
-            <td colspan="7" class="text-center text-muted">ยังไม่มีข้อมูล</td>
-          </tr>
-        <% } %>
-        <% prs.forEach((pr) => { %>
-          <tr>
-            <td data-label="PR">
-              <a href="/admin/pr/<%= pr._id %>"><strong><%= pr.prNumber %></strong></a>
-              <div class="text-xs text-muted"><%= pr.requester %></div>
-            </td>
-            <td data-label="สถานะ">
-              <span class="badge status-<%= pr.status %>"><%= STATUS_LABELS[pr.status] || pr.status %></span>
-            </td>
-            <td data-label="Vendor">
-              <%= pr.vendorId?.name || pr.vendorId?.displayName || '-' %>
-            </td>
-            <td data-label="รายการ">
-              <ul class="list-compact">
-                <% pr.lines.slice(0, 2).forEach((line) => { %>
-                  <li><%= line.description %> · <%= line.quantity %> <%= line.uom %></li>
-                <% }) %>
-                <% if (pr.lines.length > 2) { %>
-                  <li class="text-muted">+ <%= pr.lines.length - 2 %> รายการ</li>
-                <% } %>
-              </ul>
-            </td>
-            <td class="text-right" data-label="ยอดรวม">
-              ฿<%= pr.total.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %>
-            </td>
-            <td data-label="อัปเดตล่าสุด">
-              <%= dayjs(pr.updatedAt).format('DD MMM YYYY HH:mm') %>
-            </td>
-            <td data-label="Actions" class="text-right">
-              <div class="btn-group">
-                <a href="/admin/pr/<%= pr._id %>" class="btn ghost small">View</a>
-                <% if (pr.status === PR_STATUSES.DRAFT) { %>
-                  <form method="post" action="/admin/pr/<%= pr._id %>/submit">
-                    <button type="submit" class="btn primary small">Submit</button>
-                  </form>
-                <% } %>
-                <% if (pr.status === PR_STATUSES.WAITING_APPROVAL) { %>
-                  <form method="post" action="/admin/pr/<%= pr._id %>/approve" class="inline">
-                    <input type="hidden" name="remark" value="Approve via dashboard" />
-                    <button type="submit" class="btn success small">Approve</button>
-                  </form>
-                  <form method="post" action="/admin/pr/<%= pr._id %>/reject" class="inline">
-                    <input type="hidden" name="reason" value="Reject via dashboard" />
-                    <button type="submit" class="btn danger ghost small" data-confirm="ยืนยันปฏิเสธ PR นี้หรือไม่?">Reject</button>
-                  </form>
-                <% } %>
-              </div>
-            </td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
-    <% if (pagination.hasPrev || pagination.hasNext) { %>
-      <div class="pagination">
-        <% if (pagination.hasPrev) { %>
-          <a class="btn ghost" href="?<%= new URLSearchParams({ ...filters, page: pagination.prev }).toString() %>">&larr; Prev</a>
         <% } else { %>
-          <span></span>
+          <a href="<%= loginForActions %>" class="btn ghost btn-sm">ล็อกอินเพื่อดำเนินการ</a>
         <% } %>
-        <span>Page <%= pagination.current %></span>
-        <% if (pagination.hasNext) { %>
-          <a class="btn ghost" href="?<%= new URLSearchParams({ ...filters, page: pagination.next }).toString() %>">Next &rarr;</a>
-        <% } else { %>
-          <span></span>
-        <% } %>
-      </div>
+      </footer>
+    </article>
+  <% }) %>
+</section>
+
+<% if (pagination.hasPrev || pagination.hasNext) { %>
+  <div class="line-mobile-pagination mobile-only">
+    <% if (pagination.hasPrev) { %>
+      <a class="btn ghost btn-sm" href="?<%= new URLSearchParams({ ...filters, page: pagination.prev }).toString() %>">&larr; ก่อนหน้า</a>
     <% } %>
-  </section>
+    <span>หน้า <%= pagination.current %></span>
+    <% if (pagination.hasNext) { %>
+      <a class="btn ghost btn-sm" href="?<%= new URLSearchParams({ ...filters, page: pagination.next }).toString() %>">ถัดไป &rarr;</a>
+    <% } %>
+  </div>
 <% } %>

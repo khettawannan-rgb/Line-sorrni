@@ -1,95 +1,52 @@
 <%
-  const mobileView = typeof isLineMobile !== 'undefined' && isLineMobile;
+  const guestMode = typeof isGuest !== 'undefined' ? !!isGuest : false;
+  const loginRedirect = `/admin/login?redirect=${encodeURIComponent('/admin/pr/' + pr._id)}`;
+  const vendorName = vendor?.name || pr.vendorId?.name || '-';
+  const subtotalValue = Number(pr.subtotal ?? (pr.total - (pr.taxAmount || 0)));
+  const taxValue = Number(pr.taxAmount || 0);
+  const totalValue = Number(pr.total || 0);
 %>
 
-<% if (mobileView) { %>
-  <section class="line-mobile-hero">
-    <div class="line-mobile-hero__title">
-      <h1><%= pr.prNumber %></h1>
-      <p>สร้างเมื่อ <%= dayjs(pr.createdAt).format('DD MMM YYYY HH:mm') %> · โดย <%= pr.requester %></p>
-    </div>
-    <div class="line-mobile-hero__stats compact">
-      <div>
-        <span class="label">สถานะ</span>
-        <strong><%= STATUS_LABELS[pr.status] %></strong>
-      </div>
-      <div>
-        <span class="label">ยอดรวม</span>
-        <strong>฿<%= pr.total.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></strong>
-      </div>
-      <div>
-        <span class="label">Vendor</span>
-        <strong><%= vendor?.name || '-' %></strong>
-      </div>
-    </div>
-    <div class="line-mobile-hero__cta-group">
-      <a class="btn ghost btn-block" href="/admin/pr">← กลับรายการ</a>
-      <% if (pr.status === PR_STATUSES.DRAFT) { %>
-        <a class="btn ghost btn-block" href="/admin/pr/<%= pr._id %>/edit">แก้ไข</a>
-        <form class="inline" method="post" action="/admin/pr/<%= pr._id %>/submit">
-          <button type="submit" class="btn primary btn-block">ส่งอนุมัติ</button>
-        </form>
-      <% } %>
-    </div>
-  </section>
-<% } else { %>
-  <section class="page-header">
-    <div>
-      <h1><%= pr.prNumber %></h1>
-      <p class="text-muted">
-        สร้างเมื่อ <%= dayjs(pr.createdAt).format('DD MMM YYYY HH:mm') %> · โดย <%= pr.requester %>
-      </p>
-    </div>
-    <div class="actions">
-      <a class="btn ghost" href="/admin/pr">← กลับรายการ</a>
-      <% if (pr.status === PR_STATUSES.DRAFT) { %>
-        <a class="btn ghost" href="/admin/pr/<%= pr._id %>/edit">Edit</a>
-        <form class="inline" method="post" action="/admin/pr/<%= pr._id %>/submit">
-          <button type="submit" class="btn primary">Submit</button>
-        </form>
-      <% } %>
-    </div>
-  </section>
-<% } %>
+<section class="page-hero">
+  <div>
+    <h1><%= pr.prNumber %></h1>
+    <p>สร้างเมื่อ <%= dayjs(pr.createdAt).format('DD MMM YYYY HH:mm') %> · โดย <%= pr.requester || '-' %></p>
+  </div>
+  <div class="actions">
+    <span class="badge status-<%= pr.status %>"><%= STATUS_LABELS[pr.status] %></span>
+    <a href="/admin/pr" class="btn ghost">← ย้อนกลับ</a>
+  </div>
+</section>
 
-<% if (toast) { %>
+<% if (typeof toast !== 'undefined' && toast) { %>
   <div class="alert success"><%= toast %></div>
 <% } %>
 
-<section class="<%= mobileView ? 'line-mobile-stack' : 'grid grid-2' %>">
-  <article class="card <%= mobileView ? 'line-mobile-card' : '' %>">
+<div class="grid grid-2">
+  <section class="card">
     <header>
-      <h2>รายละเอียด</h2>
+      <h2>รายละเอียดใบขอซื้อ</h2>
     </header>
     <dl class="definition-list">
       <div>
-        <dt>สถานะ</dt>
-        <dd><span class="badge status-<%= pr.status %>"><%= STATUS_LABELS[pr.status] %></span></dd>
+        <dt>ผู้ร้องขอ</dt>
+        <dd><%= pr.requester || '-' %></dd>
       </div>
       <div>
-        <dt>Vendor</dt>
-        <dd>
-          <% if (vendor) { %>
-            <strong><%= vendor.name %></strong><br />
-            <span class="text-muted"><%= vendor.email || '-' %></span>
-          <% } else { %>
-            -
-          <% } %>
-        </dd>
+        <dt>บริษัท</dt>
+        <dd><%= pr.companyId || '-' %></dd>
       </div>
       <div>
-        <dt>รวมก่อนภาษี</dt>
-        <dd>฿<%= pr.subtotal.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
+        <dt>ยอดรวมก่อนภาษี</dt>
+        <dd>฿<%= subtotalValue.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
       </div>
       <div>
         <dt>VAT</dt>
-        <dd>
-          <%= (pr.taxRate * 100).toFixed(2) %>% · ฿<%= pr.taxAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %>
-        </dd>
+        <dd><%= (pr.taxRate * 100).toFixed(2) %>% · ฿<%= taxValue.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
       </div>
       <div>
-        <dt>ยอดรวม</dt>
-        <dd><strong>฿<%= pr.total.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></strong></dd>
+        <dt>ยอดสุทธิ</dt>
+        <dd><strong>฿<%= totalValue.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></strong></dd>
       </div>
       <% if (pr.notes) { %>
         <div class="span-2">
@@ -98,9 +55,8 @@
         </div>
       <% } %>
     </dl>
-
     <% if (Array.isArray(pr.attachments) && pr.attachments.length) { %>
-      <div class="divider"></div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:18px 0;">
       <h3>ไฟล์แนบ</h3>
       <ul class="attachment-list">
         <% pr.attachments.forEach((att) => { %>
@@ -111,61 +67,89 @@
         <% }) %>
       </ul>
     <% } %>
-  </article>
+  </section>
 
-  <article class="card <%= mobileView ? 'line-mobile-card' : '' %>">
+  <section class="card">
     <header>
-      <h2>Action</h2>
+      <h2>Vendor &amp; การดำเนินการ</h2>
     </header>
-    <% if (pr.status === PR_STATUSES.WAITING_APPROVAL) { %>
-      <form method="post" action="/admin/pr/<%= pr._id %>/approve" class="stack">
-        <h3>Approve &amp; Create PO</h3>
-        <label>Remark
-          <textarea name="remark" rows="2" placeholder="เหตุผล/คอมเมนต์เพิ่มเติม"></textarea>
-        </label>
-        <label>Ship To
-          <input name="shipTo" placeholder="ชื่อผู้รับสินค้า" />
-        </label>
-        <label>Shipping Address
-          <textarea name="shippingAddress" rows="2" placeholder="ที่อยู่จัดส่ง"></textarea>
-        </label>
-        <label>Contact
-          <input name="shippingContact" placeholder="เบอร์ติดต่อ/อีเมล" />
-        </label>
-        <label>Payment Terms
-          <input name="paymentTerms" value="Credit 30 days" />
-        </label>
-        <label>Incoterms
-          <input name="incoterms" value="FOB" />
-        </label>
-        <button type="submit" class="btn success <%= mobileView ? 'btn-block btn-lg' : '' %>">Approve &amp; Create PO</button>
-      </form>
+    <dl class="definition-list">
+      <div>
+        <dt>Vendor</dt>
+        <dd>
+          <strong><%= vendorName %></strong><br />
+          <span class="text-muted"><%= vendor?.email || '-' %></span>
+        </dd>
+      </div>
+      <div>
+        <dt>สถานะ</dt>
+        <dd><span class="badge status-<%= pr.status %>"><%= STATUS_LABELS[pr.status] %></span></dd>
+      </div>
+    </dl>
 
-      <form method="post" action="/admin/pr/<%= pr._id %>/reject" class="stack">
-        <h3>Reject PR</h3>
-        <label>เหตุผล</label>
-        <textarea name="reason" rows="2" required></textarea>
-        <button type="submit" class="btn danger <%= mobileView ? 'btn-block btn-lg' : '' %>">Reject</button>
-      </form>
+    <% if (guestMode) { %>
+      <div class="alert neutral">
+        โหมดผู้เยี่ยมชม: ต้องล็อกอินก่อนจึงจะอนุมัติ/แก้ไขเอกสารได้
+      </div>
+      <a href="<%= loginRedirect %>" class="btn primary btn-block">ล็อกอินเพื่อดำเนินการ</a>
     <% } else { %>
-      <p class="text-muted">ไม่มี action ที่ต้องทำในสถานะปัจจุบัน</p>
-      <% if (pr.linkedPurchaseOrder) { %>
-        <a href="/admin/po/<%= pr.linkedPurchaseOrder._id %>" class="btn ghost small">เปิด PO <%= pr.linkedPurchaseOrder.poNumber %></a>
+      <% if (pr.status === PR_STATUSES.DRAFT) { %>
+        <div class="form-actions">
+          <a class="btn ghost" href="/admin/pr/<%= pr._id %>/edit">แก้ไข PR</a>
+          <form method="post" action="/admin/pr/<%= pr._id %>/submit" class="inline">
+            <button type="submit" class="btn primary">ส่งอนุมัติ</button>
+          </form>
+        </div>
+      <% } else if (pr.status === PR_STATUSES.WAITING_APPROVAL) { %>
+        <form method="post" action="/admin/pr/<%= pr._id %>/approve" class="stack">
+          <h3>อนุมัติและสร้าง PO</h3>
+          <label>Remark
+            <textarea name="remark" rows="2" placeholder="คำอธิบายเพิ่มเติม"></textarea>
+          </label>
+          <label>Ship To
+            <input name="shipTo" placeholder="ชื่อผู้รับสินค้า" />
+          </label>
+          <label>ที่อยู่จัดส่ง
+            <textarea name="shippingAddress" rows="2"></textarea>
+          </label>
+          <label>ผู้ติดต่อ
+            <input name="shippingContact" placeholder="เบอร์ติดต่อ/อีเมล" />
+          </label>
+          <label>Payment Terms
+            <input name="paymentTerms" value="Credit 30 days" />
+          </label>
+          <label>Incoterms
+            <input name="incoterms" value="FOB" />
+          </label>
+          <button type="submit" class="btn success btn-block">อนุมัติ &amp; สร้าง PO</button>
+        </form>
+
+        <form method="post" action="/admin/pr/<%= pr._id %>/reject" class="stack">
+          <h3>ปฏิเสธเอกสาร</h3>
+          <label>เหตุผลการปฏิเสธ</label>
+          <textarea name="reason" rows="2" required></textarea>
+          <button type="submit" class="btn danger btn-block">ปฏิเสธ PR</button>
+        </form>
+      <% } else if (pr.linkedPurchaseOrder) { %>
+        <a href="/admin/po/<%= pr.linkedPurchaseOrder._id %>" class="btn ghost btn-block">
+          เปิด PO <%= pr.linkedPurchaseOrder.poNumber %>
+        </a>
+      <% } else { %>
+        <p class="text-muted">ไม่มีการดำเนินการเพิ่มเติมในสถานะนี้</p>
       <% } %>
     <% } %>
-  </article>
-</section>
+  </section>
+</div>
 
-<section class="card <%= mobileView ? 'line-mobile-card' : '' %>">
+<section class="card">
   <header>
     <h2>รายการสินค้า</h2>
   </header>
-  <div class="responsive-table <%= mobileView ? 'line-mobile-table' : '' %>">
+  <div class="responsive-table">
     <table class="table">
       <thead>
         <tr>
           <th>#</th>
-          <th>SKU</th>
           <th>รายละเอียด</th>
           <th>จำนวน</th>
           <th>หน่วย</th>
@@ -177,7 +161,6 @@
         <% pr.lines.forEach((line, idx) => { %>
           <tr>
             <td data-label="#"><%= idx + 1 %></td>
-            <td data-label="SKU"><%= line.sku || '-' %></td>
             <td data-label="รายละเอียด">
               <strong><%= line.description %></strong>
               <% if (line.notes) { %>
@@ -195,22 +178,26 @@
   </div>
 </section>
 
-<section class="card <%= mobileView ? 'line-mobile-card' : '' %>">
+<section class="card">
   <header>
-    <h2>บันทึกเหตุการณ์</h2>
+    <h2>ไทม์ไลน์การดำเนินงาน</h2>
   </header>
-  <ul class="timeline">
-    <% pr.history.slice().reverse().forEach((entry) => { %>
-      <li>
-        <div class="timeline__time"><%= dayjs(entry.at).format('DD MMM YYYY HH:mm') %></div>
-        <div class="timeline__body">
-          <strong><%= entry.action %></strong>
-          <span class="text-muted">โดย <%= entry.actor %></span>
-          <% if (entry.remark) { %>
-            <div><%= entry.remark %></div>
-          <% } %>
-        </div>
-      </li>
-    <% }) %>
-  </ul>
+  <% if (!pr.history || !pr.history.length) { %>
+    <p class="text-muted">ยังไม่มีประวัติการดำเนินงาน</p>
+  <% } else { %>
+    <ul class="timeline">
+      <% pr.history.slice().reverse().forEach((entry) => { %>
+        <li>
+          <div class="timeline__time"><%= dayjs(entry.at).format('DD MMM YYYY HH:mm') %></div>
+          <div class="timeline__body">
+            <strong><%= entry.action %></strong>
+            <span class="text-muted">โดย <%= entry.actor %></span>
+            <% if (entry.remark) { %>
+              <div><%= entry.remark %></div>
+            <% } %>
+          </div>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
 </section>

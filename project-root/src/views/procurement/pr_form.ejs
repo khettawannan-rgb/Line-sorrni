@@ -1,83 +1,99 @@
 <%
   const action = MODE === 'edit' ? `/admin/pr/${form._id}` : '/admin/pr';
-  const mobileView = typeof isLineMobile !== 'undefined' && isLineMobile;
+  const guestMode = typeof isGuest !== 'undefined' ? !!isGuest : false;
+  const taxPercent = Number(form.taxRate || 0) * 100;
+  const loginRedirect = `/admin/login?redirect=${encodeURIComponent(action + (MODE === 'edit' ? '' : '/new'))}`;
+  const computedSubtotal = Array.isArray(form.lines)
+    ? form.lines.reduce((sum, line) => {
+        const qty = Number(line.quantity || 0);
+        const price = Number(line.unitPrice || 0);
+        return sum + (Number(line.amount || qty * price) || 0);
+      }, 0)
+    : 0;
+  const subtotalValue = Number(form.subtotal ?? computedSubtotal);
+  const taxValue = Number(form.taxAmount ?? 0);
+  const totalValue = Number(form.total ?? subtotalValue + taxValue);
 %>
 
-<% if (mobileView) { %>
-  <section class="line-mobile-hero">
-    <div class="line-mobile-hero__title">
-      <h1><%= MODE === 'edit' ? `แก้ไข ${form.prNumber}` : 'สร้างใบขอซื้อ' %></h1>
-      <p>กรอกข้อมูลสั้น ๆ เพื่อสร้างใบ PR จากมือถือ</p>
-    </div>
-    <div class="line-mobile-hero__stats compact">
-      <div>
-        <span class="label">ผู้ขาย</span>
-        <strong><%= vendors.length %></strong>
-      </div>
-      <div>
-        <span class="label">รายการ</span>
-        <strong><%= form.lines.length %></strong>
-      </div>
-      <div>
-        <span class="label">ภาษี</span>
-        <strong><%= Number(form.taxRate || 0) * 100 %>%</strong>
-      </div>
-    </div>
-    <a href="/admin/pr" class="btn ghost btn-block">← กลับรายการ PR</a>
-  </section>
-<% } else { %>
-  <section class="page-header">
-    <div>
-      <h1><%= MODE === 'edit' ? `Edit ${form.prNumber}` : 'Create PR' %></h1>
-      <p class="text-muted">ระบุรายละเอียดผู้ขาย รายการสินค้า และแนบไฟล์ที่เกี่ยวข้อง</p>
-    </div>
-    <div class="actions">
-      <a href="/admin/pr" class="btn ghost">← กลับรายการ PR</a>
-    </div>
-  </section>
+<section class="page-hero">
+  <div>
+    <h1><%= MODE === 'edit' ? `แก้ไข ${form.prNumber}` : 'สร้างใบขอซื้อ (PR)' %></h1>
+    <p>กรอกข้อมูลผู้ขาย รายละเอียดสินค้า และสรุปยอดเพื่อบันทึก PR</p>
+  </div>
+  <div class="actions">
+    <a href="/admin/pr" class="btn ghost">← ย้อนกลับ</a>
+  </div>
+</section>
+
+<% if (errors && errors.length) { %>
+  <div class="alert danger">
+    <strong>ไม่สามารถบันทึกได้</strong>
+    <ul>
+      <% errors.forEach((err) => { %>
+        <li><%= err %></li>
+      <% }) %>
+    </ul>
+  </div>
 <% } %>
 
-<section class="card <%= mobileView ? 'line-mobile-card' : '' %>">
-  <% if (errors && errors.length) { %>
-    <div class="alert danger">
-      <strong>ไม่สามารถบันทึกได้</strong>
-      <ul>
-        <% errors.forEach((err) => { %>
-          <li><%= err %></li>
-        <% }) %>
-      </ul>
+<form method="post" action="<%= action %>" enctype="multipart/form-data" class="grid">
+  <% if (guestMode) { %>
+    <div class="alert neutral">
+      โหมดผู้เยี่ยมชม: สามารถดูตัวอย่างฟอร์มได้ แต่ต้องล็อกอินก่อนจึงจะบันทึกหรือส่งอนุมัติได้
     </div>
   <% } %>
 
-  <form method="post" action="<%= action %>" enctype="multipart/form-data" class="form-grid <%= mobileView ? 'mobile' : '' %>">
-    <div class="form-group">
-      <label for="requester">ผู้ร้องขอ (Requester)</label>
-      <input id="requester" name="requester" value="<%= form.requester || '' %>" required />
-    </div>
-    <div class="form-group">
-      <label for="vendor">ผู้ขาย (Vendor)</label>
-      <select id="vendor" name="vendorId" required>
-        <option value="">เลือกผู้ขาย...</option>
-        <% vendors.forEach((vendor) => { %>
-          <option value="<%= vendor._id %>" <%= String(form.vendorId) === String(vendor._id) ? 'selected' : '' %>>
-            <%= vendor.name %>
-          </option>
-        <% }) %>
-      </select>
-    </div>
-    <div class="form-group">
-      <label for="currency">สกุลเงิน</label>
-      <input id="currency" name="currency" value="<%= form.currency || 'THB' %>" />
-    </div>
-    <div class="form-group">
-      <label for="companyId">บริษัท (optional)</label>
-      <input id="companyId" name="companyId" value="<%= form.companyId || '' %>" placeholder="Mongo ID หรือปล่อยว่าง" />
-    </div>
+  <fieldset class="grid" <%= guestMode ? 'disabled' : '' %>>
+    <section class="card">
+      <header>
+        <h2>ข้อมูลเอกสาร</h2>
+        <p class="subtitle">ข้อมูลหลักของใบขอซื้อ</p>
+      </header>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="requester">ผู้ร้องขอ</label>
+          <input id="requester" name="requester" value="<%= form.requester || '' %>" required />
+        </div>
+        <div class="form-group">
+          <label for="vendor">ผู้ขาย</label>
+          <select id="vendor" name="vendorId" required>
+            <option value="">เลือกผู้ขาย...</option>
+            <% vendors.forEach((vendor) => { %>
+              <option value="<%= vendor._id %>" <%= String(form.vendorId) === String(vendor._id) ? 'selected' : '' %>><%= vendor.name %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="currency">สกุลเงิน</label>
+          <input id="currency" name="currency" value="<%= form.currency || 'THB' %>" />
+        </div>
+        <div class="form-group">
+          <label for="companyId">บริษัท (ถ้ามี)</label>
+          <input id="companyId" name="companyId" value="<%= form.companyId || '' %>" placeholder="ระบุ ID บริษัท หรือเว้นว่าง" />
+        </div>
+        <div class="form-group">
+          <label for="taxRate">VAT (%)</label>
+          <input id="taxRate" name="taxRate" type="number" step="0.01" value="<%= taxPercent.toFixed(2) %>" />
+          <small>ระบุเป็นเปอร์เซ็นต์ เช่น 7.00</small>
+        </div>
+        <div class="form-group">
+          <label for="taxAmount">ภาษี (บาท)</label>
+          <input id="taxAmount" name="taxAmount" type="number" step="0.01" value="<%= form.taxAmount || '' %>" />
+        </div>
+        <div class="form-group form-full">
+          <label for="notes">หมายเหตุ</label>
+          <textarea id="notes" name="notes" rows="3"><%= form.notes || '' %></textarea>
+        </div>
+      </div>
+    </section>
 
-    <div class="form-group form-full">
-      <label>รายการสินค้า</label>
+    <section class="card">
+      <header>
+        <h2>รายการสินค้า</h2>
+        <p class="subtitle">เพิ่มรายการสินค้า/บริการที่ต้องการสั่งซื้อ</p>
+      </header>
       <div class="line-items" data-item-list>
-        <% form.lines.forEach((line, idx) => { %>
+        <% form.lines.forEach((line) => { %>
           <div class="item-row">
             <div>
               <label>SKU</label>
@@ -106,47 +122,59 @@
           </div>
         <% }) %>
       </div>
-      <button type="button" class="btn ghost small <%= mobileView ? 'btn-block' : '' %>" data-add-row>+ เพิ่มแถว</button>
-    </div>
+      <button type="button" class="btn ghost small" data-add-row>+ เพิ่มรายการสินค้า</button>
+    </section>
 
-    <div class="form-group">
-      <label for="taxRate">VAT (%)</label>
-      <input id="taxRate" name="taxRate" type="number" step="0.01" value="<%= (Number(form.taxRate || 0) * 100).toFixed(2) %>" />
-      <small class="text-muted">ระบบจะคิดเป็นทศนิยม เช่น 7% = 7.00</small>
-    </div>
-    <div class="form-group">
-      <label for="taxAmount">ภาษี (บาท)</label>
-      <input id="taxAmount" name="taxAmount" type="number" step="0.01" value="<%= form.taxAmount || '' %>" />
-    </div>
-    <div class="form-group">
-      <label for="notes">หมายเหตุ</label>
-      <textarea id="notes" name="notes" rows="3"><%= form.notes || '' %></textarea>
-    </div>
-
-    <div class="form-group form-full">
-      <label>แนบไฟล์ (PDF/ภาพ สูงสุด 5 ไฟล์)</label>
-      <input type="file" name="attachments" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" multiple />
+    <section class="card">
+      <header>
+        <h2>ไฟล์แนบ</h2>
+        <p class="subtitle">แนบใบเสนอราคา ใบแจ้งหนี้ หรือเอกสารประกอบ</p>
+      </header>
+      <div class="form-group form-full">
+        <input type="file" name="attachments" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" multiple />
+        <small>รองรับสูงสุด 5 ไฟล์</small>
+      </div>
       <% if (Array.isArray(form.attachments) && form.attachments.length) { %>
         <ul class="attachment-list">
           <% form.attachments.forEach((att) => { %>
             <li>
               <a href="<%= att.url %>" target="_blank" rel="noopener"><%= att.originalName || att.filename %></a>
-              <span class="text-muted"><%= (att.size / 1024).toFixed(1) %> KB</span>
+              <span class="text-muted"><%= att.size ? (att.size / 1024).toFixed(1) + ' KB' : '' %></span>
             </li>
           <% }) %>
         </ul>
       <% } %>
-    </div>
+    </section>
+  </fieldset>
 
-    <div class="form-actions form-full <%= mobileView ? 'line-mobile-actions' : '' %>">
-      <button type="submit" class="btn primary <%= mobileView ? 'btn-block btn-lg' : '' %>">
-        <%= MODE === 'edit' ? 'Save Changes' : 'Create PR' %>
-      </button>
-      <% if (MODE === 'edit' && form.status === PR_STATUSES.DRAFT) { %>
-        <button type="submit" formaction="/admin/pr/<%= form._id %>/submit" class="btn success <%= mobileView ? 'btn-block btn-lg' : '' %>">
-          Submit for Approval
+  <section class="card sticky-actions">
+    <% if (guestMode) { %>
+      <a href="<%= loginRedirect %>" class="btn primary btn-block btn-lg">ล็อกอินเพื่อบันทึก PR</a>
+    <% } else { %>
+      <dl class="definition-list">
+        <div>
+          <dt>รวมก่อนภาษี</dt>
+          <dd>฿<%= subtotalValue.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
+        </div>
+        <div>
+          <dt>VAT</dt>
+          <dd>฿<%= taxValue.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
+        </div>
+        <div>
+          <dt>ยอดสุทธิ</dt>
+          <dd><strong>฿<%= totalValue.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></strong></dd>
+        </div>
+      </dl>
+      <div class="form-actions">
+        <button type="submit" class="btn primary btn-lg">
+          <%= MODE === 'edit' ? 'บันทึกการแก้ไข' : 'บันทึก Draft' %>
         </button>
-      <% } %>
-    </div>
-  </form>
-</section>
+        <% if (MODE === 'edit' && form.status === PR_STATUSES.DRAFT) { %>
+          <button type="submit" formaction="/admin/pr/<%= form._id %>/submit" class="btn success btn-lg">
+            ส่งอนุมัติ
+          </button>
+        <% } %>
+      </div>
+    <% } %>
+  </section>
+</form>

@@ -8,6 +8,7 @@ import { createRequisition, getRequisitionById } from '../services/procurement/p
 import { approvePrAndCreatePo } from '../services/procurement/workflowService.js';
 import { rejectRequisition } from '../services/procurement/prService.js';
 import { PR_STATUSES, STATUS_LABELS } from '../services/procurement/constants.js';
+import guestMode from '../middleware/guestMode.js';
 
 dayjs.locale('th');
 
@@ -17,6 +18,7 @@ router.use((req, res, next) => {
   res.locals.noChrome = true;
   next();
 });
+router.use(guestMode);
 
 function parseNumber(input, fallback = 0) {
   if (typeof input === 'number') return Number.isFinite(input) ? input : fallback;
@@ -29,7 +31,7 @@ function parseNumber(input, fallback = 0) {
 router.get('/forms/quick-pr', async (req, res, next) => {
   try {
     const vendors = await listVendors({ activeOnly: true });
-    res.render('line/quick_pr', {
+    res.render('line/quick-pr', {
       title: 'Quick PR',
       vendors,
       dayjs,
@@ -81,7 +83,7 @@ router.post('/forms/quick-pr', async (req, res, next) => {
     if (!lines.length) errors.push('กรอกอย่างน้อย 1 รายการ');
 
     if (errors.length) {
-      return res.render('line/quick_pr', {
+      return res.render('line/quick-pr', {
         title: 'Quick PR',
         vendors,
         dayjs,
@@ -107,7 +109,7 @@ router.post('/forms/quick-pr', async (req, res, next) => {
       'line-quick-form'
     );
 
-    res.render('line/quick_pr', {
+    res.render('line/quick-pr', {
       title: 'Quick PR',
       vendors,
       dayjs,
@@ -124,7 +126,7 @@ router.get('/approve/pr/:id', async (req, res, next) => {
   try {
     const pr = await getRequisitionById(req.params.id);
     if (!pr) {
-      return res.status(404).render('line/quick_pr_approve', {
+      return res.status(404).render('line/approve-pr', {
         title: 'PR Not Found',
         pr: null,
         error: 'ไม่พบเอกสาร',
@@ -133,7 +135,7 @@ router.get('/approve/pr/:id', async (req, res, next) => {
         dayjs,
       });
     }
-    res.render('line/quick_pr_approve', {
+    res.render('line/approve-pr', {
       title: pr.prNumber,
       pr,
       STATUS_LABELS,

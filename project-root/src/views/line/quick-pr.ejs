@@ -1,7 +1,7 @@
 <section class="lite-wrapper">
   <header class="lite-header">
-    <h1>สร้าง PR ด่วน</h1>
-    <p>เลือกผู้ขายและกรอก 1-2 รายการเพื่อส่งให้ทีมจัดซื้อ</p>
+    <h1>สร้างใบขอซื้อแบบรวดเร็ว</h1>
+    <p>กรอกข้อมูลผู้ขายและสินค้าไม่กี่รายการ เพื่อบันทึก PR (Draft) ผ่าน LINE ได้ทันที</p>
   </header>
 
   <% if (errors && errors.length) { %>
@@ -14,7 +14,11 @@
 
   <% if (result && result.success) { %>
     <div class="lite-alert success">
-      สร้าง PR เรียบร้อย: <strong><a href="/admin/pr/<%= result.pr._id %>" target="_blank" rel="noopener"><%= result.pr.prNumber %></a></strong>
+      สร้าง PR เรียบร้อยแล้ว:
+      <strong><a href="/admin/pr/<%= result.pr._id %>" target="_blank" rel="noopener"><%= result.pr.prNumber %></a></strong>
+      <div style="margin-top:8px;">
+        <a href="/admin/pr/<%= result.pr._id %>?guest=1" target="_blank" rel="noopener">เปิดดูใน NILA Admin</a>
+      </div>
     </div>
   <% } %>
 
@@ -28,12 +32,12 @@
       <select name="vendorId" required>
         <option value="">เลือกผู้ขาย...</option>
         <% vendors.forEach((vendor) => { %>
-          <option value="<%= vendor._id %>" <%= String(form.vendorId) === String(vendor._id) ? 'selected' : '' %>>
-            <%= vendor.name %>
-          </option>
+          <option value="<%= vendor._id %>" <%= String(form.vendorId) === String(vendor._id) ? 'selected' : '' %>><%= vendor.name %></option>
         <% }) %>
       </select>
     </label>
+
+    <h2>รายการสินค้า</h2>
     <label>
       รายการ 1
       <input name="line1Desc" placeholder="สินค้า/บริการ" value="<%= form.line1Desc || '' %>" />
@@ -52,6 +56,7 @@
         <input name="line1Uom" value="<%= form.line1Uom || 'EA' %>" />
       </label>
     </div>
+
     <label>
       รายการ 2 (ถ้ามี)
       <input name="line2Desc" placeholder="สินค้า/บริการ" value="<%= form.line2Desc || '' %>" />
@@ -70,11 +75,12 @@
         <input name="line2Uom" value="<%= form.line2Uom || 'EA' %>" />
       </label>
     </div>
+
     <label>
       หมายเหตุ
-      <textarea name="notes" rows="2"><%= form.notes || '' %></textarea>
+      <textarea name="notes" rows="3" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"><%= form.notes || '' %></textarea>
     </label>
 
-    <button type="submit" class="lite-submit">ส่งคำขอ</button>
+    <button type="submit" class="lite-submit">บันทึก PR เป็น Draft</button>
   </form>
 </section>

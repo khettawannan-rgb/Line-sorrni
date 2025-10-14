@@ -21,14 +21,27 @@
     ? !!locals.isLineMobile
     : false;
 
+  const isGuest = typeof locals.isGuest !== 'undefined'
+    ? !!locals.isGuest
+    : !(locals.user && locals.user.username);
+
+  const displayName = (user && user.username)
+    ? user.username
+    : (isGuest ? 'Guest Mode' : 'User');
+
+  const redirectTarget = (typeof locals.redirectTo === 'string' && locals.redirectTo.length)
+    ? locals.redirectTo
+    : '/admin';
+  const redirectQuery = encodeURIComponent(redirectTarget);
+
   const lineHeaderTitle =
     typeof locals.lineHeaderTitle !== 'undefined'
       ? String(locals.lineHeaderTitle || '')
-      : (typeof title === 'string' && title ? title : 'Procurement');
+      : (typeof title === 'string' && title ? title : 'Procurement workspace');
   const lineHeaderSubtitle =
     typeof locals.lineHeaderSubtitle !== 'undefined'
       ? String(locals.lineHeaderSubtitle || '')
-      : 'LINE mobile console';
+      : (isGuest ? 'ดูข้อมูลแบบจำกัดสิทธิ์' : 'พร้อมดำเนินการจัดซื้อ');
 
   const bodyClasses = [];
   if (isAuth) bodyClasses.push('auth');
@@ -65,7 +78,7 @@
     <header class="topbar">
       <a class="brand" href="/admin">
         <img src="/static/img/Nila_Flatcolour_Logo-.png" alt="NILA" />
-        <span>NILA · LINE ERP Notifier</span>
+        <span>NILA · Admin</span>
       </a>
       <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-overlay" data-nav-toggle>
         <span></span><span></span><span></span>
@@ -160,9 +173,16 @@
         </nav>
         <div class="user">
           <div class="user-meta">
-            <span>สวัสดี, <%= (user && user.username) || 'guest' %></span>
+            <span><%= displayName %></span>
+            <% if (isGuest) { %>
+              <small>โหมดผู้เยี่ยมชม</small>
+            <% } %>
           </div>
-          <a class="btn ghost small" href="/admin/logout">Logout</a>
+          <% if (isGuest) { %>
+            <a class="btn ghost small" href="/admin/login?redirect=<%= redirectQuery %>">Login</a>
+          <% } else { %>
+            <a class="btn ghost small" href="/admin/logout">Logout</a>
+          <% } %>
         </div>
       </div>
     </header>
@@ -170,6 +190,13 @@
   <% } %>
 
   <main class="container <%= isLineMobileFlag ? 'line-app-main' : '' %>">
+    <% if (isGuest && !hideChrome) { %>
+      <div class="guest-banner">
+        <span class="guest-indicator">Guest mode</span>
+        <p>คุณกำลังดูข้อมูลแบบอ่านอย่างเดียว หากต้องการดำเนินการ โปรดล็อกอิน</p>
+        <a class="btn primary ghost" href="/admin/login?redirect=<%= redirectQuery %>">ล็อกอินเพื่อทำงาน</a>
+      </div>
+    <% } %>
     <%- body %>
   </main>
 

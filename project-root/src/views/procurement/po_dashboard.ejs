@@ -1,153 +1,65 @@
 <%
-  const mobileView = typeof isLineMobile !== 'undefined' && isLineMobile;
+  const guestMode = typeof isGuest !== 'undefined' ? !!isGuest : false;
   const draftCount = pos.filter((po) => po.status === PO_STATUSES.DRAFT).length;
   const approvedCount = pos.filter((po) => po.status === PO_STATUSES.APPROVED).length;
-  const sentCount = pos.filter((po) => [PO_STATUSES.SENT, PO_STATUSES.RECEIVED].includes(po.status)).length;
+  const sentCount = pos.filter((po) => po.status === PO_STATUSES.SENT).length;
+  const receivedCount = pos.filter((po) => po.status === PO_STATUSES.RECEIVED).length;
+  const redirectSelf = typeof locals.redirectTo === 'string' && locals.redirectTo.length
+    ? locals.redirectTo
+    : '/admin/po';
+  const createHref = guestMode
+    ? `/admin/login?redirect=${encodeURIComponent('/admin/po/new')}`
+    : '/admin/po/new';
+  const loginForActions = `/admin/login?redirect=${encodeURIComponent(redirectSelf)}`;
+  const hasFilters =
+    filters.status !== 'all' ||
+    (filters.vendorId && filters.vendorId.length) ||
+    (filters.search && filters.search.length);
 %>
 
-<% if (mobileView) { %>
-  <section class="line-mobile-hero">
-    <div class="line-mobile-hero__title">
-      <h1>PO Dashboard</h1>
-      <p>ตรวจสอบสถานะการสั่งซื้อและอนุมัติจากมือถือ</p>
-    </div>
-    <div class="line-mobile-hero__stats">
-      <div>
-        <span class="label">Draft</span>
-        <strong><%= draftCount %></strong>
-      </div>
-      <div>
-        <span class="label">Approved</span>
-        <strong><%= approvedCount %></strong>
-      </div>
-      <div>
-        <span class="label">ส่งแล้ว</span>
-        <strong><%= sentCount %></strong>
-      </div>
-    </div>
-    <a href="/admin/po/new" class="btn primary btn-block line-mobile-hero__cta">+ สร้างใบสั่งซื้อ</a>
-  </section>
+<section class="page-hero">
+  <div>
+    <h1>Purchase Orders</h1>
+    <p>จัดการใบสั่งซื้อ ตรวจสอบสถานะการส่ง และดูยอดคงค้างได้จากหน้าเดียว</p>
+  </div>
+  <div class="actions">
+    <a href="<%= createHref %>" class="btn primary">+ สร้าง PO</a>
+  </div>
+</section>
 
-  <% if (toast) { %>
-    <div class="alert info line-mobile-alert"><%= toast %></div>
-  <% } %>
+<section class="metrics-grid">
+  <article class="metric-card">
+    <span>ทั้งหมด</span>
+    <strong><%= pos.length %></strong>
+  </article>
+  <article class="metric-card">
+    <span>Draft</span>
+    <strong><%= draftCount %></strong>
+  </article>
+  <article class="metric-card">
+    <span>Approved</span>
+    <strong><%= approvedCount %></strong>
+  </article>
+  <article class="metric-card">
+    <span>ส่งแล้ว</span>
+    <strong><%= sentCount + receivedCount %></strong>
+  </article>
+</section>
 
-  <section class="card line-mobile-filter">
-    <details>
-      <summary>ปรับฟิลเตอร์</summary>
-      <form class="filter-grid mobile" method="get" action="/admin/po">
-        <label class="form-group">
-          <span>สถานะ</span>
-          <select name="status">
-            <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>ทั้งหมด</option>
-            <% Object.values(PO_STATUSES).forEach((status) => { %>
-              <option value="<%= status %>" <%= filters.status === status ? 'selected' : '' %>>
-                <%= STATUS_LABELS[status] %>
-              </option>
-            <% }) %>
-          </select>
-        </label>
-        <label class="form-group">
-          <span>ผู้ขาย</span>
-          <select name="vendorId">
-            <option value="">ทั้งหมด</option>
-            <% vendors.forEach((vendor) => { %>
-              <option value="<%= vendor._id %>" <%= String(filters.vendorId) === String(vendor._id) ? 'selected' : '' %>>
-                <%= vendor.name %>
-              </option>
-            <% }) %>
-          </select>
-        </label>
-        <label class="form-group">
-          <span>ค้นหา</span>
-          <input type="search" name="search" value="<%= filters.search %>" placeholder="ค้นหาเลขที่ / หมายเหตุ" />
-        </label>
-        <button type="submit" class="btn primary btn-block">Apply</button>
-      </form>
-    </details>
-  </section>
+<% if (typeof toast !== 'undefined' && toast) { %>
+  <div class="alert success"><%= toast %></div>
+<% } %>
 
-  <section class="line-mobile-list">
-    <% if (!pos.length) { %>
-      <p class="text-muted text-center">ยังไม่มีใบสั่งซื้อ</p>
-    <% } %>
-    <% pos.forEach((po) => { %>
-      <article class="mobile-card po-card">
-        <header class="mobile-card__header">
-          <div>
-            <h3><%= po.poNumber %></h3>
-            <small>Vendor: <%= po.vendorId?.name || '-' %></small>
-          </div>
-          <span class="mobile-tag status-<%= po.status %>"><%= STATUS_LABELS[po.status] %></span>
-        </header>
-        <div class="mobile-card__body">
-          <% if (po.prId) { %>
-            <div class="mobile-card__meta secondary">
-              <span>จาก PR</span>
-              <a href="/admin/pr/<%= po.prId._id || po.prId %>"><%= po.prId.prNumber %></a>
-            </div>
-          <% } %>
-          <div class="mobile-card__meta">
-            <span>ยอดรวม</span>
-            <strong>฿<%= po.totalAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></strong>
-          </div>
-          <div class="mobile-card__meta secondary">
-            <span>กำหนดส่ง</span>
-            <time><%= po.expectedDeliveryDate ? dayjs(po.expectedDeliveryDate).format('DD MMM YYYY') : '-' %></time>
-          </div>
-          <div class="mobile-card__meta secondary">
-            <span>สร้างเมื่อ</span>
-            <time><%= dayjs(po.createdAt).format('DD MMM YYYY HH:mm') %></time>
-          </div>
-        </div>
-        <footer class="mobile-card__actions">
-          <a class="btn ghost btn-sm" href="/admin/po/<%= po._id %>">รายละเอียด</a>
-          <% if (po.status === PO_STATUSES.DRAFT) { %>
-            <form class="inline" method="post" action="/admin/po/<%= po._id %>/approve">
-              <button type="submit" class="btn success btn-sm">อนุมัติ</button>
-            </form>
-          <% } %>
-        </footer>
-      </article>
-    <% }) %>
-  </section>
-
-  <% if (pagination.hasPrev || pagination.hasNext) { %>
-    <div class="line-mobile-pagination">
-      <% if (pagination.hasPrev) { %>
-        <a class="btn ghost btn-sm" href="?<%= new URLSearchParams({ ...filters, page: pagination.prev }).toString() %>">&larr; ก่อนหน้า</a>
-      <% } %>
-      <span>หน้า <%= pagination.current %></span>
-      <% if (pagination.hasNext) { %>
-        <a class="btn ghost btn-sm" href="?<%= new URLSearchParams({ ...filters, page: pagination.next }).toString() %>">ถัดไป &rarr;</a>
-      <% } %>
-    </div>
-  <% } %>
-<% } else { %>
-  <section class="page-header">
-    <div>
-      <h1>Purchase Orders</h1>
-      <p class="text-muted">อนุมัติ ส่ง และติดตามสถานะ PO ได้ในที่เดียว</p>
-    </div>
-    <div class="actions">
-      <a href="/admin/po/new" class="btn primary">+ Create PO</a>
-    </div>
-  </section>
-
-  <% if (toast) { %>
-    <div class="alert info"><%= toast %></div>
-  <% } %>
-
-  <section class="card filters-card">
+<section class="card filters-card">
+  <details <%= hasFilters ? 'open' : '' %>>
+    <summary>ปรับฟิลเตอร์</summary>
     <form class="filter-grid" method="get" action="/admin/po">
       <div class="form-group">
         <label for="status">สถานะ</label>
         <select id="status" name="status">
           <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>ทั้งหมด</option>
           <% Object.values(PO_STATUSES).forEach((status) => { %>
-            <option value="<%= status %>" <%= filters.status === status ? 'selected' : '' %>>
-              <%= STATUS_LABELS[status] %>
-            </option>
+            <option value="<%= status %>" <%= filters.status === status ? 'selected' : '' %>><%= STATUS_LABELS[status] %></option>
           <% }) %>
         </select>
       </div>
@@ -156,84 +68,153 @@
         <select id="vendorId" name="vendorId">
           <option value="">ทั้งหมด</option>
           <% vendors.forEach((vendor) => { %>
-            <option value="<%= vendor._id %>" <%= String(filters.vendorId) === String(vendor._id) ? 'selected' : '' %>>
-              <%= vendor.name %>
-            </option>
+            <option value="<%= vendor._id %>" <%= String(filters.vendorId) === String(vendor._id) ? 'selected' : '' %>><%= vendor.name %></option>
           <% }) %>
         </select>
       </div>
       <div class="form-group">
         <label for="search">ค้นหา</label>
-        <input id="search" name="search" value="<%= filters.search %>" placeholder="เลขที่ PO / รายการ / หมายเหตุ" />
+        <input id="search" name="search" value="<%= filters.search %>" placeholder="เลขที่ PO / หมายเหตุ" />
       </div>
-      <div class="form-group form-group--submit">
-        <label>&nbsp;</label>
-        <button type="submit" class="btn secondary">Apply</button>
+      <div class="form-group form-full form-actions">
+        <button type="submit" class="btn primary">ใช้ฟิลเตอร์</button>
+        <% if (hasFilters) { %>
+          <a href="/admin/po" class="btn ghost">เคลียร์ฟิลเตอร์</a>
+        <% } %>
       </div>
     </form>
-  </section>
+  </details>
+</section>
 
-  <section class="card responsive-table">
-    <header>
-      <h2>รายการ PO</h2>
-    </header>
-    <table class="table table-stretched">
+<section class="card data-table desktop-only">
+  <header>
+    <h2>รายการ PO</h2>
+  </header>
+  <div class="responsive-table">
+    <table class="table">
       <thead>
         <tr>
           <th>PO</th>
           <th>สถานะ</th>
           <th>Vendor</th>
           <th>ยอดรวม</th>
-          <th>วันที่ส่งของ</th>
+          <th>กำหนดส่ง</th>
           <th>สร้างเมื่อ</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <% if (!pos.length) { %>
-          <tr><td colspan="7" class="text-center text-muted">ยังไม่มีข้อมูล</td></tr>
+          <tr>
+            <td colspan="7" class="text-center text-muted">ยังไม่มีใบสั่งซื้อในระบบ</td>
+          </tr>
         <% } %>
         <% pos.forEach((po) => { %>
           <tr>
-            <td>
+            <td data-label="PO">
               <a href="/admin/po/<%= po._id %>"><strong><%= po.poNumber %></strong></a>
               <% if (po.prId) { %>
                 <div class="text-xs text-muted">จาก PR <a href="/admin/pr/<%= po.prId._id || po.prId %>"><%= po.prId.prNumber %></a></div>
               <% } %>
             </td>
-            <td>
+            <td data-label="สถานะ">
               <span class="badge status-<%= po.status %>"><%= STATUS_LABELS[po.status] %></span>
             </td>
-            <td><%= po.vendorId?.name || '-' %></td>
-            <td>฿<%= po.totalAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></td>
-            <td><%= po.expectedDeliveryDate ? dayjs(po.expectedDeliveryDate).format('DD MMM YYYY') : '-' %></td>
-            <td><%= dayjs(po.createdAt).format('DD MMM YYYY HH:mm') %></td>
-            <td class="text-right">
-              <a class="btn ghost small" href="/admin/po/<%= po._id %>">View</a>
-              <% if (po.status === PO_STATUSES.DRAFT) { %>
-                <form class="inline" method="post" action="/admin/po/<%= po._id %>/approve">
-                  <button type="submit" class="btn success small">Approve</button>
-                </form>
-              <% } %>
+            <td data-label="Vendor"><%= po.vendorId?.name || '-' %></td>
+            <td data-label="ยอดรวม">฿<%= po.totalAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></td>
+            <td data-label="กำหนดส่ง"><%= po.expectedDeliveryDate ? dayjs(po.expectedDeliveryDate).format('DD MMM YYYY') : '-' %></td>
+            <td data-label="สร้างเมื่อ"><%= dayjs(po.createdAt).format('DD MMM YYYY HH:mm') %></td>
+            <td data-label="การดำเนินการ" class="text-right">
+              <div class="btn-group">
+                <a class="btn ghost small" href="/admin/po/<%= po._id %>">รายละเอียด</a>
+                <% if (!guestMode) { %>
+                  <% if (po.status === PO_STATUSES.DRAFT) { %>
+                    <form class="inline" method="post" action="/admin/po/<%= po._id %>/approve">
+                      <button type="submit" class="btn success small">อนุมัติ</button>
+                    </form>
+                  <% } %>
+                <% } else { %>
+                  <a href="<%= loginForActions %>" class="btn ghost small">ล็อกอินเพื่อดำเนินการ</a>
+                <% } %>
+              </div>
             </td>
           </tr>
         <% }) %>
       </tbody>
     </table>
-    <% if (pagination.hasPrev || pagination.hasNext) { %>
-      <div class="pagination">
-        <% if (pagination.hasPrev) { %>
-          <a class="btn ghost" href="?<%= new URLSearchParams({ ...filters, page: pagination.prev }).toString() %>">&larr; Prev</a>
-        <% } else { %>
-          <span></span>
-        <% } %>
-        <span>Page <%= pagination.current %></span>
-        <% if (pagination.hasNext) { %>
-          <a class="btn ghost" href="?<%= new URLSearchParams({ ...filters, page: pagination.next }).toString() %>">Next &rarr;</a>
-        <% } else { %>
-          <span></span>
-        <% } %>
+  </div>
+  <% if (pagination.hasPrev || pagination.hasNext) { %>
+    <div class="pagination">
+      <% if (pagination.hasPrev) { %>
+        <a class="btn ghost" href="?<%= new URLSearchParams({ ...filters, page: pagination.prev }).toString() %>">&larr; ก่อนหน้า</a>
+      <% } else { %>
+        <span></span>
+      <% } %>
+      <span>หน้า <%= pagination.current %></span>
+      <% if (pagination.hasNext) { %>
+        <a class="btn ghost" href="?<%= new URLSearchParams({ ...filters, page: pagination.next }).toString() %>">ถัดไป &rarr;</a>
+      <% } else { %>
+        <span></span>
+      <% } %>
+    </div>
+  <% } %>
+</section>
+
+<section class="mobile-card-list mobile-only">
+  <% if (!pos.length) { %>
+    <div class="card empty-state">ยังไม่มีใบสั่งซื้อ</div>
+  <% } %>
+  <% pos.forEach((po) => { %>
+    <article class="mobile-card">
+      <header class="mobile-card__header">
+        <div>
+          <h3><%= po.poNumber %></h3>
+          <small><%= po.vendorId?.name || '-' %></small>
+        </div>
+        <span class="badge status-<%= po.status %>"><%= STATUS_LABELS[po.status] %></span>
+      </header>
+      <% if (po.prId) { %>
+        <div class="mobile-card__meta secondary">
+          <span>จาก PR</span>
+          <a href="/admin/pr/<%= po.prId._id || po.prId %>"><%= po.prId.prNumber %></a>
+        </div>
+      <% } %>
+      <div class="mobile-card__meta">
+        <span>ยอดรวม</span>
+        <strong>฿<%= po.totalAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></strong>
       </div>
+      <div class="mobile-card__meta secondary">
+        <span>กำหนดส่ง</span>
+        <time><%= po.expectedDeliveryDate ? dayjs(po.expectedDeliveryDate).format('DD MMM YYYY') : '-' %></time>
+      </div>
+      <div class="mobile-card__meta secondary">
+        <span>สร้างเมื่อ</span>
+        <time><%= dayjs(po.createdAt).format('DD MMM YYYY HH:mm') %></time>
+      </div>
+      <footer class="mobile-card__actions">
+        <a class="btn ghost btn-sm" href="/admin/po/<%= po._id %>">รายละเอียด</a>
+        <% if (!guestMode) { %>
+          <% if (po.status === PO_STATUSES.DRAFT) { %>
+            <form class="inline" method="post" action="/admin/po/<%= po._id %>/approve">
+              <button type="submit" class="btn success btn-sm">อนุมัติ</button>
+            </form>
+          <% } %>
+        <% } else { %>
+          <a href="<%= loginForActions %>" class="btn ghost btn-sm">ล็อกอินเพื่อดำเนินการ</a>
+        <% } %>
+      </footer>
+    </article>
+  <% }) %>
+</section>
+
+<% if (pagination.hasPrev || pagination.hasNext) { %>
+  <div class="line-mobile-pagination mobile-only">
+    <% if (pagination.hasPrev) { %>
+      <a class="btn ghost btn-sm" href="?<%= new URLSearchParams({ ...filters, page: pagination.prev }).toString() %>">&larr; ก่อนหน้า</a>
     <% } %>
-  </section>
+    <span>หน้า <%= pagination.current %></span>
+    <% if (pagination.hasNext) { %>
+      <a class="btn ghost btn-sm" href="?<%= new URLSearchParams({ ...filters, page: pagination.next }).toString() %>">ถัดไป &rarr;</a>
+    <% } %>
+  </div>
 <% } %>

@@ -1,86 +1,55 @@
 <%
-  const mobileView = typeof isLineMobile !== 'undefined' && isLineMobile;
+  const guestMode = typeof isGuest !== 'undefined' ? !!isGuest : false;
+  const loginRedirect = `/admin/login?redirect=${encodeURIComponent('/admin/po/' + po._id)}`;
+  const vendorName = po.vendorId?.name || vendor?.name || '-';
 %>
 
-<% if (mobileView) { %>
-  <section class="line-mobile-hero">
-    <div class="line-mobile-hero__title">
-      <h1><%= po.poNumber %></h1>
-      <p>
-        สร้างเมื่อ <%= dayjs(po.createdAt).format('DD MMM YYYY HH:mm') %>
-        <% if (po.prId) { %>
-          · จาก PR <a href="/admin/pr/<%= po.prId._id || po.prId %>"><%= po.prId.prNumber %></a>
-        <% } %>
-      </p>
-    </div>
-    <div class="line-mobile-hero__stats compact">
-      <div>
-        <span class="label">สถานะ</span>
-        <strong><%= STATUS_LABELS[po.status] %></strong>
-      </div>
-      <div>
-        <span class="label">Vendor</span>
-        <strong><%= po.vendorId?.name || '-' %></strong>
-      </div>
-      <div>
-        <span class="label">ยอดรวม</span>
-        <strong>฿<%= po.totalAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></strong>
-      </div>
-    </div>
-    <div class="line-mobile-hero__cta-group">
-      <a class="btn ghost btn-block" href="/admin/po">← กลับรายการ</a>
-      <a class="btn ghost btn-block" href="/admin/po/<%= po._id %>/pdf">Export PDF</a>
-    </div>
-  </section>
-<% } else { %>
-  <section class="page-header">
-    <div>
-      <h1><%= po.poNumber %></h1>
-      <p class="text-muted">
-        สร้างเมื่อ <%= dayjs(po.createdAt).format('DD MMM YYYY HH:mm') %>
-        <% if (po.prId) { %>
-          · จาก PR <a href="/admin/pr/<%= po.prId._id || po.prId %>"><%= po.prId.prNumber %></a>
-        <% } %>
-      </p>
-    </div>
-    <div class="actions">
-      <a class="btn ghost" href="/admin/po">← กลับรายการ</a>
+<section class="page-hero">
+  <div>
+    <h1><%= po.poNumber %></h1>
+    <p>
+      สร้างเมื่อ <%= dayjs(po.createdAt).format('DD MMM YYYY HH:mm') %>
+      <% if (po.prId) { %>
+        · จาก PR <a href="/admin/pr/<%= po.prId._id || po.prId %>"><%= po.prId.prNumber %></a>
+      <% } %>
+    </p>
+  </div>
+  <div class="actions">
+    <span class="badge status-<%= po.status %>"><%= STATUS_LABELS[po.status] %></span>
+    <a class="btn ghost" href="/admin/po">← ย้อนกลับ</a>
+    <% if (!guestMode) { %>
       <a class="btn ghost" href="/admin/po/<%= po._id %>/pdf">Export PDF</a>
-    </div>
-  </section>
-<% } %>
+    <% } %>
+  </div>
+</section>
 
-<% if (toast) { %>
+<% if (typeof toast !== 'undefined' && toast) { %>
   <div class="alert success"><%= toast %></div>
 <% } %>
 
-<section class="<%= mobileView ? 'line-mobile-stack' : 'grid grid-2' %>">
-  <article class="card <%= mobileView ? 'line-mobile-card' : '' %>">
+<div class="grid grid-2">
+  <section class="card">
     <header>
-      <h2>รายละเอียด PO</h2>
+      <h2>รายละเอียดใบสั่งซื้อ</h2>
     </header>
     <dl class="definition-list">
+      <div>
+        <dt>Vendor</dt>
+        <dd>
+          <strong><%= vendorName %></strong><br />
+          <span class="text-muted"><%= vendor?.email || '-' %></span>
+        </dd>
+      </div>
       <div>
         <dt>สถานะ</dt>
         <dd><span class="badge status-<%= po.status %>"><%= STATUS_LABELS[po.status] %></span></dd>
       </div>
       <div>
-        <dt>Vendor</dt>
-        <dd>
-          <% if (vendor) { %>
-            <strong><%= vendor.name %></strong><br />
-            <span class="text-muted"><%= vendor.email || '-' %></span>
-          <% } else { %>
-            -
-          <% } %>
-        </dd>
-      </div>
-      <div>
-        <dt>ยอดสุทธิ</dt>
+        <dt>ยอดสุทธิ (ก่อน VAT)</dt>
         <dd>฿<%= po.subtotal.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
       </div>
       <div>
-        <dt>ภาษี</dt>
+        <dt>VAT</dt>
         <dd>฿<%= po.taxAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
       </div>
       <div>
@@ -118,40 +87,47 @@
         </div>
       <% } %>
     </dl>
-  </article>
+  </section>
 
-  <article class="card <%= mobileView ? 'line-mobile-card' : '' %>">
+  <section class="card">
     <header>
-      <h2>Action</h2>
+      <h2>การดำเนินการ</h2>
     </header>
-    <% if (po.status === PO_STATUSES.DRAFT) { %>
-      <form method="post" action="/admin/po/<%= po._id %>/approve" class="stack">
-        <label>ข้อความถึง Vendor</label>
-        <textarea name="remark" rows="3" placeholder="ข้อความที่จะบันทึกพร้อมการอนุมัติ"></textarea>
-      <button type="submit" class="btn success <%= mobileView ? 'btn-block btn-lg' : '' %>">Approve PO</button>
+    <% if (guestMode) { %>
+      <div class="alert neutral">
+        โหมดผู้เยี่ยมชม: ต้องล็อกอินก่อนดำเนินการแก้ไขหรืออนุมัติใบสั่งซื้อ
+      </div>
+      <a href="<%= loginRedirect %>" class="btn primary btn-block">ล็อกอินเพื่อดำเนินการ</a>
+    <% } else { %>
+      <% if (po.status === PO_STATUSES.DRAFT) { %>
+        <form method="post" action="/admin/po/<%= po._id %>/approve" class="stack">
+          <label>Remark</label>
+          <textarea name="remark" rows="2" placeholder="ข้อความบันทึกเมื่ออนุมัติ"></textarea>
+          <button type="submit" class="btn success btn-block">Approve PO</button>
+        </form>
+      <% } %>
+      <form method="post" action="/admin/po/<%= po._id %>/status" class="stack">
+        <label>อัปเดตสถานะ</label>
+        <select name="status">
+          <% Object.values(PO_STATUSES).forEach((status) => { %>
+            <option value="<%= status %>" <%= po.status === status ? 'selected' : '' %>><%= STATUS_LABELS[status] %></option>
+          <% }) %>
+        </select>
+        <textarea name="remark" rows="2" placeholder="หมายเหตุเพิ่มเติม"></textarea>
+        <button type="submit" class="btn secondary btn-block">อัปเดตสถานะ</button>
       </form>
+      <% if (po.pdfUrl) { %>
+        <a class="btn ghost btn-block" href="<%= po.pdfUrl %>" target="_blank" rel="noopener">ดาวน์โหลด PDF ล่าสุด</a>
+      <% } %>
     <% } %>
-    <form method="post" action="/admin/po/<%= po._id %>/status" class="stack">
-      <label>อัปเดตสถานะ</label>
-      <select name="status">
-        <% Object.values(PO_STATUSES).forEach((status) => { %>
-          <option value="<%= status %>" <%= po.status === status ? 'selected' : '' %>><%= STATUS_LABELS[status] %></option>
-        <% }) %>
-      </select>
-      <textarea name="remark" rows="2" placeholder="หมายเหตุเพิ่มเติม"></textarea>
-      <button type="submit" class="btn secondary <%= mobileView ? 'btn-block btn-lg' : '' %>">Update Status</button>
-    </form>
-    <% if (po.pdfUrl) { %>
-    <a class="btn ghost <%= mobileView ? 'btn-block' : '' %>" href="<%= po.pdfUrl %>" target="_blank" rel="noopener">ดาวน์โหลดไฟล์ล่าสุด</a>
-    <% } %>
-  </article>
-</section>
+  </section>
+</div>
 
-<section class="card <%= mobileView ? 'line-mobile-card' : '' %>">
+<section class="card">
   <header>
     <h2>รายการสินค้า</h2>
   </header>
-  <div class="responsive-table <%= mobileView ? 'line-mobile-table' : '' %>">
+  <div class="responsive-table">
     <table class="table">
       <thead>
         <tr>
@@ -186,22 +162,26 @@
   </div>
 </section>
 
-<section class="card <%= mobileView ? 'line-mobile-card' : '' %>">
+<section class="card">
   <header>
     <h2>ประวัติการเปลี่ยนสถานะ</h2>
   </header>
-  <ul class="timeline">
-    <% (po.statusHistory || []).slice().reverse().forEach((entry) => { %>
-      <li>
-        <div class="timeline__time"><%= dayjs(entry.at).format('DD MMM YYYY HH:mm') %></div>
-        <div class="timeline__body">
-          <strong><%= STATUS_LABELS[entry.status] || entry.status %></strong>
-          <span class="text-muted">โดย <%= entry.actor %></span>
-          <% if (entry.remark) { %>
-            <div><%= entry.remark %></div>
-          <% } %>
-        </div>
-      </li>
-    <% }) %>
-  </ul>
+  <% if (!po.statusHistory || !po.statusHistory.length) { %>
+    <p class="text-muted">ยังไม่มีประวัติการเปลี่ยนสถานะ</p>
+  <% } else { %>
+    <ul class="timeline">
+      <% po.statusHistory.slice().reverse().forEach((entry) => { %>
+        <li>
+          <div class="timeline__time"><%= dayjs(entry.at).format('DD MMM YYYY HH:mm') %></div>
+          <div class="timeline__body">
+            <strong><%= STATUS_LABELS[entry.status] || entry.status %></strong>
+            <span class="text-muted">โดย <%= entry.actor %></span>
+            <% if (entry.remark) { %>
+              <div><%= entry.remark %></div>
+            <% } %>
+          </div>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
 </section>

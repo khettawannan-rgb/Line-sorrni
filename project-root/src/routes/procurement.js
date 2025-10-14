@@ -37,6 +37,7 @@ import {
 import { ensureStorageDirectories, saveAttachment } from '../services/procurement/storageService.js';
 import { safeNumber } from '../services/procurement/helpers.js';
 import { isSuperAdminSession } from '../middleware/checkSuperAdmin.js';
+import guestMode from '../middleware/guestMode.js';
 
 dayjs.locale('th');
 
@@ -47,6 +48,8 @@ const BASE_URL = process.env.BASE_URL ? process.env.BASE_URL.replace(/\/$/, '') 
 
 ensureStorageDirectories();
 
+router.use(guestMode);
+
 router.use((req, res, next) => {
   res.locals.procurementNav = true;
   next();
@@ -55,8 +58,9 @@ router.use((req, res, next) => {
 function requireAuth(req, res, next) {
   if (req.session?.user) return next();
   if (isSuperAdminSession(req)) return next();
-  const target = BASE_URL ? `${BASE_URL}/admin/login` : '/admin/login'; // updated to use BASE_URL
-  return res.redirect(target);
+  const targetBase = BASE_URL ? `${BASE_URL}/admin/login` : '/admin/login'; // updated to use BASE_URL
+  const redirectParam = encodeURIComponent(req.originalUrl || '/admin');
+  return res.redirect(`${targetBase}?redirect=${redirectParam}`);
 }
 
 function actorName(req) {
@@ -127,7 +131,7 @@ function buildPagination(totalFetched, page) {
 /* PR Dashboard                                                        */
 /* ------------------------------------------------------------------ */
 
-router.get('/pr', requireAuth, async (req, res, next) => {
+router.get('/pr', async (req, res, next) => {
   try {
     res.locals.active = 'procurement-pr';
     await ensureSeedVendors();
@@ -164,7 +168,7 @@ router.get('/pr', requireAuth, async (req, res, next) => {
   }
 });
 
-router.get('/pr/new', requireAuth, async (req, res, next) => {
+router.get('/pr/new', async (req, res, next) => {
   try {
     res.locals.active = 'procurement-pr';
     const vendors = await listVendors({ activeOnly: true });
@@ -256,7 +260,7 @@ router.post(
   }
 );
 
-router.get('/pr/:id', requireAuth, async (req, res, next) => {
+router.get('/pr/:id', async (req, res, next) => {
   try {
     res.locals.active = 'procurement-pr';
     const pr = await getRequisitionById(req.params.id);
@@ -393,7 +397,7 @@ router.post('/pr/:id/reject', requireAuth, async (req, res, next) => {
 /* PO Dashboard                                                        */
 /* ------------------------------------------------------------------ */
 
-router.get('/po', requireAuth, async (req, res, next) => {
+router.get('/po', async (req, res, next) => {
   try {
     res.locals.active = 'procurement-po';
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
@@ -433,7 +437,7 @@ router.get('/po', requireAuth, async (req, res, next) => {
   }
 });
 
-router.get('/po/new', requireAuth, async (req, res, next) => {
+router.get('/po/new', async (req, res, next) => {
   try {
     res.locals.active = 'procurement-po';
     const vendors = await listVendors({ activeOnly: true });
@@ -545,7 +549,7 @@ router.post('/po', requireAuth, async (req, res, next) => {
   }
 });
 
-router.get('/po/:id', requireAuth, async (req, res, next) => {
+router.get('/po/:id', async (req, res, next) => {
   try {
     res.locals.active = 'procurement-po';
     const po = await getPurchaseOrderById(req.params.id);
