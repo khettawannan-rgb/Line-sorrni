@@ -15,6 +15,20 @@
     filters.status !== 'all' ||
     (filters.vendorId && filters.vendorId.length) ||
     (filters.search && filters.search.length);
+
+  const buildQuery = (page) => {
+    const params = [];
+    const append = (key, value, options = {}) => {
+      if (value === undefined || value === null || value === '') return;
+      if (options.skipIf === value) return;
+      params.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`);
+    };
+    append('status', filters.status, { skipIf: 'all' });
+    append('vendorId', filters.vendorId);
+    append('search', filters.search);
+    append('page', page);
+    return params.length ? `?${params.join('&')}` : `?page=${encodeURIComponent(page)}`;
+  };
 %>
 
 <section class="page-hero">
@@ -146,13 +160,13 @@
   <% if (pagination.hasPrev || pagination.hasNext) { %>
     <div class="pagination">
       <% if (pagination.hasPrev) { %>
-        <a class="btn ghost" href="?<%= new URLSearchParams({ ...filters, page: pagination.prev }).toString() %>">&larr; ก่อนหน้า</a>
+        <a class="btn ghost" href="<%= buildQuery(pagination.prev) %>">&larr; ก่อนหน้า</a>
       <% } else { %>
         <span></span>
       <% } %>
       <span>หน้า <%= pagination.current %></span>
       <% if (pagination.hasNext) { %>
-        <a class="btn ghost" href="?<%= new URLSearchParams({ ...filters, page: pagination.next }).toString() %>">ถัดไป &rarr;</a>
+        <a class="btn ghost" href="<%= buildQuery(pagination.next) %>">ถัดไป &rarr;</a>
       <% } else { %>
         <span></span>
       <% } %>
@@ -210,11 +224,11 @@
 <% if (pagination.hasPrev || pagination.hasNext) { %>
   <div class="line-mobile-pagination mobile-only">
     <% if (pagination.hasPrev) { %>
-      <a class="btn ghost btn-sm" href="?<%= new URLSearchParams({ ...filters, page: pagination.prev }).toString() %>">&larr; ก่อนหน้า</a>
+      <a class="btn ghost btn-sm" href="<%= buildQuery(pagination.prev) %>">&larr; ก่อนหน้า</a>
     <% } %>
     <span>หน้า <%= pagination.current %></span>
     <% if (pagination.hasNext) { %>
-      <a class="btn ghost btn-sm" href="?<%= new URLSearchParams({ ...filters, page: pagination.next }).toString() %>">ถัดไป &rarr;</a>
+      <a class="btn ghost btn-sm" href="<%= buildQuery(pagination.next) %>">ถัดไป &rarr;</a>
     <% } %>
   </div>
 <% } %>
