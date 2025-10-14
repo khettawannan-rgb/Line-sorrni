@@ -290,6 +290,7 @@ router.get('/login', (req, res) => {
     noChrome: true,
     isLineMobile,
     isSuperAdminLocked: isSuperAdminSession(req),
+    user: null,
   });
 });
 
@@ -307,6 +308,8 @@ router.post('/login', (req, res) => {
     title: 'เข้าสู่ระบบ',
     active: 'login',
     noChrome: true,
+    isLineMobile: /Line/i.test(req.headers['user-agent'] || '') && /Mobile/i.test(req.headers['user-agent'] || ''),
+    user: null,
   });
 });
 
