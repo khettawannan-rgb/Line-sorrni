@@ -16,7 +16,7 @@ import consentRouter from './routes/consent.js';
 import lineFormsRouter from './routes/lineForms.js';
 import { setupDailyCron } from './jobs/scheduler.js';
 import { liffLink } from './utils/liff.js';
-import { checkSuperAdmin } from './middleware/checkSuperAdmin.js';
+import checkSuperAdmin from './middleware/checkSuperAdmin.js';
 
 const PORT = Number(process.env.PORT || 10000);
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/line-erp-notifier';

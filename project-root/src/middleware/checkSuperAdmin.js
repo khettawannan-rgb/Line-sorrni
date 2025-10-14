@@ -55,7 +55,7 @@ export function isSuperAdminSession(req) {
   return false;
 }
 
-export function checkSuperAdmin(req, res, next) {
+export default function checkSuperAdmin(req, res, next) {
   const userAgent = req.headers['user-agent'] || '';
   const queryUid = typeof req.query?.uid === 'string' ? req.query.uid : '';
   const sessionUid = req.session?.superAdminUid || '';
