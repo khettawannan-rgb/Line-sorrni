@@ -1,13 +1,17 @@
 // src/routes/richmenu.js
 import express from 'express';
 import { listRichMenus, createOrUpdateRichMenu, deleteAllRichMenus } from '../services/richmenu.js';
+import { isSuperAdminSession } from '../middleware/checkSuperAdmin.js';
 
 const router = express.Router();
+const BASE_URL = process.env.BASE_URL ? process.env.BASE_URL.replace(/\/$/, '') : ''; // updated to use BASE_URL
 
 // ป้องกันด้วย session เบื้องต้น (แยกจาก admin.js)
 function requireAuth(req, res, next) {
   if (req.session?.user) return next();
-  return res.redirect('/admin/login');
+  if (isSuperAdminSession(req)) return next();
+  const target = BASE_URL ? `${BASE_URL}/admin/login` : '/admin/login'; // updated to use BASE_URL
+  return res.redirect(target);
 }
 
 router.get('/richmenu', requireAuth, async (req, res) => {

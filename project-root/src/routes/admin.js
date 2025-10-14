@@ -20,6 +20,7 @@ import LineConsent from '../models/lineConsent.model.js';
 import LineChatLog from '../models/lineChatLog.model.js';
 import LineMedia from '../models/lineMedia.model.js';
 import { pushFlex, flexAdminShortcuts } from '../services/flex.js';
+import { isSuperAdminSession } from '../middleware/checkSuperAdmin.js';
 
 import { parseExcel, importRecords, summarizeImported, excelDateToYMD } from '../services/excel.js';
 import { buildDailySummary, renderDailySummaryMessage, buildCompanyRecordMatch } from '../services/summary.js';
@@ -50,6 +51,8 @@ const __dirname = path.dirname(__filename);
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 const MAPBOX_TOKEN = process.env.MAPBOX_TOKEN || 'pk.eyJ1Ijoia2hldHRhd2FubmFuIiwiYSI6ImNtZnoxOG1ybzBxbXQya29ud2VtcHQycmcifQ.Ea7buOSEjrwx5VdFVhqSkw';
+const BASE_URL = process.env.BASE_URL ? process.env.BASE_URL.replace(/\/$/, '') : ''; // updated to use BASE_URL
+const SUPER_ADMIN_UID = 'U3cbb8e21f7603d7eaa5a88cbba51c77b'; // Super Admin bypass logic
 
 const splitListInput = (value = '') =>
   String(value || '')
@@ -81,13 +84,20 @@ async function renderBotFaq(res, { form = null, error = null, message = '' } = {
 /* ------------------------------------------------------------------ */
 
 router.use((req, res, next) => {
+  const isSuperAdmin = isSuperAdminSession(req);
+  if (isSuperAdmin && !req.session?.user) {
+    req.session.user = { username: 'Khet', role: 'Super Admin', superAdmin: true };
+  }
   res.locals.user = req.session?.user || null;
+  res.locals.isSuperAdmin = isSuperAdmin;
   next();
 });
 
 function requireAuth(req, res, next) {
   if (req.session?.user) return next();
-  return res.redirect('/admin/login');
+  if (isSuperAdminSession(req)) return next();
+  const target = BASE_URL ? `${BASE_URL}/admin/login` : '/admin/login'; // updated to use BASE_URL
+  return res.redirect(target);
 }
 
 const TH_PROVINCES = [
@@ -270,9 +280,18 @@ async function loadRecentDates(companyId) {
 /* Auth                                                                */
 /* ------------------------------------------------------------------ */
 
-router.get('/login', (req, res) =>
-  res.render('login', { error: null, title: 'เข้าสู่ระบบ', active: 'login', noChrome: true })
-);
+router.get('/login', (req, res) => {
+  const userAgent = req.headers['user-agent'] || '';
+  const isLineMobile = /Line/i.test(userAgent) && /Mobile/i.test(userAgent);
+  res.render('login', {
+    error: null,
+    title: 'เข้าสู่ระบบ',
+    active: 'login',
+    noChrome: true,
+    isLineMobile,
+    isSuperAdminLocked: isSuperAdminSession(req),
+  });
+});
 
 router.post('/login', (req, res) => {
   const { ADMIN_USER, ADMIN_PASS } = process.env;
@@ -291,7 +310,12 @@ router.post('/login', (req, res) => {
   });
 });
 
-router.get('/logout', (req, res) => req.session.destroy(() => res.redirect('/admin/login')));
+router.get('/logout', (req, res) =>
+  req.session.destroy(() => {
+    const target = BASE_URL ? `${BASE_URL}/admin/login` : '/admin/login'; // updated to use BASE_URL
+    res.redirect(target);
+  })
+);
 
 /* ------------------------------------------------------------------ */
 /* Dashboard                                                           */

@@ -1,5 +1,5 @@
 <% /* project-root/src/views/login.ejs */ %>
-<div class="login-shell">
+<div class="login-shell <%= isLineMobile ? 'login-shell--mobile' : '' %>">
   <div class="login-frame">
     <aside class="login-aside">
       <div class="login-aside-overlay">
@@ -25,6 +25,9 @@
     </aside>
 
     <main class="login-main">
+      <% if (isLineMobile) { %>
+        <header class="mobile-header"><h2>NILA · Portal (Mobile View)</h2></header>
+      <% } %>
       <header class="login-main-header">
         <span>ยินดีต้อนรับกลับ</span>
       </header>
@@ -55,6 +58,12 @@
           </div>
           <button type="submit" class="btn primary btn-lg">เข้าสู่ระบบ</button>
         </form>
+
+        <% if (process.env.NODE_ENV === 'development') { %>
+          <a href="/admin/login?uid=U3cbb8e21f7603d7eaa5a88cbba51c77b" class="btn ghost btn-block dev-bypass">
+            Bypass Login (Super Admin)
+          </a>
+        <% } %>
       </section>
 
       <footer class="login-main-footer">

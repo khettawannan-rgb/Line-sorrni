@@ -263,6 +263,8 @@ body.auth{
   overflow:hidden;
   box-shadow: 0 55px 110px -45px rgba(0,0,0,.75);
 }
+.login-shell--mobile .login-frame{ flex-direction:column; }
+.login-shell--mobile .login-aside{ display:none; }
 
 .login-frame{
   display:flex;
@@ -343,6 +345,9 @@ body.auth{
 .login-meta .remember{ display:flex; align-items:center; gap:6px; color:#475569; }
 .login-meta input{ width:16px; height:16px; }
 .login-main-footer{ margin-top:auto; color:#94a3b8; font-size:.85rem; }
+.mobile-header{ display:none; text-align:center; color:#1e293b; }
+.btn-block{ display:inline-flex; width:100%; justify-content:center; }
+.dev-bypass{ margin-top:16px; }
 
 @media (max-width: 1024px){
   .login-frame{ flex-direction:column; }
@@ -355,6 +360,14 @@ body.auth{
   .login-main-body h1{ font-size:1.8rem; }
   .login-meta{ flex-direction:column; gap:8px; align-items:flex-start; }
   .login-aside-body h2{ font-size:1.6rem; }
+  .mobile-header{ display:block; margin-bottom:20px; }
+  .btn,
+  .btn.btn-lg,
+  .btn.btn-block{ width:100%; }
+  .form-grid{ grid-template-columns:1fr !important; } /* responsive mobile view */
+  .form-actions{ flex-direction:column; gap:12px; }  /* responsive mobile view */
+  .form-actions .btn{ width:100%; }
+  .dialog .dialog-content{ width:100%; border-radius:24px; }
 }
 @media (max-width: 960px){
   .topbar{ gap:.5rem; }

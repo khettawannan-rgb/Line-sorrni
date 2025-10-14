@@ -36,12 +36,14 @@ import {
 } from '../services/procurement/vendorService.js';
 import { ensureStorageDirectories, saveAttachment } from '../services/procurement/storageService.js';
 import { safeNumber } from '../services/procurement/helpers.js';
+import { isSuperAdminSession } from '../middleware/checkSuperAdmin.js';
 
 dayjs.locale('th');
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 const PAGE_SIZE = 10;
+const BASE_URL = process.env.BASE_URL ? process.env.BASE_URL.replace(/\/$/, '') : ''; // updated to use BASE_URL
 
 ensureStorageDirectories();
 
@@ -52,7 +54,9 @@ router.use((req, res, next) => {
 
 function requireAuth(req, res, next) {
   if (req.session?.user) return next();
-  return res.redirect('/admin/login');
+  if (isSuperAdminSession(req)) return next();
+  const target = BASE_URL ? `${BASE_URL}/admin/login` : '/admin/login'; // updated to use BASE_URL
+  return res.redirect(target);
 }
 
 function actorName(req) {

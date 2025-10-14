@@ -5,6 +5,12 @@ const API = 'https://api.line.me/v2/bot/message/push';
 const AUTH = process.env.LINE_CHANNEL_ACCESS_TOKEN
   ? `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
   : null;
+const BASE_URL = process.env.BASE_URL ? process.env.BASE_URL.replace(/\/$/, '') : ''; // updated to use BASE_URL
+
+function buildAltUri(path) {
+  if (!BASE_URL) return undefined;
+  return { desktop: `${BASE_URL}${path}` };
+}
 
 export async function pushFlex(userId, contents, altText = 'NILA · Admin') {
   if (!AUTH) throw new Error('Missing LINE_CHANNEL_ACCESS_TOKEN env');
@@ -33,6 +39,10 @@ export async function pushFlex(userId, contents, altText = 'NILA · Admin') {
 }
 
 export function flexAdminShortcuts(prId = 'PR_DEMO_ID') {
+  const prAlt = buildAltUri('/admin/pr');
+  const poAlt = buildAltUri('/admin/po/new');
+  const approveAlt = buildAltUri(`/line/approve/pr/${prId}`);
+
   return {
     type: 'bubble',
     body: {
@@ -44,17 +54,32 @@ export function flexAdminShortcuts(prId = 'PR_DEMO_ID') {
         {
           type: 'button',
           style: 'primary',
-          action: { type: 'uri', label: 'PR Dashboard', uri: liffLink('/admin/pr') },
+          action: {
+            type: 'uri',
+            label: 'PR Dashboard',
+            uri: liffLink('/admin/pr'),
+            ...(prAlt ? { altUri: prAlt } : {}),
+          },
         },
         {
           type: 'button',
           style: 'secondary',
-          action: { type: 'uri', label: 'สร้าง PO ใหม่', uri: liffLink('/admin/po/new') },
+          action: {
+            type: 'uri',
+            label: 'สร้าง PO ใหม่',
+            uri: liffLink('/admin/po/new'),
+            ...(poAlt ? { altUri: poAlt } : {}),
+          },
         },
         {
           type: 'button',
           style: 'secondary',
-          action: { type: 'uri', label: 'อนุมัติ PR นี้', uri: liffLink(`/line/approve/pr/${prId}`) },
+          action: {
+            type: 'uri',
+            label: 'อนุมัติ PR นี้',
+            uri: liffLink(`/line/approve/pr/${prId}`),
+            ...(approveAlt ? { altUri: approveAlt } : {}),
+          },
         },
       ],
     },
