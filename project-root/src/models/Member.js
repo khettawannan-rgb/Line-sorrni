@@ -5,12 +5,13 @@ const { Schema } = mongoose;
 
 const MemberSchema = new Schema(
   {
-    lineUserId: { type: String, index: true, unique: true, required: true },
+    lineUserId: { type: String, index: true, unique: true, sparse: true, default: null },
     displayName: { type: String },
     pictureUrl: { type: String },
     companyId: { type: Schema.Types.ObjectId, ref: 'Company', default: null },
     role: { type: String, enum: ['member', 'admin', 'super'], default: 'member' },
     active: { type: Boolean, default: false },
+    bindCode: { type: String, trim: true, default: '' }, // optional code for manual binding via wizard
   },
   { timestamps: true }
 );

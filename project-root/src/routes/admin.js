@@ -19,6 +19,7 @@ import Member from '../models/Member.js';
 import LineConsent from '../models/lineConsent.model.js';
 import LineChatLog from '../models/lineChatLog.model.js';
 import LineMedia from '../models/lineMedia.model.js';
+import { sanitizeRedirect } from '../utils/url.js';
 import { pushFlex, flexAdminShortcuts } from '../services/flex.js';
 import { isSuperAdminSession } from '../middleware/checkSuperAdmin.js';
 
@@ -283,7 +284,9 @@ async function loadRecentDates(companyId) {
 router.get('/login', (req, res) => {
   const userAgent = req.headers['user-agent'] || '';
   const isLineMobile = /Line/i.test(userAgent) && /Mobile/i.test(userAgent);
-  res.render('login', {
+  const redirect = sanitizeRedirect(req.query.redirect || req.headers.referer || '/admin');
+  res.locals.redirectTo = redirect;
+  res.render('auth/login', {
     error: null,
     title: 'เข้าสู่ระบบ',
     active: 'login',
@@ -291,29 +294,28 @@ router.get('/login', (req, res) => {
     isLineMobile,
     isSuperAdminLocked: isSuperAdminSession(req),
     user: null,
-    lineHeaderTitle: 'เข้าสู่ระบบ',
-    lineHeaderSubtitle: 'ลงชื่อเข้าเพื่อสร้าง PR / PO',
+    redirect,
   });
 });
 
 router.post('/login', (req, res) => {
   const { ADMIN_USER, ADMIN_PASS } = process.env;
-  const { username, password } = req.body || {};
+  const { username, password, redirect: redirectBody } = req.body || {};
+  const redirect = sanitizeRedirect(redirectBody || req.query.redirect || '/admin');
   const ok = username === ADMIN_USER && password === ADMIN_PASS;
   console.log(`[AUTH] login ${ok ? 'OK' : 'fail'} for ${username}`);
   if (ok) {
-    req.session.user = { username };
-    return res.redirect('/admin/');
+    req.session.user = { username, role: 'admin' };
+    return res.redirect(redirect);
   }
-  return res.render('login', {
+  return res.render('auth/login', {
     error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
     title: 'เข้าสู่ระบบ',
     active: 'login',
     noChrome: true,
     isLineMobile: /Line/i.test(req.headers['user-agent'] || '') && /Mobile/i.test(req.headers['user-agent'] || ''),
     user: null,
-    lineHeaderTitle: 'เข้าสู่ระบบ',
-    lineHeaderSubtitle: 'ตรวจสอบข้อมูลแล้วลองอีกครั้ง',
+    redirect,
   });
 });
 
@@ -1138,14 +1140,15 @@ router.get('/members/new', requireAuth, async (req, res) => {
 });
 
 router.post('/members/new', requireAuth, async (req, res) => {
-  const { companyId, lineUserId, displayName, role, active } = req.body || {};
+  const { companyId, lineUserId, displayName, role, active, bindCode } = req.body || {};
   try {
     await Member.create({
       companyId: companyId || null,
-      lineUserId: (lineUserId || '').trim(),
+      lineUserId: (lineUserId || '').trim() || null,
       displayName: (displayName || '').trim(),
       role: role || 'member',
       active: active === 'on',
+      bindCode: (bindCode || '').trim(),
     });
     res.redirect('/admin/members');
   } catch (err) {
@@ -1153,7 +1156,7 @@ router.post('/members/new', requireAuth, async (req, res) => {
     res.render('member_form', {
       action: 'สร้าง',
       companies,
-      m: { companyId, lineUserId, displayName, role, active: active === 'on' },
+      m: { companyId, lineUserId, displayName, role, active: active === 'on', bindCode },
       error: err.message || String(err),
       title: 'New Member',
       active: 'members',
@@ -1169,14 +1172,15 @@ router.get('/members/:id/edit', requireAuth, async (req, res) => {
 });
 
 router.post('/members/:id/edit', requireAuth, async (req, res) => {
-  const { companyId, lineUserId, displayName, role, active } = req.body || {};
+  const { companyId, lineUserId, displayName, role, active, bindCode } = req.body || {};
   try {
     await Member.findByIdAndUpdate(req.params.id, {
       companyId: companyId || null,
-      lineUserId: (lineUserId || '').trim(),
+      lineUserId: (lineUserId || '').trim() || null,
       displayName: (displayName || '').trim(),
       role: role || 'member',
       active: active === 'on',
+      bindCode: (bindCode || '').trim(),
     });
     res.redirect('/admin/members');
   } catch (err) {

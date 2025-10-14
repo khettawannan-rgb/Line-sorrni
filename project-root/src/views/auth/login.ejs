@@ -1,0 +1,30 @@
+<section class="auth-container">
+  <div class="auth-illustration">
+    <img src="/static/img/Nila_Flatcolour_Logo-.png" alt="NILA" />
+    <h1>NILA · Admin Console</h1>
+    <p>เข้าสู่ระบบเพื่อจัดการใบขอซื้อ (PR) และใบสั่งซื้อ (PO) ได้อย่างรวดเร็ว</p>
+  </div>
+
+  <div class="auth-card">
+    <h2>เข้าสู่ระบบ</h2>
+    <% if (typeof error === 'string' && error) { %>
+      <div class="alert error"><%= error %></div>
+    <% } %>
+    <% if (isSuperAdminLocked) { %>
+      <div class="alert info">โหมด Super Admin ถูกล็อกไว้ คุณสามารถเข้าต่อได้จากอุปกรณ์ที่ได้รับอนุญาต</div>
+    <% } %>
+    <form method="post" action="/admin/login" class="auth-form">
+      <input type="hidden" name="redirect" value="<%= redirect || '/admin' %>" />
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" autocomplete="username" required />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+      </div>
+      <button type="submit" class="btn primary btn-block">เข้าสู่ระบบ</button>
+    </form>
+    <p class="auth-footnote">ปัญหาในการล็อกอิน? ติดต่อผู้ดูแลระบบของคุณ</p>
+  </div>
+</section>

@@ -40,9 +40,10 @@ export default function viewHelpers(req, res, next) {
   res.locals.money = res.locals.money || formatMoney;
   res.locals.dateFmt = res.locals.dateFmt || formatDate;
   res.locals.dayjs = dayjs;
+  const isLineUserAgent = /Line\/\d+/i.test(req.headers['user-agent'] || '');
+  res.locals.isLine = isLineUserAgent;
   if (typeof res.locals.isGuest !== 'boolean') {
     res.locals.isGuest = !req.session?.user;
   }
-  res.locals.lineMobile = /Line\/\d+/i.test(req.headers['user-agent'] || '');
   next();
 }

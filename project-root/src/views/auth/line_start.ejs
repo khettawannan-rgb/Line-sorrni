@@ -1,0 +1,54 @@
+<section class="liff-start">
+  <div class="card">
+    <img src="/static/img/Nila_Flatcolour_Logo-.png" alt="NILA" />
+    <h1>กำลังตรวจสอบบัญชี LINE</h1>
+    <p id="liff-message">โปรดรอสักครู่ ระบบกำลังเชื่อมต่อ...</p>
+    <div class="spinner" aria-hidden="true"></div>
+  </div>
+</section>
+
+<script src="https://static.line-scdn.net/liff/edge/versions/2.21.2/sdk.js"></script>
+<script>
+  (async function init() {
+    const messageEl = document.getElementById('liff-message');
+    const redirectTarget = '<%= redirect %>';
+    const postVerify = async (idToken) => {
+      const resp = await fetch('/auth/line/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_token: idToken, redirect: redirectTarget })
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || 'verify_failed');
+      }
+      const data = await resp.json();
+      if (data.ok) {
+        location.href = data.redirect || '/admin';
+        return;
+      }
+      if (data.bindRequired && data.lineUserId) {
+        const bindUrl = `/line/bind?lineUserId=${encodeURIComponent(data.lineUserId)}&redirect=${encodeURIComponent(data.redirect || '/admin')}`;
+        location.href = bindUrl;
+        return;
+      }
+      throw new Error(data.error || 'unknown_state');
+    };
+
+    try {
+      await liff.init({ liffId: '<%= liffId %>' });
+      if (!liff.isLoggedIn()) {
+        liff.login({ redirectUri: window.location.href });
+        return;
+      }
+      const idToken = liff.getIDToken();
+      if (!idToken) {
+        throw new Error('missing_id_token');
+      }
+      await postVerify(idToken);
+    } catch (err) {
+      console.error('[LIFF][START] error', err);
+      messageEl.textContent = 'ไม่สามารถเข้าสู่ระบบได้ โปรดลองใหม่อีกครั้งหรือติดต่อผู้ดูแล';
+    }
+  })();
+</script>

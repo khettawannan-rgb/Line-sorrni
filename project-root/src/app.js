@@ -15,6 +15,7 @@ import webhookRouter from './routes/webhook.js';
 import consentRouter from './routes/consent.js';
 import lineFormsRouter from './routes/lineForms.js';
 import lineRouter from './routes/line.js';
+import authLineRouter from './routes/auth_line.js';
 import { setupDailyCron } from './jobs/scheduler.js';
 import { liffLink } from './utils/liff.js';
 import checkSuperAdmin from './middleware/checkSuperAdmin.js';
@@ -251,6 +252,7 @@ app.get('/liff-open-admin', (req, res) => {
 app.use('/consent', consentRouter);
 app.use('/line', lineFormsRouter);
 app.use('/line', lineRouter);
+app.use('/auth/line', authLineRouter);
 app.use('/admin', adminRouter);
 
 // 404

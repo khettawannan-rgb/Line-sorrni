@@ -35,6 +35,12 @@
     </div>
 
     <div class="form-row">
+      <label>Bind Code (สำหรับ Line Binding Wizard)</label>
+      <input type="text" name="bindCode" value="<%= (m && m.bindCode) || '' %>" />
+      <small class="help">ใช้รหัสนี้ให้พนักงานกรอกตอนเชื่อมบัญชี LINE</small>
+    </div>
+
+    <div class="form-row">
       <label>Role</label>
       <select name="role">
         <option value="member" <%= (m && m.role==='member' ? 'selected' : '') %> >member</option>

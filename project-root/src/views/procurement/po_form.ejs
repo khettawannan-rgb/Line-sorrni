@@ -7,14 +7,14 @@
       ? form.lines
       : [{ description: '', quantity: '', unitPrice: '', uom: 'EA', sku: '', notes: '' }];
   const computedSubtotal = items.reduce((sum, item) => {
-    const qty = Number(item.quantity || 0);
-    const price = Number(item.unitPrice || 0);
-    return sum + (Number(item.lineTotal || item.amount) || qty * price);
+    const qty = Number(get(item, 'quantity', 0));
+    const price = Number(get(item, 'unitPrice', 0));
+    return sum + (Number(get(item, 'lineTotal', null)) || qty * price);
   }, 0);
-  const taxValue = Number(form.taxAmount ?? 0);
-  const shippingValue = Number(form.shippingFee ?? 0);
-  const subtotalValue = Number(form.subtotal ?? computedSubtotal);
-  const totalValue = Number(form.totalAmount ?? subtotalValue + taxValue + shippingValue);
+  const taxValue = Number(get(form, 'taxAmount', 0));
+  const shippingValue = Number(get(form, 'shippingFee', 0));
+  const subtotalValue = Number(get(form, 'subtotal', computedSubtotal));
+  const totalValue = Number(get(form, 'totalAmount', subtotalValue + taxValue + shippingValue));
   const loginRedirect = `/admin/login?redirect=${encodeURIComponent('/admin/po/new')}`;
 %>
 
@@ -40,7 +40,7 @@
 <% } %>
 
 <form method="post" action="<%= action %>" class="grid">
-  <input type="hidden" name="prId" value="<%= form.prId || '' %>" />
+  <input type="hidden" name="prId" value="<%= get(form, 'prId', '') %>" />
   <% if (guestMode) { %>
     <div class="alert neutral">
       โหมดผู้เยี่ยมชม: ฟอร์มเปิดให้ดูเท่านั้น หากต้องการสร้าง PO กรุณาล็อกอินก่อน
@@ -59,29 +59,29 @@
           <select id="vendorId" name="vendorId" required>
             <option value="">เลือกผู้ขาย...</option>
             <% vendors.forEach((vendor) => { %>
-              <option value="<%= vendor._id %>" <%= String(form.vendorId) === String(vendor._id) ? 'selected' : '' %>><%= vendor.name %></option>
+          <option value="<%= vendor._id %>" <%= String(get(form, 'vendorId', '')) === String(vendor._id) ? 'selected' : '' %>><%= vendor.name %></option>
             <% }) %>
           </select>
         </div>
         <div class="form-group">
           <label for="companyId">บริษัท (ถ้ามี)</label>
-          <input id="companyId" name="companyId" value="<%= form.companyId || '' %>" placeholder="ระบุรหัสบริษัทหรือเว้นว่าง" />
+          <input id="companyId" name="companyId" value="<%= get(form, 'companyId', '') %>" placeholder="ระบุรหัสบริษัทหรือเว้นว่าง" />
         </div>
         <div class="form-group">
           <label for="currency">สกุลเงิน</label>
-          <input id="currency" name="currency" value="<%= form.currency || 'THB' %>" />
+          <input id="currency" name="currency" value="<%= get(form, 'currency', 'THB') %>" />
         </div>
         <div class="form-group">
           <label for="paymentTerms">เงื่อนไขการชำระเงิน</label>
-          <input id="paymentTerms" name="paymentTerms" value="<%= form.paymentTerms || 'Credit 30 days' %>" />
+          <input id="paymentTerms" name="paymentTerms" value="<%= get(form, 'paymentTerms', 'Credit 30 days') %>" />
         </div>
         <div class="form-group">
           <label for="incoterms">Incoterms</label>
-          <input id="incoterms" name="incoterms" value="<%= form.incoterms || 'FOB' %>" />
+          <input id="incoterms" name="incoterms" value="<%= get(form, 'incoterms', 'FOB') %>" />
         </div>
         <div class="form-group">
           <label for="expectedDeliveryDate">กำหนดส่ง</label>
-          <input id="expectedDeliveryDate" name="expectedDeliveryDate" type="date" value="<%= form.expectedDeliveryDate ? dayjs(form.expectedDeliveryDate).format('YYYY-MM-DD') : '' %>" />
+          <input id="expectedDeliveryDate" name="expectedDeliveryDate" type="date" value="<%= dateFmt(get(form, 'expectedDeliveryDate', null), 'YYYY-MM-DD', '') %>" />
         </div>
       </div>
     </section>
@@ -96,27 +96,27 @@
           <div class="item-row">
             <div>
               <label>SKU</label>
-              <input name="itemSku" value="<%= item.sku || '' %>" />
+              <input name="itemSku" value="<%= get(item, 'sku', '') %>" />
             </div>
             <div>
               <label>รายละเอียด</label>
-              <input name="itemDescription" value="<%= item.description || item.itemName || '' %>" required />
+              <input name="itemDescription" value="<%= get(item, 'description', get(item, 'itemName', '')) %>" required />
             </div>
             <div>
               <label>จำนวน</label>
-              <input name="itemQuantity" type="number" step="0.01" min="0" value="<%= item.quantity || '' %>" required />
+              <input name="itemQuantity" type="number" step="0.01" min="0" value="<%= get(item, 'quantity', '') %>" required />
             </div>
             <div>
               <label>หน่วย</label>
-              <input name="itemUom" value="<%= item.uom || item.unit || 'EA' %>" />
+              <input name="itemUom" value="<%= get(item, 'uom', get(item, 'unit', 'EA')) %>" />
             </div>
             <div>
               <label>ราคา/หน่วย</label>
-              <input name="itemUnitPrice" type="number" step="0.01" min="0" value="<%= item.unitPrice || '' %>" />
+              <input name="itemUnitPrice" type="number" step="0.01" min="0" value="<%= get(item, 'unitPrice', '') %>" />
             </div>
             <div>
               <label>หมายเหตุ</label>
-              <input name="itemNote" value="<%= item.notes || item.note || '' %>" />
+              <input name="itemNote" value="<%= get(item, 'notes', get(item, 'note', '')) %>" />
             </div>
           </div>
         <% }) %>
@@ -131,19 +131,19 @@
       <div class="form-grid">
         <div class="form-group">
           <label for="shipTo">Ship To</label>
-          <input id="shipTo" name="shipTo" value="<%= form.shipping?.shipTo || '' %>" />
+          <input id="shipTo" name="shipTo" value="<%= get(form, 'shipping.shipTo', '') %>" />
         </div>
         <div class="form-group">
           <label for="shippingContact">ผู้ติดต่อ</label>
-          <input id="shippingContact" name="shippingContact" value="<%= form.shipping?.contact || '' %>" />
+          <input id="shippingContact" name="shippingContact" value="<%= get(form, 'shipping.contact', '') %>" />
         </div>
         <div class="form-group form-full">
           <label for="shippingAddress">ที่อยู่จัดส่ง</label>
-          <textarea id="shippingAddress" name="shippingAddress" rows="3"><%= form.shipping?.address || '' %></textarea>
+          <textarea id="shippingAddress" name="shippingAddress" rows="3"><%= get(form, 'shipping.address', '') %></textarea>
         </div>
         <div class="form-group form-full">
           <label for="remarks">หมายเหตุ</label>
-          <textarea id="remarks" name="remarks" rows="3"><%= form.remarks || '' %></textarea>
+          <textarea id="remarks" name="remarks" rows="3"><%= get(form, 'remarks', '') %></textarea>
         </div>
       </div>
     </section>

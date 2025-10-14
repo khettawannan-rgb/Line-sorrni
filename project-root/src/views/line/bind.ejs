@@ -1,0 +1,44 @@
+<section class="bind-container">
+  <header class="bind-header">
+    <img src="/static/img/Nila_Flatcolour_Logo-.png" alt="NILA" class="bind-logo" />
+    <h1>เชื่อมบัญชี LINE กับพนักงาน</h1>
+    <p>กรอกรหัสพนักงานที่ได้รับจากผู้ดูแล แล้วกดยืนยันเพื่อเข้าใช้งานระบบ</p>
+  </header>
+
+  <% if (errors && errors.length) { %>
+    <div class="alert error">
+      <ul>
+        <% errors.forEach((err) => { %>
+          <li><%= err %></li>
+        <% }) %>
+      </ul>
+    </div>
+  <% } %>
+
+  <form method="post" action="/line/bind" class="bind-form">
+    <input type="hidden" name="lineUserId" value="<%= lineUserId %>" />
+    <input type="hidden" name="redirect" value="<%= redirect %>" />
+
+    <div class="field">
+      <label for="companyId">เลือกบริษัท</label>
+      <select id="companyId" name="companyId" required>
+        <option value="">— เลือกบริษัท —</option>
+        <% (companies || []).forEach((company) => { %>
+          <option value="<%= company._id %>" <%= form.companyId === String(company._id) ? 'selected' : '' %>><%= company.name %></option>
+        <% }) %>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="bindCode">รหัสยืนยันพนักงาน</label>
+      <input id="bindCode" name="bindCode" type="text" autocomplete="one-time-code" value="<%= form.bindCode || '' %>" placeholder="เช่น NILA-2024" required />
+      <small>รหัสนี้ออกโดยผู้ดูแลระบบ เพื่อป้องกันการเชื่อมบัญชีผิดคน</small>
+    </div>
+
+    <button type="submit" class="btn primary btn-block">เชื่อมบัญชี</button>
+  </form>
+
+  <footer class="bind-footer">
+    หากมีปัญหา กรุณาติดต่อผู้ดูแลระบบหรือ HR เพื่อขอรหัสใหม่
+  </footer>
+</section>
