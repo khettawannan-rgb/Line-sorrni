@@ -17,7 +17,17 @@ function parseCookies(req) {
     } else {
       const key = trimmed.slice(0, idx).trim();
       const value = trimmed.slice(idx + 1).trim();
-      acc[key] = decodeURIComponent(value);
+      if (!key) return acc;
+      if (!value) {
+        acc[key] = '';
+        return acc;
+      }
+      try {
+        acc[key] = decodeURIComponent(value);
+      } catch (err) {
+        console.warn('[checkSuperAdmin] Failed to decode cookie value for', key, '-', err.message);
+        acc[key] = value;
+      }
     }
     return acc;
   }, {});
