@@ -19,6 +19,7 @@ import Member from '../models/Member.js';
 import LineConsent from '../models/lineConsent.model.js';
 import LineChatLog from '../models/lineChatLog.model.js';
 import LineMedia from '../models/lineMedia.model.js';
+import { pushFlex, flexAdminShortcuts } from '../services/flex.js';
 
 import { parseExcel, importRecords, summarizeImported, excelDateToYMD } from '../services/excel.js';
 import { buildDailySummary, renderDailySummaryMessage, buildCompanyRecordMatch } from '../services/summary.js';
@@ -2240,6 +2241,20 @@ router.post('/test/send', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('[SEND ERROR]', err);
     return res.render('test', { companies, recipients, recentDates, form: req.body, preview: null, sent: { ok: false, error: err.message || String(err) }, error: null, title: 'Test & Send', active: 'test' });
+  }
+});
+
+// POST /admin/test/push-flex { userId, prId }
+router.post('/test/push-flex', requireAuth, async (req, res, next) => {
+  try {
+    const { userId, prId } = req.body || {};
+    if (!userId) {
+      return res.status(400).json({ ok: false, error: 'userId is required' });
+    }
+    await pushFlex(userId, flexAdminShortcuts(prId), 'NILA · Admin Shortcuts');
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
   }
 });
 

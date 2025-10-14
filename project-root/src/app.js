@@ -15,6 +15,7 @@ import webhookRouter from './routes/webhook.js';
 import consentRouter from './routes/consent.js';
 import lineFormsRouter from './routes/lineForms.js';
 import { setupDailyCron } from './jobs/scheduler.js';
+import { liffLink } from './utils/liff.js';
 
 const PORT = Number(process.env.PORT || 10000);
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/line-erp-notifier';
@@ -22,6 +23,16 @@ const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret';
 const BASE_URL = (process.env.BASE_URL || '').replace(/\/$/, '');
 const LIFF_ID = process.env.LIFF_ID || '';
 const TRUSTED_ORIGINS = [BASE_URL, 'https://liff.line.me'].filter(Boolean);
+
+if (process.env.LIFF_ID) {
+  try {
+    console.log('LIFF_BASE   =', liffLink());
+    console.log('LIFF_PR     =', liffLink('/admin/pr'));
+    console.log('LIFF_PO_NEW =', liffLink('/admin/po/new'));
+  } catch (err) {
+    console.warn('[LIFF] Failed to log LIFF links:', err.message);
+  }
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -174,17 +185,45 @@ app.get('/', (req, res) => {
 });
 
 app.get('/liff-open-admin', (req, res) => {
-  if (!LIFF_ID) {
-    return res.status(500).send('LIFF_ID is not configured');
-  }
   const rawTo = typeof req.query.to === 'string' ? req.query.to : '';
-  const safePath = rawTo.startsWith('/') ? rawTo : '/admin';
-  res.render('liff_open_admin', {
-    title: 'NILA · Admin Launcher',
-    liffId: LIFF_ID,
-    targetPath: safePath,
-    baseUrl: BASE_URL || '',
-  });
+  const target = rawTo.startsWith('/') ? rawTo : '/admin';
+  const liffId = process.env.LIFF_ID || '';
+  const baseUrl = BASE_URL || '';
+  res.set('Cache-Control', 'no-store');
+  res.send(`<!doctype html><html><head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>NILA · Admin Launcher</title></head>
+  <body style="background:#05070d;color:#f8fafc;display:flex;align-items:center;justify-content:center;height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+    <div style="text-align:center;max-width:360px;padding:24px;">
+      <h1 style="font-size:1.6rem;margin-bottom:16px;">กำลังเปิด NILA Admin...</h1>
+      <p style="opacity:0.75;">หากไม่เปิดอัตโนมัติ จะมีปุ่มให้กดภายในไม่กี่วินาที</p>
+    </div>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
+    (async () => {
+      try {
+        await liff.init({ liffId: "${liffId}" });
+        const to = new URL(location.href).searchParams.get("to") || "${target}";
+        liff.openWindow({ url: "${baseUrl}"+to, external: true });
+        setTimeout(() => {
+          const link = document.createElement("a");
+          link.href = "${baseUrl}"+to;
+          link.textContent = "เปิดด้วยเบราว์เซอร์ภายนอก";
+          link.style.display = "inline-block";
+          link.style.marginTop = "24px";
+          link.style.padding = "12px 18px";
+          link.style.borderRadius = "12px";
+          link.style.background = "rgba(99,102,241,0.25)";
+          link.style.color = "#dbeafe";
+          link.style.textDecoration = "none";
+          document.body.appendChild(link);
+        }, 2200);
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+    </script>
+  </body></html>`);
 });
 app.use('/consent', consentRouter);
 app.use('/line', lineFormsRouter);
