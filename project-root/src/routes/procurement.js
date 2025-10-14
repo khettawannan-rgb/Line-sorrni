@@ -148,7 +148,11 @@ router.get('/pr', async (req, res, next) => {
     ]);
 
     const pagination = buildPagination(rawPrs.length, page);
-    const prs = pagination.hasNext ? rawPrs.slice(0, PAGE_SIZE) : rawPrs;
+    const prsRaw = pagination.hasNext ? rawPrs.slice(0, PAGE_SIZE) : rawPrs;
+    const prs = prsRaw.map((pr) => ({
+      ...pr,
+      lines: Array.isArray(pr.lines) ? pr.lines : [],
+    }));
 
     const toast = req.query.missing ? 'ไม่พบ PR ที่ร้องขอแล้ว' : null;
 
@@ -164,6 +168,7 @@ router.get('/pr', async (req, res, next) => {
       toast,
     });
   } catch (err) {
+    console.error('[PROCUREMENT] Failed to render PR dashboard:', err);
     next(err);
   }
 });
@@ -188,6 +193,7 @@ router.get('/pr/new', async (req, res, next) => {
       PR_STATUSES,
     });
   } catch (err) {
+    console.error('[PROCUREMENT] Failed to render PO dashboard:', err);
     next(err);
   }
 });
@@ -413,7 +419,11 @@ router.get('/po', async (req, res, next) => {
     ]);
 
     const pagination = buildPagination(rawPos.length, page);
-    const pos = pagination.hasNext ? rawPos.slice(0, PAGE_SIZE) : rawPos;
+    const posRaw = pagination.hasNext ? rawPos.slice(0, PAGE_SIZE) : rawPos;
+    const pos = posRaw.map((po) => ({
+      ...po,
+      items: Array.isArray(po.items) ? po.items : [],
+    }));
 
     const toast = req.query.auto
       ? 'สร้าง PO จาก PR แล้ว'
