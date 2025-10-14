@@ -79,38 +79,49 @@
       </header>
     <% } else { %>
       <header class="topbar" role="banner">
-        <div class="topbar__brand">
-          <a href="/admin" class="brand">
-            <img src="/static/img/Nila_Flatcolour_Logo-.png" alt="NILA" />
-            <span>NILA · Admin</span>
-          </a>
-          <button type="button" class="nav-toggle" aria-expanded="false" data-nav-toggle>
-            <span></span><span></span><span></span>
-          </button>
-        </div>
-        <nav class="topnav" id="main-nav">
-          <% navGroups.forEach((group) => { %>
-            <div class="topnav-group">
-              <span class="topnav-label"><%= group.label %></span>
-              <ul>
-                <% group.items.forEach((item) => { %>
-                  <li>
-                    <a href="<%= item.href %>" class="<%= active === item.key ? 'active' : '' %>"><%= item.title %></a>
-                  </li>
-                <% }) %>
-              </ul>
+        <div class="topbar__inner">
+          <div class="topbar__brand">
+            <button
+              type="button"
+              class="nav-toggle"
+              aria-expanded="false"
+              aria-controls="main-nav"
+              data-nav-toggle
+            >
+              <span></span><span></span><span></span>
+            </button>
+            <a href="/admin" class="brand">
+              <img src="/static/img/Nila_Flatcolour_Logo-.png" alt="NILA" />
+              <span>NILA · Admin</span>
+            </a>
+          </div>
+          <nav class="topnav" id="main-nav" aria-label="เมนูหลัก">
+            <div class="topnav__content">
+              <% navGroups.forEach((group) => { %>
+                <section class="topnav-group" data-nav-group="<%= group.label %>">
+                  <span class="topnav-label"><%= group.label %></span>
+                  <ul>
+                    <% group.items.forEach((item) => { %>
+                      <li>
+                        <a href="<%= item.href %>" class="<%= active === item.key ? 'active' : '' %>"><%= item.title %></a>
+                      </li>
+                    <% }) %>
+                  </ul>
+                </section>
+              <% }) %>
             </div>
-          <% }) %>
-        </nav>
-        <div class="topbar__account">
-          <span class="user-pill"><%= displayName %></span>
-          <% if (isGuest) { %>
-            <a class="btn ghost" href="/admin/login?redirect=<%= redirectQuery %>">Login</a>
-          <% } else { %>
-            <a class="btn ghost" href="/admin/logout">Logout</a>
-          <% } %>
+          </nav>
+          <div class="topbar__account">
+            <span class="user-pill"><%= displayName %></span>
+            <% if (isGuest) { %>
+              <a class="btn ghost" href="/admin/login?redirect=<%= redirectQuery %>">Login</a>
+            <% } else { %>
+              <a class="btn ghost" href="/admin/logout">Logout</a>
+            <% } %>
+          </div>
         </div>
       </header>
+      <div class="topnav-backdrop" data-nav-backdrop aria-hidden="true"></div>
     <% } %>
   <% } %>
 

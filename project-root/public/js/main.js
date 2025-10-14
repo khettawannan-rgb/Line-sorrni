@@ -1,33 +1,20 @@
 // ไฮไลต์เมนูตาม URL ปัจจุบัน + ปุ่มยืนยันอันตราย
 document.addEventListener('DOMContentLoaded', () => {
+  const navRoot = document.querySelector('.topnav');
   const here = location.pathname.replace(/\/+$/, '');
-  const navLinks = document.querySelectorAll('.nav a');
-  document.querySelectorAll('.nav a').forEach((a) => {
+  const navLinks = navRoot ? Array.from(navRoot.querySelectorAll('a[href]')) : [];
+  const navGroups = navRoot ? Array.from(navRoot.querySelectorAll('.topnav-group')) : [];
+
+  navLinks.forEach((a) => {
     const href = (a.getAttribute('href') || '').replace(/\/+$/, '');
-    if (href && here === href) a.classList.add('active');
-    const group = a.closest('.nav-group');
-    if (a.classList.contains('active') && group) {
-      group.classList.add('active');
+    const isActive = href && here === href;
+    if (isActive) {
+      a.classList.add('active');
+      a.setAttribute('aria-current', 'page');
     }
-  });
-
-  const navGroups = document.querySelectorAll('.nav-group');
-  navGroups.forEach((group) => {
-    const button = group.querySelector('button');
-    if (!button) return;
-    button.addEventListener('click', (ev) => {
-      ev.preventDefault();
-      const isOpen = group.classList.toggle('open');
-      if (isOpen) {
-        navGroups.forEach((g) => { if (g !== group) g.classList.remove('open'); });
-      }
-    });
-  });
-
-  document.addEventListener('click', (ev) => {
-    const target = ev.target;
-    if (!target.closest('.nav-group')) {
-      navGroups.forEach((group) => group.classList.remove('open'));
+    const group = a.closest('.topnav-group');
+    if (group && (isActive || a.classList.contains('active'))) {
+      group.classList.add('active');
     }
   });
 
