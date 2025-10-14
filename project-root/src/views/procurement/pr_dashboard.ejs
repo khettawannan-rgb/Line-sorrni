@@ -122,7 +122,9 @@
             <td colspan="7" class="text-center text-muted">ยังไม่มีใบขอซื้อในระบบ</td>
           </tr>
         <% } %>
-        <% prs.forEach((pr) => { %>
+        <% prs.forEach((pr) => {
+             const lines = Array.isArray(pr.lines) ? pr.lines : [];
+        %>
           <tr>
             <td data-label="PR">
               <a href="/admin/pr/<%= pr._id %>"><strong><%= pr.prNumber %></strong></a>
@@ -134,11 +136,11 @@
             <td data-label="Vendor"><%= pr.vendorId?.name || '-' %></td>
             <td data-label="รายการ">
               <ul>
-                <% pr.lines.slice(0, 2).forEach((line) => { %>
+                <% lines.slice(0, 2).forEach((line) => { %>
                   <li><%= line.description %> · <%= line.quantity %> <%= line.uom %></li>
                 <% }) %>
-                <% if (pr.lines.length > 2) { %>
-                  <li class="text-muted">+ <%= pr.lines.length - 2 %> รายการ</li>
+                <% if (lines.length > 2) { %>
+                  <li class="text-muted">+ <%= lines.length - 2 %> รายการ</li>
                 <% } %>
               </ul>
             </td>
@@ -194,7 +196,9 @@
   <% if (!prs.length) { %>
     <div class="card empty-state">ยังไม่มีใบขอซื้อ</div>
   <% } %>
-  <% prs.forEach((pr) => { %>
+  <% prs.forEach((pr) => {
+       const lines = Array.isArray(pr.lines) ? pr.lines : [];
+  %>
     <article class="mobile-card">
       <header class="mobile-card__header">
         <div>
@@ -208,14 +212,14 @@
         <span><%= pr.vendorId?.name || '-' %></span>
       </div>
       <ul class="mobile-card__items">
-        <% pr.lines.slice(0, 3).forEach((line) => { %>
+        <% lines.slice(0, 3).forEach((line) => { %>
           <li>
             <span><%= line.description %></span>
             <strong><%= line.quantity %> <%= line.uom %></strong>
           </li>
         <% }) %>
-        <% if (pr.lines.length > 3) { %>
-          <li class="text-muted">+ <%= pr.lines.length - 3 %> รายการ</li>
+        <% if (lines.length > 3) { %>
+          <li class="text-muted">+ <%= lines.length - 3 %> รายการ</li>
         <% } %>
       </ul>
       <div class="mobile-card__meta">
