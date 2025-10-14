@@ -44,19 +44,19 @@
 <section class="metrics-grid">
   <article class="metric-card">
     <span>ทั้งหมด</span>
-    <strong><%= pos.length %></strong>
+    <strong><%= num(pos.length) %></strong>
   </article>
   <article class="metric-card">
     <span>Draft</span>
-    <strong><%= draftCount %></strong>
+    <strong><%= num(draftCount) %></strong>
   </article>
   <article class="metric-card">
     <span>Approved</span>
-    <strong><%= approvedCount %></strong>
+    <strong><%= num(approvedCount) %></strong>
   </article>
   <article class="metric-card">
     <span>ส่งแล้ว</span>
-    <strong><%= sentCount + receivedCount %></strong>
+    <strong><%= num(sentCount + receivedCount) %></strong>
   </article>
 </section>
 
@@ -126,18 +126,18 @@
         <% pos.forEach((po) => { %>
           <tr>
             <td data-label="PO">
-              <a href="/admin/po/<%= po._id %>"><strong><%= po.poNumber %></strong></a>
+              <a href="/admin/po/<%= po._id %>"><strong><%= get(po, 'poNumber', '-') %></strong></a>
               <% if (po.prId) { %>
-                <div class="text-xs text-muted">จาก PR <a href="/admin/pr/<%= po.prId._id || po.prId %>"><%= po.prId.prNumber %></a></div>
+                <div class="text-xs text-muted">จาก PR <a href="/admin/pr/<%= po.prId._id || po.prId %>"><%= get(po, 'prId.prNumber', '-') %></a></div>
               <% } %>
             </td>
             <td data-label="สถานะ">
-              <span class="badge status-<%= po.status %>"><%= STATUS_LABELS[po.status] %></span>
+              <span class="badge status-<%= po.status %>"><%= get(STATUS_LABELS, po.status, po.status) %></span>
             </td>
-            <td data-label="Vendor"><%= po.vendorId?.name || '-' %></td>
-            <td data-label="ยอดรวม">฿<%= po.totalAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></td>
-            <td data-label="กำหนดส่ง"><%= po.expectedDeliveryDate ? dayjs(po.expectedDeliveryDate).format('DD MMM YYYY') : '-' %></td>
-            <td data-label="สร้างเมื่อ"><%= dayjs(po.createdAt).format('DD MMM YYYY HH:mm') %></td>
+            <td data-label="Vendor"><%= get(po, 'vendorId.name', '-') %></td>
+            <td data-label="ยอดรวม">฿<%= money(get(po, 'totalAmount', 0)) %></td>
+            <td data-label="กำหนดส่ง"><%= dateFmt(get(po, 'expectedDeliveryDate', null), 'DD MMM YYYY') %></td>
+            <td data-label="สร้างเมื่อ"><%= dateFmt(get(po, 'createdAt', null), 'DD MMM YYYY HH:mm') %></td>
             <td data-label="การดำเนินการ" class="text-right">
               <div class="btn-group">
                 <a class="btn ghost small" href="/admin/po/<%= po._id %>">รายละเอียด</a>
@@ -182,28 +182,28 @@
     <article class="mobile-card">
       <header class="mobile-card__header">
         <div>
-          <h3><%= po.poNumber %></h3>
-          <small><%= po.vendorId?.name || '-' %></small>
+          <h3><%= get(po, 'poNumber', '-') %></h3>
+          <small><%= get(po, 'vendorId.name', '-') %></small>
         </div>
-        <span class="badge status-<%= po.status %>"><%= STATUS_LABELS[po.status] %></span>
+        <span class="badge status-<%= po.status %>"><%= get(STATUS_LABELS, po.status, po.status) %></span>
       </header>
       <% if (po.prId) { %>
         <div class="mobile-card__meta secondary">
           <span>จาก PR</span>
-          <a href="/admin/pr/<%= po.prId._id || po.prId %>"><%= po.prId.prNumber %></a>
+          <a href="/admin/pr/<%= po.prId._id || po.prId %>"><%= get(po, 'prId.prNumber', '-') %></a>
         </div>
       <% } %>
       <div class="mobile-card__meta">
         <span>ยอดรวม</span>
-        <strong>฿<%= po.totalAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></strong>
+        <strong>฿<%= money(get(po, 'totalAmount', 0)) %></strong>
       </div>
       <div class="mobile-card__meta secondary">
         <span>กำหนดส่ง</span>
-        <time><%= po.expectedDeliveryDate ? dayjs(po.expectedDeliveryDate).format('DD MMM YYYY') : '-' %></time>
+        <time><%= dateFmt(get(po, 'expectedDeliveryDate', null), 'DD MMM YYYY') %></time>
       </div>
       <div class="mobile-card__meta secondary">
         <span>สร้างเมื่อ</span>
-        <time><%= dayjs(po.createdAt).format('DD MMM YYYY HH:mm') %></time>
+        <time><%= dateFmt(get(po, 'createdAt', null), 'DD MMM YYYY HH:mm') %></time>
       </div>
       <footer class="mobile-card__actions">
         <a class="btn ghost btn-sm" href="/admin/po/<%= po._id %>">รายละเอียด</a>

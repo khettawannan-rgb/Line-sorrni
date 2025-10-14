@@ -43,19 +43,19 @@
 <section class="metrics-grid">
   <article class="metric-card">
     <span>ทั้งหมด</span>
-    <strong><%= prs.length %></strong>
+    <strong><%= num(prs.length) %></strong>
   </article>
   <article class="metric-card">
     <span>Draft</span>
-    <strong><%= draftCount %></strong>
+    <strong><%= num(draftCount) %></strong>
   </article>
   <article class="metric-card">
     <span>รออนุมัติ</span>
-    <strong><%= waitingCount %></strong>
+    <strong><%= num(waitingCount) %></strong>
   </article>
   <article class="metric-card">
     <span>อนุมัติแล้ว</span>
-    <strong><%= approvedCount %></strong>
+    <strong><%= num(approvedCount) %></strong>
   </article>
 </section>
 
@@ -127,25 +127,25 @@
         %>
           <tr>
             <td data-label="PR">
-              <a href="/admin/pr/<%= pr._id %>"><strong><%= pr.prNumber %></strong></a>
-              <div class="text-xs text-muted">โดย <%= pr.requester || '-' %></div>
+              <a href="/admin/pr/<%= pr._id %>"><strong><%= get(pr, 'prNumber', '-') %></strong></a>
+              <div class="text-xs text-muted">โดย <%= get(pr, 'requester', '-') %></div>
             </td>
             <td data-label="สถานะ">
-              <span class="badge status-<%= pr.status %>"><%= STATUS_LABELS[pr.status] || pr.status %></span>
+              <span class="badge status-<%= pr.status %>"><%= get(STATUS_LABELS, pr.status, pr.status) %></span>
             </td>
-            <td data-label="Vendor"><%= pr.vendorId?.name || '-' %></td>
+            <td data-label="Vendor"><%= get(pr, 'vendorId.name', '-') %></td>
             <td data-label="รายการ">
               <ul>
                 <% lines.slice(0, 2).forEach((line) => { %>
-                  <li><%= line.description %> · <%= line.quantity %> <%= line.uom %></li>
+                  <li><%= get(line, 'description', '-') %> · <%= num(get(line, 'quantity', 0)) %> <%= get(line, 'uom', '-') %></li>
                 <% }) %>
                 <% if (lines.length > 2) { %>
                   <li class="text-muted">+ <%= lines.length - 2 %> รายการ</li>
                 <% } %>
               </ul>
             </td>
-            <td class="text-right" data-label="ยอดรวม">฿<%= pr.total.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></td>
-            <td data-label="อัปเดตล่าสุด"><%= dayjs(pr.updatedAt).format('DD MMM YYYY HH:mm') %></td>
+            <td class="text-right" data-label="ยอดรวม">฿<%= money(get(pr, 'total', 0)) %></td>
+            <td data-label="อัปเดตล่าสุด"><%= dateFmt(get(pr, 'updatedAt', null), 'DD MMM YYYY HH:mm') %></td>
             <td data-label="การดำเนินการ" class="text-right">
               <div class="btn-group">
                 <a href="/admin/pr/<%= pr._id %>" class="btn ghost small">รายละเอียด</a>
@@ -202,20 +202,20 @@
     <article class="mobile-card">
       <header class="mobile-card__header">
         <div>
-          <h3><%= pr.prNumber %></h3>
-          <small>โดย <%= pr.requester || '-' %></small>
+          <h3><%= get(pr, 'prNumber', '-') %></h3>
+          <small>โดย <%= get(pr, 'requester', '-') %></small>
         </div>
-        <span class="badge status-<%= pr.status %>"><%= STATUS_LABELS[pr.status] || pr.status %></span>
+        <span class="badge status-<%= pr.status %>"><%= get(STATUS_LABELS, pr.status, pr.status) %></span>
       </header>
       <div class="mobile-card__meta secondary">
         <span>Vendor</span>
-        <span><%= pr.vendorId?.name || '-' %></span>
+        <span><%= get(pr, 'vendorId.name', '-') %></span>
       </div>
       <ul class="mobile-card__items">
         <% lines.slice(0, 3).forEach((line) => { %>
           <li>
-            <span><%= line.description %></span>
-            <strong><%= line.quantity %> <%= line.uom %></strong>
+            <span><%= get(line, 'description', '-') %></span>
+            <strong><%= num(get(line, 'quantity', 0)) %> <%= get(line, 'uom', '-') %></strong>
           </li>
         <% }) %>
         <% if (lines.length > 3) { %>
@@ -224,11 +224,11 @@
       </ul>
       <div class="mobile-card__meta">
         <span>ยอดรวม</span>
-        <strong>฿<%= pr.total.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></strong>
+        <strong>฿<%= money(get(pr, 'total', 0)) %></strong>
       </div>
       <div class="mobile-card__meta secondary">
         <span>อัปเดต</span>
-        <time><%= dayjs(pr.updatedAt).format('DD MMM YYYY HH:mm') %></time>
+        <time><%= dateFmt(get(pr, 'updatedAt', null), 'DD MMM YYYY HH:mm') %></time>
       </div>
       <footer class="mobile-card__actions">
         <a href="/admin/pr/<%= pr._id %>" class="btn ghost btn-sm">รายละเอียด</a>

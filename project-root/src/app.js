@@ -14,9 +14,11 @@ import adminRouter from './routes/admin.js';
 import webhookRouter from './routes/webhook.js';
 import consentRouter from './routes/consent.js';
 import lineFormsRouter from './routes/lineForms.js';
+import lineRouter from './routes/line.js';
 import { setupDailyCron } from './jobs/scheduler.js';
 import { liffLink } from './utils/liff.js';
 import checkSuperAdmin from './middleware/checkSuperAdmin.js';
+import viewHelpers from './middleware/viewHelpers.js';
 
 const PORT = Number(process.env.PORT || 10000);
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/line-erp-notifier';
@@ -129,6 +131,8 @@ app.use(
     },
   })
 );
+
+app.use(viewHelpers);
 
 // ===== Super Admin bypass =====
 app.use('/admin', checkSuperAdmin);
@@ -246,6 +250,7 @@ app.get('/liff-open-admin', (req, res) => {
 });
 app.use('/consent', consentRouter);
 app.use('/line', lineFormsRouter);
+app.use('/line', lineRouter);
 app.use('/admin', adminRouter);
 
 // 404
@@ -253,8 +258,16 @@ app.use((req, res) => res.status(404).send('Not Found'));
 
 // Error fallback
 app.use((err, req, res, next) => {
-  console.error('[APP][ERR]', err);
-  if (!res.headersSent) return res.status(500).send('Internal Server Error');
+  console.error('EJS Error:', {
+    path: req.path,
+    query: req.query,
+    userAgent: req.headers['user-agent'],
+    lineMobile: /Line\/\d+/i.test(req.headers['user-agent'] || ''),
+  });
+  console.error(err);
+  if (!res.headersSent) {
+    return res.status(500).render('error', { title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถแสดงผลได้ชั่วคราว' });
+  }
 });
 
 async function start() {

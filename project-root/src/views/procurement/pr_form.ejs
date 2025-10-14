@@ -3,13 +3,16 @@
   const guestMode = typeof isGuest !== 'undefined' ? !!isGuest : false;
   const taxPercent = Number(form.taxRate || 0) * 100;
   const loginRedirect = `/admin/login?redirect=${encodeURIComponent(action + (MODE === 'edit' ? '' : '/new'))}`;
-  const computedSubtotal = Array.isArray(form.lines)
-    ? form.lines.reduce((sum, line) => {
+  const lineItems = Array.isArray(form.lines) && form.lines.length
+    ? form.lines
+    : [
+        { sku: '', description: '', quantity: '', uom: 'EA', unitPrice: '', notes: '' },
+      ];
+  const computedSubtotal = lineItems.reduce((sum, line) => {
         const qty = Number(line.quantity || 0);
         const price = Number(line.unitPrice || 0);
         return sum + (Number(line.amount || qty * price) || 0);
-      }, 0)
-    : 0;
+      }, 0);
   const subtotalValue = Number(form.subtotal ?? computedSubtotal);
   const taxValue = Number(form.taxAmount ?? 0);
   const totalValue = Number(form.total ?? subtotalValue + taxValue);
@@ -93,7 +96,7 @@
         <p class="subtitle">เพิ่มรายการสินค้า/บริการที่ต้องการสั่งซื้อ</p>
       </header>
       <div class="line-items" data-item-list>
-        <% form.lines.forEach((line) => { %>
+        <% lineItems.forEach((line) => { %>
           <div class="item-row">
             <div>
               <label>SKU</label>
@@ -154,15 +157,15 @@
       <dl class="definition-list">
         <div>
           <dt>รวมก่อนภาษี</dt>
-          <dd>฿<%= subtotalValue.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
+          <dd>฿<%= money(subtotalValue) %></dd>
         </div>
         <div>
           <dt>VAT</dt>
-          <dd>฿<%= taxValue.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
+          <dd>฿<%= money(taxValue) %></dd>
         </div>
         <div>
           <dt>ยอดสุทธิ</dt>
-          <dd><strong>฿<%= totalValue.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></strong></dd>
+          <dd><strong>฿<%= money(totalValue) %></strong></dd>
         </div>
       </dl>
       <div class="form-actions">

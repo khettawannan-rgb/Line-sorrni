@@ -1,21 +1,23 @@
 <%
   const guestMode = typeof isGuest !== 'undefined' ? !!isGuest : false;
   const loginRedirect = `/admin/login?redirect=${encodeURIComponent('/admin/po/' + po._id)}`;
-  const vendorName = po.vendorId?.name || vendor?.name || '-';
+  const vendorName = get(po, 'vendorId.name', get(vendor, 'name', '-'));
+  const items = Array.isArray(po.items) ? po.items : [];
+  const history = Array.isArray(po.statusHistory) ? po.statusHistory : [];
 %>
 
 <section class="page-hero">
   <div>
-    <h1><%= po.poNumber %></h1>
+    <h1><%= get(po, 'poNumber', '-') %></h1>
     <p>
-      สร้างเมื่อ <%= dayjs(po.createdAt).format('DD MMM YYYY HH:mm') %>
+      สร้างเมื่อ <%= dateFmt(get(po, 'createdAt', null), 'DD MMM YYYY HH:mm') %>
       <% if (po.prId) { %>
-        · จาก PR <a href="/admin/pr/<%= po.prId._id || po.prId %>"><%= po.prId.prNumber %></a>
+        · จาก PR <a href="/admin/pr/<%= po.prId._id || po.prId %>"><%= get(po, 'prId.prNumber', '-') %></a>
       <% } %>
     </p>
   </div>
   <div class="actions">
-    <span class="badge status-<%= po.status %>"><%= STATUS_LABELS[po.status] %></span>
+    <span class="badge status-<%= po.status %>"><%= get(STATUS_LABELS, po.status, po.status) %></span>
     <a class="btn ghost" href="/admin/po">← ย้อนกลับ</a>
     <% if (!guestMode) { %>
       <a class="btn ghost" href="/admin/po/<%= po._id %>/pdf">Export PDF</a>
@@ -37,53 +39,53 @@
         <dt>Vendor</dt>
         <dd>
           <strong><%= vendorName %></strong><br />
-          <span class="text-muted"><%= vendor?.email || '-' %></span>
+          <span class="text-muted"><%= get(vendor, 'email', get(po, 'vendorId.email', '-')) %></span>
         </dd>
       </div>
       <div>
         <dt>สถานะ</dt>
-        <dd><span class="badge status-<%= po.status %>"><%= STATUS_LABELS[po.status] %></span></dd>
+        <dd><span class="badge status-<%= po.status %>"><%= get(STATUS_LABELS, po.status, po.status) %></span></dd>
       </div>
       <div>
         <dt>ยอดสุทธิ (ก่อน VAT)</dt>
-        <dd>฿<%= po.subtotal.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
+        <dd>฿<%= money(get(po, 'subtotal', 0)) %></dd>
       </div>
       <div>
         <dt>VAT</dt>
-        <dd>฿<%= po.taxAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
+        <dd>฿<%= money(get(po, 'taxAmount', 0)) %></dd>
       </div>
       <div>
         <dt>ค่าขนส่ง</dt>
-        <dd>฿<%= po.shippingFee.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
+        <dd>฿<%= money(get(po, 'shippingFee', 0)) %></dd>
       </div>
       <div>
         <dt>ยอดรวม</dt>
-        <dd><strong>฿<%= po.totalAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></strong></dd>
+        <dd><strong>฿<%= money(get(po, 'totalAmount', 0)) %></strong></dd>
       </div>
       <div>
         <dt>Payment Terms</dt>
-        <dd><%= po.paymentTerms || '-' %></dd>
+        <dd><%= get(po, 'paymentTerms', '-') %></dd>
       </div>
       <div>
         <dt>Incoterms</dt>
-        <dd><%= po.incoterms || '-' %></dd>
+        <dd><%= get(po, 'incoterms', '-') %></dd>
       </div>
       <div>
         <dt>Ship To</dt>
         <dd>
-          <strong><%= po.shipping?.shipTo || '-' %></strong><br />
-          <span class="text-muted"><%= po.shipping?.address || '' %></span><br />
-          <span class="text-muted"><%= po.shipping?.contact || '' %></span>
+          <strong><%= get(po, 'shipping.shipTo', '-') %></strong><br />
+          <span class="text-muted"><%= get(po, 'shipping.address', '') %></span><br />
+          <span class="text-muted"><%= get(po, 'shipping.contact', '') %></span>
         </dd>
       </div>
       <div>
         <dt>กำหนดส่ง</dt>
-        <dd><%= po.expectedDeliveryDate ? dayjs(po.expectedDeliveryDate).format('DD MMM YYYY') : '-' %></dd>
+        <dd><%= dateFmt(get(po, 'expectedDeliveryDate', null), 'DD MMM YYYY') %></dd>
       </div>
-      <% if (po.remarks) { %>
+      <% if (get(po, 'remarks')) { %>
         <div class="span-2">
           <dt>หมายเหตุ</dt>
-          <dd><%= po.remarks %></dd>
+          <dd><%= get(po, 'remarks', '') %></dd>
         </div>
       <% } %>
     </dl>
@@ -141,20 +143,20 @@
         </tr>
       </thead>
       <tbody>
-        <% po.items.forEach((item, idx) => { %>
+        <% items.forEach((item, idx) => { %>
           <tr>
             <td data-label="#"><%= idx + 1 %></td>
-            <td data-label="SKU"><%= item.sku || '-' %></td>
+            <td data-label="SKU"><%= get(item, 'sku', '-') %></td>
             <td data-label="รายละเอียด">
-              <strong><%= item.itemName %></strong>
-              <% if (item.note) { %>
-                <div class="text-muted text-xs"><%= item.note %></div>
+              <strong><%= get(item, 'itemName', '-') %></strong>
+              <% if (get(item, 'note')) { %>
+                <div class="text-muted text-xs"><%= get(item, 'note', '') %></div>
               <% } %>
             </td>
-            <td data-label="จำนวน"><%= item.quantity %></td>
-            <td data-label="หน่วย"><%= item.unit %></td>
-            <td data-label="ราคา/หน่วย" class="text-right">฿<%= item.unitPrice.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></td>
-            <td data-label="รวม" class="text-right">฿<%= item.lineTotal.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></td>
+            <td data-label="จำนวน"><%= num(get(item, 'quantity', 0)) %></td>
+            <td data-label="หน่วย"><%= get(item, 'unit', '-') %></td>
+            <td data-label="ราคา/หน่วย" class="text-right">฿<%= money(get(item, 'unitPrice', 0)) %></td>
+            <td data-label="รวม" class="text-right">฿<%= money(get(item, 'lineTotal', 0)) %></td>
           </tr>
         <% }) %>
       </tbody>
@@ -166,18 +168,18 @@
   <header>
     <h2>ประวัติการเปลี่ยนสถานะ</h2>
   </header>
-  <% if (!po.statusHistory || !po.statusHistory.length) { %>
+  <% if (!history.length) { %>
     <p class="text-muted">ยังไม่มีประวัติการเปลี่ยนสถานะ</p>
   <% } else { %>
     <ul class="timeline">
-      <% po.statusHistory.slice().reverse().forEach((entry) => { %>
+      <% history.slice().reverse().forEach((entry) => { %>
         <li>
-          <div class="timeline__time"><%= dayjs(entry.at).format('DD MMM YYYY HH:mm') %></div>
+          <div class="timeline__time"><%= dateFmt(get(entry, 'at', null), 'DD MMM YYYY HH:mm') %></div>
           <div class="timeline__body">
-            <strong><%= STATUS_LABELS[entry.status] || entry.status %></strong>
-            <span class="text-muted">โดย <%= entry.actor %></span>
-            <% if (entry.remark) { %>
-              <div><%= entry.remark %></div>
+            <strong><%= get(STATUS_LABELS, entry.status, entry.status) %></strong>
+            <span class="text-muted">โดย <%= get(entry, 'actor', '-') %></span>
+            <% if (get(entry, 'remark')) { %>
+              <div><%= get(entry, 'remark', '') %></div>
             <% } %>
           </div>
         </li>

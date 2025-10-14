@@ -1,5 +1,10 @@
 <section class="lite-wrapper">
   <% if (!pr) { %>
+    <%
+      const guestMode = typeof isGuest !== 'undefined' ? !!isGuest : false;
+      const loginRedirect = `/admin/login?redirect=${encodeURIComponent('/line/approve/pr/' + pr._id)}`;
+      const lines = Array.isArray(pr?.lines) ? pr.lines : [];
+    %>
     <header class="lite-header">
       <h1>ไม่พบเอกสาร PR</h1>
       <p class="text-muted">เอกสารที่ต้องการอนุมัติอาจถูกลบหรือไม่มีอยู่ในระบบ</p>
@@ -8,6 +13,7 @@
     <%
       const guestMode = typeof isGuest !== 'undefined' ? !!isGuest : false;
       const loginRedirect = `/admin/login?redirect=${encodeURIComponent('/line/approve/pr/' + pr._id)}`;
+      const lines = Array.isArray(pr?.lines) ? pr.lines : [];
     %>
     <header class="lite-header">
       <h1><%= pr.prNumber %></h1>
@@ -22,18 +28,18 @@
 
     <article class="lite-card">
       <h2>Vendor</h2>
-      <p><strong><%= pr.vendorId?.name || '-' %></strong></p>
+      <p><strong><%= get(pr, 'vendorId.name', '-') %></strong></p>
       <h3>รายการสินค้า</h3>
       <ul class="lite-list">
-        <% pr.lines.forEach((line) => { %>
+        <% lines.forEach((line) => { %>
           <li>
-            <strong><%= line.description %></strong>
-            <span><%= line.quantity %> <%= line.uom %></span>
-            <span>฿<%= line.amount.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></span>
+            <strong><%= get(line, 'description', '-') %></strong>
+            <span><%= num(get(line, 'quantity', 0)) %> <%= get(line, 'uom', '-') %></span>
+            <span>฿<%= money(get(line, 'amount', 0)) %></span>
           </li>
         <% }) %>
       </ul>
-      <p class="lite-total">ยอดรวม ฿<%= pr.total.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></p>
+      <p class="lite-total">ยอดรวม ฿<%= money(get(pr, 'total', 0)) %></p>
     </article>
 
     <% if (pr.status === PR_STATUSES.WAITING_APPROVAL) { %>
@@ -56,7 +62,7 @@
         </form>
       <% } %>
     <% } else { %>
-      <div class="lite-alert neutral">ไม่สามารถดำเนินการได้ในสถานะ <%= STATUS_LABELS[pr.status] %></div>
+      <div class="lite-alert neutral">ไม่สามารถดำเนินการได้ในสถานะ <%= get(STATUS_LABELS, pr.status, pr.status) %></div>
     <% } %>
   <% } %>
 </section>

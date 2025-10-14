@@ -1,14 +1,16 @@
 <%
   const guestMode = typeof isGuest !== 'undefined' ? !!isGuest : false;
   const action = '/admin/po';
-  const items = form.items || form.lines || [{ description: '', quantity: '', unitPrice: '', uom: 'EA', sku: '', notes: '' }];
-  const computedSubtotal = Array.isArray(items)
-    ? items.reduce((sum, item) => {
-        const qty = Number(item.quantity || 0);
-        const price = Number(item.unitPrice || 0);
-        return sum + (Number(item.lineTotal || item.amount) || qty * price);
-      }, 0)
-    : 0;
+  const items = Array.isArray(form.items)
+    ? form.items
+    : Array.isArray(form.lines)
+      ? form.lines
+      : [{ description: '', quantity: '', unitPrice: '', uom: 'EA', sku: '', notes: '' }];
+  const computedSubtotal = items.reduce((sum, item) => {
+    const qty = Number(item.quantity || 0);
+    const price = Number(item.unitPrice || 0);
+    return sum + (Number(item.lineTotal || item.amount) || qty * price);
+  }, 0);
   const taxValue = Number(form.taxAmount ?? 0);
   const shippingValue = Number(form.shippingFee ?? 0);
   const subtotalValue = Number(form.subtotal ?? computedSubtotal);
@@ -148,24 +150,24 @@
   </fieldset>
 
   <section class="card sticky-actions">
-    <dl class="definition-list">
-      <div>
-        <dt>รวมก่อนภาษี</dt>
-        <dd>฿<%= subtotalValue.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
-      </div>
-      <div>
-        <dt>VAT</dt>
-        <dd>฿<%= taxValue.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
-      </div>
-      <div>
-        <dt>ค่าขนส่ง</dt>
-        <dd>฿<%= shippingValue.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></dd>
-      </div>
-      <div>
-        <dt>ยอดสุทธิ</dt>
-        <dd><strong>฿<%= totalValue.toLocaleString('th-TH', { minimumFractionDigits: 2 }) %></strong></dd>
-      </div>
-    </dl>
+      <dl class="definition-list">
+        <div>
+          <dt>รวมก่อนภาษี</dt>
+          <dd>฿<%= money(subtotalValue) %></dd>
+        </div>
+        <div>
+          <dt>VAT</dt>
+          <dd>฿<%= money(taxValue) %></dd>
+        </div>
+        <div>
+          <dt>ค่าขนส่ง</dt>
+          <dd>฿<%= money(shippingValue) %></dd>
+        </div>
+        <div>
+          <dt>ยอดสุทธิ</dt>
+          <dd><strong>฿<%= money(totalValue) %></strong></dd>
+        </div>
+      </dl>
 
     <% if (guestMode) { %>
       <a href="<%= loginRedirect %>" class="btn primary btn-block btn-lg">ล็อกอินเพื่อสร้าง PO</a>
