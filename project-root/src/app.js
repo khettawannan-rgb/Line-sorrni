@@ -137,18 +137,22 @@ app.use('/admin', checkSuperAdmin);
 app.use((req, res, next) => {
   const userAgent = String(req.headers['user-agent'] || '');
   const uaLower = userAgent.toLowerCase();
-  const isLineApp = uaLower.includes('line');
-  const isMobileDevice = /mobile|android|iphone|ipad|ipod/.test(uaLower);
-  const isLineMobile = isLineApp && isMobileDevice;
+  const isLineAppDetected = uaLower.includes('line');
+  const isMobileDeviceDetected = /mobile|android|iphone|ipad|ipod/.test(uaLower);
+  const isLineMobileDetected = isLineAppDetected && isMobileDeviceDetected;
+  const uaHasLineVersion = /Line\/\d+/i.test(userAgent);
 
-  res.locals.user = req.session?.user || null;
-  res.locals.title = '';
-  res.locals.active = '';
-  if (typeof res.locals.noChrome !== 'boolean') res.locals.noChrome = false;   // <— สำคัญ
-  res.locals.isLineApp = isLineApp;
-  res.locals.isMobileDevice = isMobileDevice;
-  res.locals.isLineMobile = isLineMobile;
-  res.locals.bodyVariant = isLineMobile ? 'line-app-view' : '';
+  res.locals.title = res.locals.title ?? '';
+  res.locals.active = res.locals.active ?? '';
+  res.locals.noChrome = res.locals.noChrome ?? false;
+  res.locals.user = res.locals.user ?? (req.session?.user || null);
+  res.locals.isLineApp = res.locals.isLineApp ?? isLineAppDetected;
+  res.locals.isMobileDevice = res.locals.isMobileDevice ?? isMobileDeviceDetected;
+  res.locals.isLineMobile =
+    res.locals.isLineMobile ?? (uaHasLineVersion ? true : isLineMobileDetected);
+  res.locals.bodyVariant =
+    res.locals.bodyVariant ?? (res.locals.isLineMobile ? 'line-app-view' : '');
+
   next();
 });
 
