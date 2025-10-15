@@ -284,7 +284,10 @@ async function loadRecentDates(companyId) {
 router.get('/login', (req, res) => {
   const userAgent = req.headers['user-agent'] || '';
   const isLineMobile = /Line/i.test(userAgent) && /Mobile/i.test(userAgent);
-  const redirect = sanitizeRedirect(req.query.redirect || req.headers.referer || '/admin');
+  let redirect = sanitizeRedirect(req.query.redirect || req.headers.referer || '/admin');
+  if (redirect.startsWith('/admin/login')) {
+    redirect = '/admin';
+  }
   res.locals.redirectTo = redirect;
   res.render('auth/login', {
     error: null,
