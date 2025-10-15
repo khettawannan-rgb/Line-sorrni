@@ -3,7 +3,7 @@ import { buildWeatherAdvice } from '../services/advice/weather-advice.js';
 import { buildFlexWeatherAdvice } from '../line/buildFlexWeatherAdvice.js';
 import { buildStockAlert } from '../services/stock/stock-alert.js';
 import { buildFlexStockAlert } from '../line/buildFlexStockAlert.js';
-import stockMock from '../services/stock/mocks/stock.json' assert { type: 'json' };
+import stockMock from '../services/stock/mocks/stock.json' with { type: 'json' };
 
 const router = Router();
 
@@ -11,12 +11,12 @@ const FEATURE_WEATHER = String(process.env.FEATURE_WEATHER_ADVICE || '').toLower
 const FEATURE_STOCK = String(process.env.FEATURE_STOCK_ALERTS || '').toLowerCase() === 'true';
 
 async function loadWeatherScenario(name) {
-  const module = await import(`../services/advice/mocks/${name}.json`, { assert: { type: 'json' } });
+  const module = await import(`../services/advice/mocks/${name}.json`, { with: { type: 'json' } });
   return module.default || module;
 }
 
 async function loadStockScenario(name) {
-  const module = await import(`../services/stock/mocks/${name}.json`, { assert: { type: 'json' } });
+  const module = await import(`../services/stock/mocks/${name}.json`, { with: { type: 'json' } });
   return module.default || module;
 }
 

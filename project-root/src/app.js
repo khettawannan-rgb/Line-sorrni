@@ -141,15 +141,31 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // ===== Session =====
+const isProd = String(process.env.NODE_ENV).toLowerCase() === 'production';
+let sessionStore;
+if (isProd) {
+  if (!PRIMARY_MONGO_URI) {
+    console.warn('[SESSION] MONGODB_URI is not defined. Falling back to MemoryStore.');
+  } else {
+    sessionStore = MongoStore.create({
+      mongoUrl: PRIMARY_MONGO_URI,
+      collectionName: 'sessions',
+      crypto: { secret: SESSION_SECRET },
+    });
+    console.log('[SESSION] MongoStore enabled');
+  }
+}
+
 app.use(
   session({
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    store: sessionStore,
     cookie: {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+      secure: isProd,
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   })
@@ -184,10 +200,12 @@ app.use((req, res, next) => {
 });
 
 // ===== DB =====
-async function connectDatabase() {
-  console.log('[DB] connecting...');
+async function connectDatabase(retry = 0) {
+  const maxRetries = Number(process.env.DB_CONNECT_RETRIES || 3);
+  const delayMs = Number(process.env.DB_CONNECT_RETRY_DELAY_MS || 3000);
+  console.log('[DB] connecting... (attempt %d/%d)', retry + 1, maxRetries);
   try {
-    await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 10000 });
+    await mongoose.connect(PRIMARY_MONGO_URI, { serverSelectionTimeoutMS: 10000 });
     mongoReady = true;
     mongoErrorMessage = '';
     console.log('✅ Connected to MongoDB');
@@ -196,6 +214,11 @@ async function connectDatabase() {
     mongoReady = false;
     mongoErrorMessage = err?.message || 'Unknown MongoDB error';
     console.error('❌ MongoDB connection failed:', mongoErrorMessage);
+    if (retry + 1 < maxRetries) {
+      console.log('[DB] retrying in %dms...', delayMs);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      return connectDatabase(retry + 1);
+    }
   }
 }
 

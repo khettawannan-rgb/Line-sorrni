@@ -1,5 +1,5 @@
-import rules from './replenishment-rules.json' assert { type: 'json' };
-import stockMock from './mocks/stock.json' assert { type: 'json' };
+import rules from './replenishment-rules.json' with { type: 'json' };
+import stockMock from './mocks/stock.json' with { type: 'json' };
 
 const STATUS_BADGE = {
   URGENT: '🔴 ด่วน',
@@ -111,7 +111,7 @@ export function buildStockAlert(stockList = stockMock.items, advice = null, opts
 export async function buildStockAlertFromScenario(scenario) {
   if (!scenario) return buildStockAlert();
   try {
-    const mock = await import(`./mocks/${scenario}.json`, { assert: { type: 'json' } });
+    const mock = await import(`./mocks/${scenario}.json`, { with: { type: 'json' } });
     const dataset = mock?.default || mock;
     return buildStockAlert(dataset.items || dataset?.default?.items || []);
   } catch (err) {

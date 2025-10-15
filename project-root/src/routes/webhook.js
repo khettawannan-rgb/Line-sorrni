@@ -38,7 +38,6 @@ import { buildWeatherAdvice } from '../services/advice/weather-advice.js';
 import { buildFlexWeatherAdvice } from '../line/buildFlexWeatherAdvice.js';
 import { buildStockAlert } from '../services/stock/stock-alert.js';
 import { buildFlexStockAlert } from '../line/buildFlexStockAlert.js';
-import rules from '../services/advice/rules.weather.json' assert { type: 'json' };
 
 const router = Router();
 
@@ -1017,7 +1016,7 @@ function buildQuickReplyItems(items = []) {
 }
 
 async function loadWeatherScenario(name = 'ok') {
-  const module = await import(`../services/advice/mocks/${name}.json`, { assert: { type: 'json' } });
+  const module = await import(`../services/advice/mocks/${name}.json`, { with: { type: 'json' } });
   return module.default || module;
 }
 

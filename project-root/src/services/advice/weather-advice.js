@@ -1,4 +1,4 @@
-import weatherRules from './rules.weather.json' assert { type: 'json' };
+import weatherRules from './rules.weather.json' with { type: 'json' };
 
 const RISK_LABEL = {
   RAIN: 'ฝน',
@@ -132,11 +132,11 @@ export function buildWeatherAdvice(input) {
   } = input || {};
 
   const risks = [];
-  const rainRules = rules.rain;
-  const heatRules = rules.heat;
-  const windRules = rules.wind;
-  const coldRules = rules.cold;
-  const thunderRules = rules.thunder;
+  const rainRules = weatherRules.rain;
+  const heatRules = weatherRules.heat;
+  const windRules = weatherRules.wind;
+  const coldRules = weatherRules.cold;
+  const thunderRules = weatherRules.thunder;
 
   const hourlyRain = hourly.map((h) => Number(h?.rainMm || 0));
   const hourlyWind = hourly.map((h) => Number(h?.windKmh || h?.wind || 0));
