@@ -35,7 +35,8 @@
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.9.15",
     "puppeteer": "^22.12.1",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "connect-mongo": "^5.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

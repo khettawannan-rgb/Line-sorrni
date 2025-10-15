@@ -38,7 +38,7 @@ import { buildWeatherAdvice } from '../services/advice/weather-advice.js';
 import { buildFlexWeatherAdvice } from '../line/buildFlexWeatherAdvice.js';
 import { buildStockAlert } from '../services/stock/stock-alert.js';
 import { buildFlexStockAlert } from '../line/buildFlexStockAlert.js';
-import stockMock from '../services/stock/mocks/stock.json' assert { type: 'json' };
+import rules from '../services/advice/rules.weather.json' assert { type: 'json' };
 
 const router = Router();
 

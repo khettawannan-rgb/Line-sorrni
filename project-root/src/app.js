@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 
 import express from 'express';
 import session from 'express-session';
+import MongoStore from 'connect-mongo';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import expressLayouts from 'express-ejs-layouts';
@@ -25,7 +26,7 @@ import checkSuperAdmin from './middleware/checkSuperAdmin.js';
 import viewHelpers from './middleware/viewHelpers.js';
 
 const PORT = Number(process.env.PORT || 10000);
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/line-erp-notifier';
+const PRIMARY_MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/line-erp-notifier';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret';
 const BASE_URL = (process.env.BASE_URL || '').replace(/\/$/, '');
 const LIFF_ID = process.env.LIFF_ID || '';

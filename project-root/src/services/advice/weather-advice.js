@@ -1,4 +1,4 @@
-import rules from './rules.weather.json' assert { type: 'json' };
+import weatherRules from './rules.weather.json' assert { type: 'json' };
 
 const RISK_LABEL = {
   RAIN: 'ฝน',
