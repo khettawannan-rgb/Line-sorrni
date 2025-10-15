@@ -1,41 +1,36 @@
-/* ===== Emergency Responsive Hotfix – Non‑destructive (2025‑10‑15) ===== */
-
-/* 0) พื้นฐาน: ป้องกันล้น/เพี้ยนจาก 100vw, สร้าง baseline Responsive */
+/* ===== Fluid Container System v2 – Non-destructive (2025-10-15) ===== */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { width: 100%; max-width: 100%; }
 html { -webkit-text-size-adjust: 100%; }
-body {
-  margin: 0;
-  overflow-x: hidden; /* กันล้นแนวนอนจากองค์ประกอบตกแต่ง */
-  min-height: 100dvh; /* รองรับ iOS Safari */
-}
+body { margin: 0; overflow-x: hidden; min-height: 100dvh; }
 
-/* ตัวแปรสำหรับระยะและขนาดที่ "ไม่แตะสี" */
+/* FLUID TOKENS (ไม่แตะสี) */
 :root{
-  --page-max: 1280px;            /* ขนาดคอนเทนเนอร์หลัก */
-  --page-max-wide: 1440px;       /* จอใหญ่มาก */
-  --gutter: clamp(16px, 3vw, 32px);
+  /* กว้างขึ้นบนจอ 1280 โดยยังมีระยะขอบ */
+  --container-max: 1360px;             /* เดิม 1280 → ขยับนิดให้เต็มจอ 13" มากขึ้น */
+  --container-max-wide: 1440px;        /* สำหรับ desktop กว้าง */
+  --gutter: clamp(16px, 3.2vw, 32px);  /* ระยะขอบซ้าย/ขวาแบบไหล */
   --gap: clamp(12px, 2vw, 24px);
-  --card-min: 300px;             /* การ์ดขั้นต่ำในกริด */
+  --card-min: 320px;                   /* เพิ่มขั้นต่ำการ์ดเพื่ออ่านง่ายบน 1280px */
 }
 
-/* 1) คอนเทนเนอร์กลางทุกหน้า – กึ่งกลาง + จำกัดความกว้าง */
+/* 1) ช่องหลักทุกหน้า: กึ่งกลาง + กว้างขึ้น (ดีบน 1280) */
 :where(main, .main, .page, .page-content, .content, .dashboard, .app-shell){
-  max-width: var(--page-max);
+  width: min(100%, var(--container-max));
   margin-inline: auto;
   padding-inline: var(--gutter);
 }
 @media (min-width: 1600px){
   :where(main, .main, .page, .page-content, .content, .dashboard, .app-shell){
-    max-width: var(--page-max-wide);
+    width: min(100%, var(--container-max-wide));
   }
 }
 
-/* 2) ป้องกันภาพ/กราฟ/ตารางล้น */
+/* 2) กันล้น */
 :where(img, svg, canvas, video){ max-width: 100%; height: auto; display: block; }
 :where(table, .table, .data-grid){ display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-/* 3) หน้า Login – จัดกึ่งกลางจริง + ปิดคอลัมน์ตกแต่งที่ทำให้เลย์เอาต์เพี้ยน */
+/* 3) หน้า Login: จริง ๆ ต้องกึ่งกลางและไม่ถูกคอลัมน์ขวาดัน */
 :where(.login, .auth, .login-page, .auth-page){
   min-height: 100dvh;
   display: grid;
@@ -48,18 +43,19 @@ body {
   margin-inline: auto;
 }
 
-/* แถบ/คอลัมน์/การ์ดตกแต่งที่อยู่ขวา – ซ่อนบนจอเล็ก/กลางเพื่อไม่ให้ดันเลย์เอาต์ */
-@media (max-width: 1536px){
+/* 4) ซ่อนแถบ/การ์ด/ภาพตกแต่งทางขวา ที่ทำให้เกิดพื้นที่ว่างใหญ่บนจอกลาง */
+@media (max-width: 1600px){
   :where(.auth [class*="promo"], .auth [class*="banner"], .login [class*="promo"], .login [class*="banner"],
-         .auth [class*="right"], .login [class*="right"], .auth [class*="aside"], .login [class*="aside"]) {
-    display: none;
+         .auth [class*="right"], .login [class*="right"], .auth [class*="aside"], .login [class*="aside"],
+         .dashboard [class*="promo"], .dashboard [class*="right"], .dashboard [class*="aside"]) {
+    display: none !important;
   }
 }
 
-/* 4) Layout พร้อม Sidebar – ให้ทำงานได้ทั้ง 1/2 คอลัมน์โดยไม่ต้องแก้ HTML */
+/* 5) โครง Layout + Sidebar */
 :where(.layout, .app-layout, .shell){
   display: grid;
-  grid-template-columns: minmax(0, 1fr); /* เริ่มที่คอลัมน์เดียว */
+  grid-template-columns: minmax(0, 1fr); /* จอเล็ก: คอลัมน์เดียว */
   gap: var(--gap);
 }
 @media (min-width: 1024px){
@@ -71,35 +67,33 @@ body {
 }
 :where(.sidebar, .sidenav, .left-nav){ max-width: 100%; }
 
-/* 5) กริดการ์ดบน Dashboard – เรียงอัตโนมัติและไม่ล้น */
+/* 6) กริดการ์ด KPI/Widgets – ใช้พื้นที่จอ 13" ให้คุ้ม */
 :where(.cards, .card-grid, .widgets, .kpi-grid, .dashboard-cards){
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--card-min)), 1fr));
   gap: var(--gap);
 }
+/* เพิ่มกรณีพิเศษบนจอระหว่าง 1200–1400 ให้ชิด 3 คอลัมน์ได้พอดี */
+@media (min-width: 1200px) and (max-width: 1440px){
+  :where(.cards, .card-grid, .widgets, .kpi-grid, .dashboard-cards){
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
 
-/* 6) ระยะหายใจแนวตั้งอย่างสม่ำเสมอ */
+/* 7) จังหวะเว้นวรรคแนวตั้ง */
 :where(section, .section, .page-header, .group, .stack){ margin-block: clamp(16px, 4vh, 40px); }
 
-/* 7) กันองค์ประกอบตกแต่ง (bg gradient, shape) ไม่ให้สร้าง scrollbar แนวนอน */
+/* 8) ปุ่ม/อินพุตเต็มแถวบนจอเล็ก (ไม่แตะโทนสี) */
+:where(form .field, form .input, .btn, .button){ min-width: 0; }
+@media (max-width: 768px){ :where(.btn, .button){ width: 100%; } }
+
+/* 9) ป้องกัน anti-pattern 100vw + full-bleed ที่ทำให้เกิดสกรอลล์แนวนอน */
+:where([style*="width: 100vw"], [class*="full-bleed"]){ width: 100% !important; }
 :where(.bg, .background, .decor, .gradient, [class*="gradient"]){
   max-width: 100%;
   overflow: clip;
   pointer-events: none;
 }
 
-/* 8) ปรับฟอร์ม/ปุ่มให้เต็มแถวบนจอเล็ก (ไม่แตะสี) */
-:where(form .field, form .input, .btn, .button){
-  min-width: 0;
-}
-@media (max-width: 768px){
-  :where(.btn, .button){ width: 100%; }
-}
-
-/* 9) Fix ทั่วไปสำหรับ container กว้างเกิน 100% */
-:where([style*="width: 100vw"], [class*="full-bleed"]){
-  width: 100% !important; /* ใช้ !important เฉพาะเคส anti‑pattern 100vw */
-}
-
-/* 10) ป้องกันการซ้อนเงา/กล่องดันเลย์เอาต์ */
+/* 10) การ์ดไม่ล้น/ไม่ดันรอบข้าง */
 :where(.card, .panel, .widget, .box){ overflow: hidden; border-radius: inherit; }
