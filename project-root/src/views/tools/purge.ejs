@@ -1,49 +1,53 @@
 <div class="panel">
-  <div class="panel-header">
+  <div class="panel-header panel__header">
     <h2>ลบข้อมูลช่วงวันที่</h2>
   </div>
-  <div class="panel-body">
+  <div class="panel-body panel__body">
     <% if (result?.error) { %><div class="alert error"><%= result.error %></div><% } %>
     <% if (result?.ok && !result?.note) { %><div class="alert success">ลบแล้ว <%= result.deleted %> รายการ</div><% } %>
     <form class="form" method="post">
-      <div class="form-row">
-        <label>บริษัท</label>
-        <select name="companyId" required>
-          <option value="">— เลือก —</option>
-          <% companies.forEach(c => { %>
-            <option value="<%= c._id %>" <%= (form?.companyId===c._id.toString()?'selected':'') %>><%= c.name %></option>
-          <% }) %>
-        </select>
-      </div>
-      <div class="form-row">
-        <label>จากวันที่</label>
-        <input type="date" name="dateFrom" value="<%= form?.dateFrom || '' %>" required />
-      </div>
-      <div class="form-row">
-        <label>ถึงวันที่</label>
-        <input type="date" name="dateTo" value="<%= form?.dateTo || '' %>" required />
+      <div class="form-grid">
+        <div class="field">
+          <label>บริษัท</label>
+          <select name="companyId" required>
+            <option value="">— เลือก —</option>
+            <% companies.forEach(c => { %>
+              <option value="<%= c._id %>" <%= (form?.companyId===c._id.toString()?'selected':'') %>><%= c.name %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field">
+          <label>จากวันที่</label>
+          <input type="date" name="dateFrom" value="<%= form?.dateFrom || '' %>" required />
+        </div>
+        <div class="field">
+          <label>ถึงวันที่</label>
+          <input type="date" name="dateTo" value="<%= form?.dateTo || '' %>" required />
+        </div>
       </div>
       <div class="form-actions">
-        <button class="btn danger" type="submit" onclick="return confirm('ยืนยันการลบช่วงวันที่นี้?')">ลบข้อมูล</button>
+        <button class="btn danger" type="submit" data-confirm="ยืนยันการลบช่วงวันที่นี้?">ลบข้อมูล</button>
       </div>
     </form>
   </div>
 </div>
 
 <div class="panel danger-panel">
-  <div class="panel-header">
+  <div class="panel-header panel__header">
     <h2>ล้างข้อมูลทั้งหมด</h2>
   </div>
-  <div class="panel-body">
+  <div class="panel-body panel__body">
     <% if (result?.note) { %>
       <div class="alert success">ล้างข้อมูลทั้งหมดแล้ว <%= result.deleted %> รายการ</div>
     <% } %>
     <p class="form-help">คำสั่งนี้จะลบข้อมูลจากไฟล์ Excel ทั้งหมดในระบบ ไม่สามารถย้อนกลับได้ กรุณาพิมพ์ <code>Delete</code> เพื่อยืนยัน</p>
     <form class="form" method="post">
       <input type="hidden" name="wipeAll" value="1" />
-      <div class="form-row">
-        <label>ยืนยันการลบ</label>
-        <input type="text" name="confirmText" placeholder="พิมพ์ Delete" required />
+      <div class="form-grid">
+        <div class="field">
+          <label>ยืนยันการลบ</label>
+          <input type="text" name="confirmText" placeholder="พิมพ์ Delete" required />
+        </div>
       </div>
       <div class="form-actions">
         <button class="btn danger" type="submit" data-confirm="การลบทั้งหมดจะทำให้ข้อมูลหายถาวร">ล้างทั้งระบบ</button>

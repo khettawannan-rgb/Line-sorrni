@@ -1,15 +1,15 @@
 <div class="panel">
-  <div class="panel-header">
+  <div class="panel-header panel__header">
     <h2>ส่งสรุปรายวัน (Manual)</h2>
   </div>
-  <div class="panel-body">
+  <div class="panel-body panel__body">
     <% if (result?.error) { %><div class="alert error"><%= result.error %></div><% } %>
     <% if (result?.ok) { %>
       <div class="alert success">ส่งสำเร็จบางส่วน/ทั้งหมด ดูรายละเอียดด้านล่าง</div>
       <pre class="code"><%= result.preview %></pre>
       <div class="form-help">picked date: <%= result.picked %> (<%= result.reason %>)</div>
       <hr class="sep"/>
-      <div class="table-scroll">
+      <div class="table-wrap table-scroll">
         <table class="table compact">
           <thead>
             <tr>
@@ -32,21 +32,23 @@
     <% } %>
 
     <form class="form" method="post">
-      <div class="form-row">
-        <label>บริษัท</label>
-        <select name="companyId" required>
-          <option value="">— เลือก —</option>
-          <% companies.forEach(c => { %>
-            <option value="<%= c._id %>" <%= (form?.companyId===c._id.toString()?'selected':'') %>><%= c.name %></option>
-          <% }) %>
-        </select>
-      </div>
-      <div class="form-row">
-        <label>วันที่</label>
-        <input type="date" name="date" value="<%= form?.date || '' %>" required />
+      <div class="form-grid">
+        <div class="field">
+          <label>บริษัท</label>
+          <select name="companyId" required>
+            <option value="">— เลือก —</option>
+            <% companies.forEach(c => { %>
+              <option value="<%= c._id %>" <%= (form?.companyId===c._id.toString()?'selected':'') %>><%= c.name %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field">
+          <label>วันที่</label>
+          <input type="date" name="date" value="<%= form?.date || '' %>" required />
+        </div>
       </div>
       <div class="form-actions">
-        <button class="btn success" type="submit">ส่งเลย</button>
+        <button class="btn primary" type="submit">ส่งเลย</button>
       </div>
     </form>
   </div>

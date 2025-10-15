@@ -1,16 +1,16 @@
 <!-- src/views/members.ejs -->
 <div class="panel">
-  <div class="panel-header">
+  <div class="panel-header panel__header">
     <h2>Members</h2>
     <p class="muted">จัดการรายชื่อผู้ใช้ LINE และการผูกกับบริษัท</p>
   </div>
 
-  <div class="panel-actions">
+  <div class="panel-actions panel__actions">
     <a class="btn primary" href="/admin/members/new">+ New Member</a>
     <a class="btn" href="/admin/members/link">Map LINE ↔ Company</a>
   </div>
 
-  <div class="table-scroll">
+  <div class="table-wrap table-scroll">
     <table class="table">
       <thead>
         <tr>
@@ -38,8 +38,8 @@
             </td>
             <td class="table-actions col-actions">
               <a class="btn small" href="/admin/members/<%= m._id %>/edit">Edit</a>
-              <form action="/admin/members/<%= m._id %>/delete" method="post" onsubmit="return confirm('ลบสมาชิกนี้?');">
-                <button class="btn small danger" type="submit">Delete</button>
+              <form action="/admin/members/<%= m._id %>/delete" method="post">
+                <button class="btn small danger" type="submit" data-confirm="ลบสมาชิกนี้?">Delete</button>
               </form>
             </td>
           </tr>

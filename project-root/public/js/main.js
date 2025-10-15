@@ -1,64 +1,248 @@
-// ไฮไลต์เมนูตาม URL ปัจจุบัน + ปุ่มยืนยันอันตราย
+const NAV_STORAGE_KEY = 'sorrni.drawer.openGroup';
+
+const debounce = (fn, wait = 100) => {
+  let timeout;
+  return (...args) => {
+    window.clearTimeout(timeout);
+    timeout = window.setTimeout(() => fn.apply(null, args), wait);
+  };
+};
+
 document.addEventListener('DOMContentLoaded', () => {
-  const navRoot = document.querySelector('.topnav');
-  const here = location.pathname.replace(/\/+$/, '');
-  const navLinks = navRoot ? Array.from(navRoot.querySelectorAll('a[href]')) : [];
-  const navGroups = navRoot ? Array.from(navRoot.querySelectorAll('.topnav-group')) : [];
+  setupTopbarHeight();
+  setupNavigationHighlight();
+  setupDrawer();
+  setupDrawerGroups();
+  setupConfirmPrompts();
+  setupFilterToggle();
+  initChartResizeObserver();
+  initDonutCharts();
+  initLocationsTable();
+  initUploadExperience();
+  initDailyLineChart();
+  initCustomerInsightCharts();
+  initProcurementDialogs();
+  initDynamicItemRows();
+});
 
-  navLinks.forEach((a) => {
-    const href = (a.getAttribute('href') || '').replace(/\/+$/, '');
-    const isActive = href && here === href;
-    if (isActive) {
-      a.classList.add('active');
-      a.setAttribute('aria-current', 'page');
-    }
-    const group = a.closest('.topnav-group');
-    if (group && (isActive || a.classList.contains('active'))) {
-      group.classList.add('active');
-    }
-  });
+window.addEventListener('resize', debounce(setupTopbarHeight, 150));
 
-  const navToggles = document.querySelectorAll('[data-nav-toggle]');
-  const navBackdrop = document.querySelector('[data-nav-backdrop]');
-  const setNavExpanded = (isOpen) => {
-    document.body.classList.toggle('nav-open', isOpen);
-    navToggles.forEach((btn) => btn.setAttribute('aria-expanded', String(isOpen)));
-    if (!isOpen) navGroups.forEach((group) => group.classList.remove('open'));
+function setupTopbarHeight() {
+  const topbar = document.querySelector('.topbar');
+  const height = topbar ? topbar.offsetHeight : 0;
+  if (height) {
+    document.documentElement.style.setProperty('--topbar-h', `${height}px`);
+  }
+}
+
+function setupNavigationHighlight() {
+  const currentPath = location.pathname.replace(/\/+$/, '') || '/admin';
+  const topnavLinks = document.querySelectorAll('.topnav a[href]');
+  const drawerLinks = document.querySelectorAll('.drawer-group__list a[href]');
+
+  const isMatch = (href) => {
+    if (!href) return false;
+    const normalized = href.replace(/\/+$/, '');
+    if (normalized === currentPath) return true;
+    if (normalized.startsWith('/admin/tools') && currentPath.startsWith('/admin/tools')) return true;
+    return false;
   };
 
-  navToggles.forEach((btn) => {
-    btn.addEventListener('click', (event) => {
-      event.preventDefault();
-      const next = !document.body.classList.contains('nav-open');
-      setNavExpanded(next);
-    });
+  topnavLinks.forEach((link) => {
+    if (isMatch(link.getAttribute('href'))) {
+      link.classList.add('active');
+      link.setAttribute('aria-current', 'page');
+      const group = link.closest('.topnav-group');
+      if (group) group.classList.add('active');
+    }
   });
 
-  if (navBackdrop) {
-    navBackdrop.addEventListener('click', () => setNavExpanded(false));
-  }
+  drawerLinks.forEach((link) => {
+    if (isMatch(link.getAttribute('href'))) {
+      link.classList.add('is-active');
+      link.setAttribute('aria-current', 'page');
+      const group = link.closest('[data-drawer-group]');
+      if (group) {
+        openDrawerGroup(group, false);
+      }
+    }
+  });
+}
 
-  navLinks.forEach((link) => {
-    link.addEventListener('click', () => {
-      if (window.matchMedia('(max-width: 960px)').matches) {
-        setNavExpanded(false);
+function setupDrawer() {
+  const drawer = document.querySelector('[data-nav-drawer]');
+  const toggles = document.querySelectorAll('[data-nav-toggle]');
+  const closeBtn = drawer?.querySelector('[data-drawer-close]');
+  const backdrop = document.querySelector('[data-drawer-backdrop]');
+  if (!drawer || !toggles.length) return;
+
+  const focusableSelector = 'a[href]:not([tabindex="-1"]), button:not([disabled]):not([tabindex="-1"]), input:not([disabled]):not([tabindex="-1"]), select:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]):not([tabindex="-1"]), [tabindex]:not([tabindex="-1"])';
+  let lastFocused = null;
+
+  const setDrawerState = (isOpen) => {
+    drawer.setAttribute('data-open', String(isOpen));
+    drawer.setAttribute('aria-hidden', String(!isOpen));
+    document.body.classList.toggle('is-drawer-open', isOpen);
+    toggles.forEach((btn) => btn.setAttribute('aria-expanded', String(isOpen)));
+    if (!isOpen && lastFocused) {
+      requestAnimationFrame(() => lastFocused.focus());
+    }
+    if (isOpen) {
+      const focusables = drawer.querySelectorAll(focusableSelector);
+      const first = focusables[0];
+      if (first) first.focus();
+    }
+  };
+
+  const openDrawer = () => {
+    if (drawer.getAttribute('data-open') === 'true') return;
+    lastFocused = document.activeElement;
+    setDrawerState(true);
+  };
+
+  const closeDrawer = () => {
+    if (drawer.getAttribute('data-open') !== 'true') return;
+    setDrawerState(false);
+  };
+
+  toggles.forEach((btn) => {
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      const open = drawer.getAttribute('data-open') === 'true';
+      if (open) {
+        closeDrawer();
+      } else {
+        openDrawer();
       }
     });
   });
 
-  document.querySelectorAll('[data-confirm]').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      if (!confirm(btn.getAttribute('data-confirm'))) e.preventDefault();
-    });
+  closeBtn?.addEventListener('click', (event) => {
+    event.preventDefault();
+    closeDrawer();
   });
 
+  backdrop?.addEventListener('click', closeDrawer);
+
+  drawer.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeDrawer();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+
+    const focusables = drawer.querySelectorAll(focusableSelector);
+    if (!focusables.length) return;
+
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && drawer.getAttribute('data-open') === 'true') {
+      closeDrawer();
+    }
+  });
+
+  drawer.querySelectorAll('a[href]').forEach((link) => {
+    link.addEventListener('click', () => closeDrawer());
+  });
+}
+
+function setupDrawerGroups() {
+  const groups = document.querySelectorAll('[data-drawer-group]');
+  if (!groups.length) return;
+
+  let stored = null;
+  try {
+    stored = localStorage.getItem(NAV_STORAGE_KEY);
+  } catch (err) {
+    stored = null;
+  }
+
+  const alreadyExpanded = Array.from(groups).some((group) => {
+    const toggle = group.querySelector('.drawer-group__toggle');
+    return toggle?.getAttribute('aria-expanded') === 'true';
+  });
+
+  groups.forEach((group, index) => {
+    const toggle = group.querySelector('.drawer-group__toggle');
+    if (!toggle) return;
+
+    toggle.addEventListener('click', () => {
+      const expanded = toggle.getAttribute('aria-expanded') === 'true';
+      if (expanded) {
+        closeDrawerGroup(group);
+        try {
+          localStorage.removeItem(NAV_STORAGE_KEY);
+        } catch (err) {
+          /* no-op */
+        }
+      } else {
+        groups.forEach((other) => {
+          if (other !== group) closeDrawerGroup(other);
+        });
+        openDrawerGroup(group, true);
+      }
+    });
+
+    if ((stored && stored === group.dataset.groupKey) || (!stored && !alreadyExpanded && index === 0)) {
+      openDrawerGroup(group, false);
+    }
+  });
+}
+
+function openDrawerGroup(group, persist) {
+  const toggle = group.querySelector('.drawer-group__toggle');
+  const list = group.querySelector('.drawer-group__list');
+  if (!toggle || !list) return;
+  toggle.setAttribute('aria-expanded', 'true');
+  list.hidden = false;
+  if (persist) {
+    try {
+      localStorage.setItem(NAV_STORAGE_KEY, group.dataset.groupKey || '');
+    } catch (err) {
+      /* ignore */
+    }
+  }
+}
+
+function closeDrawerGroup(group) {
+  const toggle = group.querySelector('.drawer-group__toggle');
+  const list = group.querySelector('.drawer-group__list');
+  if (!toggle || !list) return;
+  toggle.setAttribute('aria-expanded', 'false');
+  list.hidden = true;
+}
+
+function setupConfirmPrompts() {
+  document.querySelectorAll('[data-confirm]').forEach((btn) => {
+    btn.addEventListener('click', (event) => {
+      if (!confirm(btn.getAttribute('data-confirm'))) {
+        event.preventDefault();
+      }
+    });
+  });
+}
+
+function setupFilterToggle() {
   const filterToggle = document.querySelector('[data-filter-toggle]');
   const filterSection = document.querySelector('[data-filter-section]');
   const filterWrapper = document.querySelector('[data-filter-wrapper]');
   const insightRoot = document.querySelector('[data-behavior-root]');
+
   if (insightRoot && !insightRoot.dataset.filters) {
     insightRoot.dataset.filters = 'expanded';
   }
+
   if (filterToggle && filterSection) {
     filterToggle.addEventListener('click', () => {
       const collapsed = filterSection.classList.toggle('is-collapsed');
@@ -72,15 +256,20 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+}
 
-  initDonutCharts();
-  initLocationsTable();
-  initUploadExperience();
-  initDailyLineChart();
-  initCustomerInsightCharts();
-  initProcurementDialogs();
-  initDynamicItemRows();
-});
+function initChartResizeObserver() {
+  if (typeof ResizeObserver === 'undefined') return;
+  const areas = document.querySelectorAll('.chart-card__body');
+  if (!areas.length) return;
+
+  const triggerResize = debounce(() => {
+    window.dispatchEvent(new Event('resize'));
+  }, 100);
+
+  const observer = new ResizeObserver(() => triggerResize());
+  areas.forEach((area) => observer.observe(area));
+}
 
 function initDonutCharts() {
   if (typeof Chart === 'undefined') return;

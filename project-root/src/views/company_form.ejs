@@ -5,7 +5,7 @@
 %>
 
 <div class="panel">
-  <div class="panel-header">
+  <div class="panel-header panel__header">
     <h2><%= isEdit ? 'Edit Company' : 'New Company' %></h2>
   </div>
 
@@ -14,31 +14,33 @@
   <% } %>
 
   <form class="form" action="<%= formAction %>" method="post">
-    <div class="form-row">
-      <label>Name</label>
-      <input type="text" name="name" value="<%= (company && company.name) || '' %>" required />
-    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Name</label>
+        <input type="text" name="name" value="<%= (company && company.name) || '' %>" required />
+      </div>
 
-    <div class="form-row">
-      <label>Timezone</label>
-      <input type="text" name="timezone" value="<%= (company && company.timezone) || 'Asia/Bangkok' %>" />
-    </div>
+      <div class="field">
+        <label>Timezone</label>
+        <input type="text" name="timezone" value="<%= (company && company.timezone) || 'Asia/Bangkok' %>" />
+      </div>
 
-    <div class="form-row">
-      <label>Daily Time (HH:mm)</label>
-      <input type="time" name="dailyTime" value="<%= (company && company.dailyTime) || '09:00' %>" />
-    </div>
+      <div class="field">
+        <label>Daily Time (HH:mm)</label>
+        <input type="time" name="dailyTime" value="<%= (company && company.dailyTime) || '09:00' %>" />
+      </div>
 
-    <div class="form-row">
-      <label>Source Company IDs (External)</label>
-      <textarea name="sourceCompanyIds" rows="3" placeholder="เช่น ID ที่มาจากไฟล์ Excel แยกบรรทัด"><%= (company && Array.isArray(company.sourceCompanyIds) ? company.sourceCompanyIds.join('\n') : '') %></textarea>
-      <small class="muted">ใช้ ID จากคอลัมน์ companyId ใน Excel (หนึ่งบรรทัดต่อหนึ่งค่า)</small>
-    </div>
+      <div class="field">
+        <label>Source Company IDs (External)</label>
+        <textarea name="sourceCompanyIds" rows="3" placeholder="เช่น ID ที่มาจากไฟล์ Excel แยกบรรทัด"><%= (company && Array.isArray(company.sourceCompanyIds) ? company.sourceCompanyIds.join('\n') : '') %></textarea>
+        <small class="muted">ใช้ ID จากคอลัมน์ companyId ใน Excel (หนึ่งบรรทัดต่อหนึ่งค่า)</small>
+      </div>
 
-    <div class="form-row">
-      <label>Source Company Names</label>
-      <textarea name="sourceCompanyNames" rows="3" placeholder="เช่น ชื่อบริษัทในไฟล์ Excel แยกบรรทัด"><%= (company && Array.isArray(company.sourceCompanyNames) ? company.sourceCompanyNames.join('\n') : '') %></textarea>
-      <small class="muted">ใช้ชื่อตามที่ปรากฏในไฟล์ Excel เพื่อจับคู่ข้อมูล (หนึ่งบรรทัดต่อหนึ่งชื่อ)</small>
+      <div class="field">
+        <label>Source Company Names</label>
+        <textarea name="sourceCompanyNames" rows="3" placeholder="เช่น ชื่อบริษัทในไฟล์ Excel แยกบรรทัด"><%= (company && Array.isArray(company.sourceCompanyNames) ? company.sourceCompanyNames.join('\n') : '') %></textarea>
+        <small class="muted">ใช้ชื่อตามที่ปรากฏในไฟล์ Excel เพื่อจับคู่ข้อมูล (หนึ่งบรรทัดต่อหนึ่งชื่อ)</small>
+      </div>
     </div>
 
     <div class="form-actions">

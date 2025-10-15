@@ -5,7 +5,7 @@
 %>
 
 <div class="panel">
-  <div class="panel-header">
+  <div class="panel-header panel__header">
     <h2><%= isEdit ? 'Edit Member' : 'New Member' %></h2>
   </div>
 
@@ -14,38 +14,40 @@
   <% } %>
 
   <form class="form" action="<%= formAction %>" method="post">
-    <div class="form-row">
-      <label>Company</label>
-      <select name="companyId">
-        <option value="">— ไม่ผูก —</option>
-        <% (companies || []).forEach(c => { %>
-          <option value="<%= c._id %>" <%= (m && String(m.companyId)===String(c._id) ? 'selected' : '') %>><%= c.name %></option>
-        <% }) %>
-      </select>
-    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Company</label>
+        <select name="companyId">
+          <option value="">— ไม่ผูก —</option>
+          <% (companies || []).forEach(c => { %>
+            <option value="<%= c._id %>" <%= (m && String(m.companyId)===String(c._id) ? 'selected' : '') %>><%= c.name %></option>
+          <% }) %>
+        </select>
+      </div>
 
-    <div class="form-row">
-      <label>LINE userId</label>
-      <input type="text" name="lineUserId" value="<%= (m && m.lineUserId) || '' %>" required />
-    </div>
+      <div class="field">
+        <label>LINE userId</label>
+        <input type="text" name="lineUserId" value="<%= (m && m.lineUserId) || '' %>" required />
+      </div>
 
-    <div class="form-row">
-      <label>Display Name</label>
-      <input type="text" name="displayName" value="<%= (m && m.displayName) || '' %>" />
-    </div>
+      <div class="field">
+        <label>Display Name</label>
+        <input type="text" name="displayName" value="<%= (m && m.displayName) || '' %>" />
+      </div>
 
-    <div class="form-row">
-      <label>Bind Code (สำหรับ Line Binding Wizard)</label>
-      <input type="text" name="bindCode" value="<%= (m && m.bindCode) || '' %>" />
-      <small class="help">ใช้รหัสนี้ให้พนักงานกรอกตอนเชื่อมบัญชี LINE</small>
-    </div>
+      <div class="field">
+        <label>Bind Code (สำหรับ Line Binding Wizard)</label>
+        <input type="text" name="bindCode" value="<%= (m && m.bindCode) || '' %>" />
+        <small class="help">ใช้รหัสนี้ให้พนักงานกรอกตอนเชื่อมบัญชี LINE</small>
+      </div>
 
-    <div class="form-row">
-      <label>Role</label>
-      <select name="role">
-        <option value="member" <%= (m && m.role==='member' ? 'selected' : '') %> >member</option>
-        <option value="admin"  <%= (m && m.role==='admin'  ? 'selected' : '') %> >admin</option>
-      </select>
+      <div class="field">
+        <label>Role</label>
+        <select name="role">
+          <option value="member" <%= (m && m.role==='member' ? 'selected' : '') %> >member</option>
+          <option value="admin"  <%= (m && m.role==='admin'  ? 'selected' : '') %> >admin</option>
+        </select>
+      </div>
     </div>
 
     <div class="form-row inline">

@@ -23,7 +23,7 @@
 <div class="grid grid-2 align-start">
 
   <section class="panel">
-    <div class="panel-header">
+    <div class="panel-header panel__header">
       <h3>ค้นโปรไฟล์จาก UID</h3>
     </div>
 
@@ -88,13 +88,13 @@
   </section>
 
   <section class="panel">
-    <div class="panel-header">
+    <div class="panel-header panel__header">
       <h3>รายการผู้ใช้ที่ผูกอยู่</h3>
     </div>
     <% if (!members || members.length === 0) { %>
       <p class="muted">ยังไม่มีสมาชิก</p>
     <% } else { %>
-      <div class="table-scroll">
+      <div class="table-wrap table-scroll">
         <table class="table">
           <thead>
             <tr>

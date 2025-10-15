@@ -1,14 +1,14 @@
 <!-- src/views/companies.ejs -->
 <div class="panel">
-  <div class="panel-header">
+  <div class="panel-header panel__header">
     <h2>Companies</h2>
   </div>
 
-  <div class="panel-actions">
+  <div class="panel-actions panel__actions">
     <a class="btn primary" href="/admin/companies/new">+ New Company</a>
   </div>
 
-  <div class="table-scroll">
+  <div class="table-wrap table-scroll">
     <table class="table">
       <thead>
         <tr>
@@ -26,8 +26,8 @@
             <td><code><%= c.dailyTime || '-' %></code></td>
             <td class="table-actions col-actions">
               <a class="btn small" href="/admin/companies/<%= c._id %>/edit">Edit</a>
-              <form action="/admin/companies/<%= c._id %>/delete" method="post" onsubmit="return confirm('ลบบริษัทนี้?');">
-                <button class="btn small danger" type="submit">Delete</button>
+              <form action="/admin/companies/<%= c._id %>/delete" method="post">
+                <button class="btn small danger" type="submit" data-confirm="ลบบริษัทนี้?">Delete</button>
               </form>
             </td>
           </tr>
