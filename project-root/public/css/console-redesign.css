@@ -1,20 +1,34 @@
 /* ===== Console Redesign Overrides v1.2 ===== */
 
 body.app-shell.use-fullwidth {
-  --console-shell-max: clamp(1120px, 86vw, 1460px);
-  --console-shell-wide: clamp(1180px, 92vw, 1640px);
-  --console-shell-pad: clamp(20px, 2.8vw, 36px);
+  --console-shell-max: 100%;
+  --console-shell-wide: 100%;
+  --console-shell-pad: clamp(24px, 4vw, 72px);
   --console-shell-gap: clamp(24px, 3vw, 40px);
-  --console-rail-width: clamp(240px, 18vw, 280px);
-  --console-side-width: clamp(320px, 24vw, 380px);
+  --console-rail-width: clamp(240px, 18vw, 320px);
+  --console-side-width: clamp(320px, 24vw, 420px);
   --console-hero-gap: clamp(18px, 2.2vw, 28px);
   --console-section-gap: clamp(20px, 3vw, 36px);
 }
 
 body.app-shell.use-fullwidth .topbar__inner,
 body.app-shell.use-fullwidth .app-footer {
-  width: min(100%, var(--console-shell-wide));
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
   padding-inline: var(--console-shell-pad);
+}
+
+body.app-shell.use-fullwidth .app-main,
+body.app-shell.use-fullwidth .app-main > .container,
+body.app-shell.use-fullwidth .app-main > .full-container,
+body.app-shell.use-fullwidth .app-main > .bare-container,
+body.app-shell.use-fullwidth .dashboard-shell,
+body.app-shell.use-fullwidth .dashboard-canvas,
+body.app-shell.use-fullwidth .layout {
+  max-width: none;
+  margin-inline: 0;
+  width: 100%;
 }
 
 body.app-shell.use-fullwidth .app-main {
@@ -24,20 +38,20 @@ body.app-shell.use-fullwidth .app-main {
 
 body.app-shell.use-fullwidth .app-main > .container {
   width: 100%;
-  max-width: var(--console-shell-max);
-  margin-inline: auto;
+  max-width: none;
+  margin: 0;
   padding-inline: var(--console-shell-pad);
 }
 
 body.app-shell.use-fullwidth .app-main > .full-container {
   width: 100%;
-  max-width: var(--console-shell-wide);
-  margin-inline: auto;
+  max-width: none;
+  margin: 0;
   padding-inline: var(--console-shell-pad);
 }
 
 body.app-shell.use-fullwidth .app-main > .bare-container {
-  width: min(100%, clamp(720px, 82vw, 1180px));
+  width: min(100%, clamp(720px, 82vw, 1240px));
   padding-inline: var(--console-shell-pad);
 }
 

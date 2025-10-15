@@ -1,8 +1,8 @@
 /* ===== Dashboard Neo Theme v1.0 ===== */
 
 body.app-shell.use-fullwidth {
-  --neo-gap: clamp(20px, 2.6vw, 36px);
-  --neo-gap-wide: clamp(28px, 3vw, 48px);
+  --neo-gap: clamp(16px, 2vw, 32px);
+  --neo-gap-wide: clamp(20px, 2.4vw, 40px);
   --neo-card-bg: rgba(255, 255, 255, 0.96);
   --neo-card-border: rgba(6, 62, 74, 0.12);
   --neo-card-shadow: 0 42px 80px -48px rgba(6, 62, 74, 0.55);
@@ -22,11 +22,18 @@ body.app-shell.use-fullwidth .dashboard-shell {
 body.app-shell.use-fullwidth .dashboard-canvas {
   gap: var(--neo-gap-wide);
   align-items: start;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 0.9fr);
 }
 
-@media (min-width: 1360px) {
+@media (max-width: 1440px) {
   body.app-shell.use-fullwidth .dashboard-canvas {
-    grid-template-columns: minmax(0, 1.75fr) minmax(320px, 1fr);
+    grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
+  }
+}
+
+@media (max-width: 1220px) {
+  body.app-shell.use-fullwidth .dashboard-canvas {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -109,7 +116,7 @@ body.app-shell.use-fullwidth .dash-hero {
   padding: clamp(28px, 4vw, 44px);
   display: grid;
   gap: clamp(20px, 2.6vw, 36px);
-  grid-template-columns: minmax(0, 1.35fr) minmax(240px, 0.9fr);
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.85fr);
 }
 
 @media (max-width: 1023.98px) {
@@ -153,6 +160,7 @@ body.app-shell.use-fullwidth .dashboard-subnav {
 body.app-shell.use-fullwidth .ops-overview {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: var(--neo-gap);
+  align-items: stretch;
 }
 
 body.app-shell.use-fullwidth .highlight-card {
