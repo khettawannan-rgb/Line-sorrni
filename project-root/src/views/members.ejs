@@ -1,17 +1,27 @@
 <!-- src/views/members.ejs -->
-<div class="panel">
-  <div class="panel-header panel__header">
-    <h2>Members</h2>
-    <p class="muted">จัดการรายชื่อผู้ใช้ LINE และการผูกกับบริษัท</p>
-  </div>
+<section class="section-block">
+  <header class="section-header">
+    <div class="section-header__titles">
+      <span class="section-pill">Organization</span>
+      <h2>Members Directory</h2>
+      <p class="muted">จัดการรายชื่อผู้ใช้ LINE และการผูกกับบริษัท</p>
+    </div>
+    <div class="section-header__actions">
+      <a class="btn primary" href="/admin/members/new">+ New Member</a>
+      <a class="btn ghost" href="/admin/members/link">Map LINE ↔ Company</a>
+    </div>
+  </header>
 
-  <div class="panel-actions panel__actions">
-    <a class="btn primary" href="/admin/members/new">+ New Member</a>
-    <a class="btn" href="/admin/members/link">Map LINE ↔ Company</a>
-  </div>
+  <article class="panel card">
+    <header class="panel__header">
+      <div>
+        <h3>รายการสมาชิกทั้งหมด</h3>
+        <p class="muted">ตรวจสอบสถานะการใช้งานและบริษัทที่ผูกไว้</p>
+      </div>
+    </header>
 
-  <div class="table-wrap table-scroll">
-    <table class="table">
+    <div class="table-wrap table-scroll">
+      <table class="table">
       <thead>
         <tr>
           <th>Display Name</th>
@@ -48,6 +58,7 @@
           <tr><td colspan="6" class="muted">ยังไม่พบข้อมูลสมาชิก</td></tr>
         <% } %>
       </tbody>
-    </table>
-  </div>
-</div>
+      </table>
+    </div>
+  </article>
+</section>

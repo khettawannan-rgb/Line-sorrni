@@ -4,16 +4,28 @@
   const formAction = isEdit ? `/admin/members/${m._id}/edit` : '/admin/members/new';
 %>
 
-<div class="panel">
-  <div class="panel-header panel__header">
-    <h2><%= isEdit ? 'Edit Member' : 'New Member' %></h2>
-  </div>
+<section class="section-block">
+  <header class="section-header">
+    <div class="section-header__titles">
+      <span class="section-pill">Organization</span>
+      <h2><%= isEdit ? 'ปรับปรุงสมาชิก' : 'สร้างสมาชิกใหม่' %></h2>
+      <p class="muted">กำหนดสิทธิ์และข้อมูลการผูก LINE สำหรับพนักงาน</p>
+    </div>
+  </header>
 
-  <% if (error) { %>
-    <div class="alert error"><%= error %></div>
-  <% } %>
+  <article class="panel card">
+    <header class="panel__header">
+      <div>
+        <h3><%= isEdit ? 'รายละเอียดสมาชิก' : 'ข้อมูลสมาชิก' %></h3>
+        <p class="muted">กรอกข้อมูลที่ต้องการและบันทึกเพื่อใช้งานในระบบ</p>
+      </div>
+    </header>
 
-  <form class="form" action="<%= formAction %>" method="post">
+    <% if (error) { %>
+      <div class="alert error"><%= error %></div>
+    <% } %>
+
+    <form class="form" action="<%= formAction %>" method="post">
     <div class="form-grid">
       <div class="field">
         <label>Company</label>
@@ -57,9 +69,10 @@
       </label>
     </div>
 
-    <div class="form-actions">
-      <a class="btn ghost" href="/admin/members">Back</a>
-      <button class="btn primary" type="submit"><%= isEdit ? 'Save' : 'Create' %></button>
-    </div>
-  </form>
-</div>
+      <div class="form-actions">
+        <a class="btn ghost" href="/admin/members">Back</a>
+        <button class="btn primary" type="submit"><%= isEdit ? 'Save' : 'Create' %></button>
+      </div>
+    </form>
+  </article>
+</section>

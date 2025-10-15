@@ -82,42 +82,55 @@
       </div>
     </header>
 
-    <section class="ops-overview">
-      <article class="highlight-card gradient gradient--ocean">
-        <header>
-          <h3>ยอดคงคลัง (โดยประมาณ)</h3>
-          <span>จากยอดซื้อสะสม - ยอดขายสะสม</span>
-        </header>
-        <div class="highlight-value"><%= fmtTons(inventoryBalance) %><small> ตัน</small></div>
-        <p>ซื้อสะสม <strong><%= fmtTons(totalsData.buyTons || 0) %></strong> ตัน • ขายสะสม <strong><%= fmtTons(totalsData.sellTons || 0) %></strong> ตัน</p>
-      </article>
-      <article class="highlight-card gradient gradient--sunset">
-        <header>
-          <h3>ของเข้าวันนี้</h3>
-          <span>BUY (นำเข้าสินค้า)</span>
-        </header>
-        <div class="highlight-value"><%= fmtTons(buyToday) %><small> ตัน</small></div>
-        <p>เฉลี่ยต่อรายการ <strong><%= entriesToday ? fmtTons(buyToday / Math.max(entriesToday, 1)) : '0' %></strong> ตัน</p>
-      </article>
-      <article class="highlight-card gradient gradient--lavender">
-        <header>
-          <h3>ของออกวันนี้</h3>
-          <span>SELL (จ่ายสินค้า)</span>
-        </header>
-        <div class="highlight-value"><%= fmtTons(sellToday) %><small> ตัน</small></div>
-        <p>Net Today <strong><%= fmtTons(buyToday - sellToday) %></strong> ตัน</p>
-      </article>
-      <article class="highlight-card gradient">
-        <header>
-          <h3>จำนวนรายการวันนี้</h3>
-          <span>การเคลื่อนไหวทั้งหมด</span>
-        </header>
-        <div class="highlight-value"><%= fmtCount(entriesToday) %><small> รายการ</small></div>
-        <p>ข้อมูลทั้งหมด <strong><%= fmtCount(totalsData.records || 0) %></strong> รายการในระบบ</p>
-      </article>
-    </section>
+    <section class="section-block" id="ops-intel">
+      <header class="section-header">
+        <div class="section-header__titles">
+          <span class="section-pill">Operations</span>
+          <h2>Operational Intelligence</h2>
+          <p class="muted">มอนิเตอร์การนำเข้า/จ่ายออกและอันดับบริษัทแบบเรียลไทม์</p>
+        </div>
+        <div class="section-header__actions">
+          <span class="section-chip">Realtime</span>
+          <span class="section-chip">Sync: <%= summaryTimestamp %></span>
+        </div>
+      </header>
+      <div class="section-body">
+        <div class="ops-overview">
+          <article class="highlight-card gradient gradient--ocean">
+            <header>
+              <h3>ยอดคงคลัง (โดยประมาณ)</h3>
+              <span>จากยอดซื้อสะสม - ยอดขายสะสม</span>
+            </header>
+            <div class="highlight-value"><%= fmtTons(inventoryBalance) %><small> ตัน</small></div>
+            <p>ซื้อสะสม <strong><%= fmtTons(totalsData.buyTons || 0) %></strong> ตัน • ขายสะสม <strong><%= fmtTons(totalsData.sellTons || 0) %></strong> ตัน</p>
+          </article>
+          <article class="highlight-card gradient gradient--sunset">
+            <header>
+              <h3>ของเข้าวันนี้</h3>
+              <span>BUY (นำเข้าสินค้า)</span>
+            </header>
+            <div class="highlight-value"><%= fmtTons(buyToday) %><small> ตัน</small></div>
+            <p>เฉลี่ยต่อรายการ <strong><%= entriesToday ? fmtTons(buyToday / Math.max(entriesToday, 1)) : '0' %></strong> ตัน</p>
+          </article>
+          <article class="highlight-card gradient gradient--lavender">
+            <header>
+              <h3>ของออกวันนี้</h3>
+              <span>SELL (จ่ายสินค้า)</span>
+            </header>
+            <div class="highlight-value"><%= fmtTons(sellToday) %><small> ตัน</small></div>
+            <p>Net Today <strong><%= fmtTons(buyToday - sellToday) %></strong> ตัน</p>
+          </article>
+          <article class="highlight-card gradient">
+            <header>
+              <h3>จำนวนรายการวันนี้</h3>
+              <span>การเคลื่อนไหวทั้งหมด</span>
+            </header>
+            <div class="highlight-value"><%= fmtCount(entriesToday) %><small> รายการ</small></div>
+            <p>ข้อมูลทั้งหมด <strong><%= fmtCount(totalsData.records || 0) %></strong> รายการในระบบ</p>
+          </article>
+        </div>
 
-    <section class="ops-grid">
+        <div class="ops-grid">
       <article class="panel card ops-table">
         <header class="panel__header">
           <div>
@@ -189,7 +202,7 @@
       </article>
     </section>
 
-    <section class="dash-panel-grid">
+        <div class="dash-panel-grid">
       <article class="panel card company-card">
         <header class="panel__header">
           <div>
@@ -245,50 +258,65 @@
           <% } %>
         </ul>
       </article>
-    </section>
-
-    <section class="dash-panel-grid">
-      <article class="panel card chart-card insight-chart" data-chart-trend='<%- JSON.stringify(safeTrendSeries.slice(-14)) %>'>
-        <header class="panel__header">
-          <div>
-            <h2>LINE Interaction Trend</h2>
-            <p class="muted">ข้อความเข้า-ออกและผู้ใช้ไม่ซ้ำในแต่ละวัน</p>
-          </div>
-        </header>
-        <div class="chart-frame chart-card__body">
-          <canvas id="chat-trend-chart" height="240"></canvas>
         </div>
-      </article>
-
-      <article class="panel card mix-card">
-        <header class="panel__header">
-          <div>
-            <h2>Mix Projects</h2>
-            <p class="muted">งานผสมที่มีน้ำหนักสูงสุด</p>
-          </div>
-        </header>
-        <ul class="mix-list">
-          <% if (topMix.length) { %>
-            <% topMix.forEach((mix) => { %>
-              <li>
-                <div>
-                  <strong><%= mix.projectName || '(ไม่ระบุโครงการ)' %></strong>
-                  <span class="muted"><%= mix.projectCode || '-' %> • <%= mix.mixName || '-' %></span>
-                </div>
-                <div class="mix-meta">
-                  <strong><%= fmtTons(mix.totalNetWeightTons) %> ตัน</strong>
-                  <span class="muted"><%= fmtCount(mix.entryCount) %> รายการ • <%= fmtCount(mix.dayCount || 0) %> วัน</span>
-                </div>
-              </li>
-            <% }) %>
-          <% } else { %>
-            <li class="empty">ยังไม่มีข้อมูล Mix</li>
-          <% } %>
-        </ul>
-      </article>
+      </div>
     </section>
 
-    <section class="dash-panel-grid">
+    <section class="section-block" id="cdp-intel">
+      <header class="section-header">
+        <div class="section-header__titles">
+          <span class="section-pill section-pill--cdp">Customer &amp; CDP</span>
+          <h2>Engagement &amp; Behaviour</h2>
+          <p class="muted">ติดตามเส้นทางลูกค้า การผสมงาน และพื้นที่ที่ต้องโฟกัส</p>
+        </div>
+        <div class="section-header__actions">
+          <span class="section-chip">Active 7 วัน <%= fmtCount(chatStats.active7d) %></span>
+          <span class="section-chip">ข้อความ 7 วัน <%= fmtCount(chatStats.messages7d) %></span>
+        </div>
+      </header>
+      <div class="section-body">
+        <div class="dash-panel-grid">
+          <article class="panel card chart-card insight-chart" data-chart-trend='<%- JSON.stringify(safeTrendSeries.slice(-14)) %>'>
+            <header class="panel__header">
+              <div>
+                <h2>LINE Interaction Trend</h2>
+                <p class="muted">ข้อความเข้า-ออกและผู้ใช้ไม่ซ้ำในแต่ละวัน</p>
+              </div>
+            </header>
+            <div class="chart-frame chart-card__body">
+              <canvas id="chat-trend-chart" height="240"></canvas>
+            </div>
+          </article>
+
+          <article class="panel card mix-card">
+            <header class="panel__header">
+              <div>
+                <h2>Mix Projects</h2>
+                <p class="muted">งานผสมที่มีน้ำหนักสูงสุด</p>
+              </div>
+            </header>
+            <ul class="mix-list">
+              <% if (topMix.length) { %>
+                <% topMix.forEach((mix) => { %>
+                  <li>
+                    <div>
+                      <strong><%= mix.projectName || '(ไม่ระบุโครงการ)' %></strong>
+                      <span class="muted"><%= mix.projectCode || '-' %> • <%= mix.mixName || '-' %></span>
+                    </div>
+                    <div class="mix-meta">
+                      <strong><%= fmtTons(mix.totalNetWeightTons) %> ตัน</strong>
+                      <span class="muted"><%= fmtCount(mix.entryCount) %> รายการ • <%= fmtCount(mix.dayCount || 0) %> วัน</span>
+                    </div>
+                  </li>
+                <% }) %>
+              <% } else { %>
+                <li class="empty">ยังไม่มีข้อมูล Mix</li>
+              <% } %>
+            </ul>
+          </article>
+        </div>
+
+        <div class="dash-panel-grid">
       <article class="panel card province-card">
         <header class="panel__header">
           <div>
@@ -356,126 +384,150 @@
           <% }) %>
         </ul>
       </article>
+        </div>
+      </div>
     </section>
   </main>
 
   <aside class="dashboard-side">
-    <section class="panel card profile-card">
-      <div class="profile-card__avatar">
-        <img src="/static/img/sorni.png" alt="Sorrni" />
-      </div>
-      <div class="profile-card__meta">
-        <h2>Sorrni Control Center</h2>
-        <p>จัดซื้อ อนุมัติ เรียลไทม์</p>
-      </div>
-      <dl class="profile-stats">
-        <div>
-          <dt>ไฟล์ล่าสุด</dt>
-          <dd><%= fmtCount(safeLatestRecords.length || 0) %></dd>
-        </div>
-        <div>
-          <dt>ยอดวันนี้</dt>
-          <dd><%= fmtTons(buyToday + sellToday) %></dd>
-        </div>
-        <div>
-          <dt>Location Map</dt>
-          <dd><%= fmtCount(provinceStats.totalProvinces || 0) %></dd>
-        </div>
-      </dl>
-    </section>
-
-    <section class="panel card chat-card">
-      <header class="panel__header">
-        <div>
-          <h2>LINE Activity</h2>
-          <p class="muted">ภาพรวมการสนทนาช่องทาง LINE Official</p>
+    <section class="section-block section-block--side" id="control-center">
+      <header class="section-header">
+        <div class="section-header__titles">
+          <span class="section-pill">Control</span>
+          <h2>Command Center</h2>
+          <p class="muted">ข้อมูลสำหรับทีมปฏิบัติการและการประชุมวันนี้</p>
         </div>
       </header>
-      <div class="chat-metrics">
-        <div>
-          <span>Active 7 วัน</span>
-          <strong><%= fmtCount(chatStats.active7d) %></strong>
-        </div>
-        <div>
-          <span>ผู้ใช้ใหม่ 7 วัน</span>
-          <strong><%= fmtCount(chatStats.new7d) %></strong>
-        </div>
-        <div>
-          <span>ข้อความ 7 วัน</span>
-          <strong><%= fmtCount(chatStats.messages7d) %></strong>
-        </div>
-        <div>
-          <span>ข้อความรวม</span>
-          <strong><%= fmtCount(chatStats.messagesTotal) %></strong>
-        </div>
-      </div>
-      <div class="topic-list">
-        <h3>หัวข้อยอดนิยม</h3>
-        <ul>
-          <% if (chatTopics.length) { %>
-            <% chatTopics.forEach((topic) => { %>
-              <li>
-                <strong><%= topic.label %></strong>
-                <span><%= fmtCount(topic.count) %> ข้อความ</span>
-              </li>
-            <% }) %>
-          <% } else { %>
-            <li class="empty">ยังไม่มีบทสนทนา</li>
-          <% } %>
-        </ul>
-      </div>
-      <div class="latest-users">
-        <h3>ผู้ใช้ล่าสุด</h3>
-        <ul>
-          <% if (latestLineUsers.length) { %>
-            <% latestLineUsers.forEach((user) => { %>
-              <li>
-                <strong><%= user.displayName || user.userId %></strong>
-                <span class="muted"><%= user.status || 'unknown' %></span>
-              </li>
-            <% }) %>
-          <% } else { %>
-            <li class="empty">ยังไม่มีข้อมูลผู้ใช้</li>
-          <% } %>
-        </ul>
-      </div>
-    </section>
-
-    <section class="panel card meetings-card">
-      <header class="panel__header">
-        <div>
-          <h2>Today’s Meetings</h2>
-          <p class="muted">เตรียมตัวก่อนเข้าประชุม</p>
-        </div>
-      </header>
-      <ul class="meetings-list">
-        <% meetings.forEach((meeting) => { %>
-          <li>
+      <div class="section-body">
+        <article class="panel card profile-card">
+          <div class="profile-card__avatar">
+            <img src="/static/img/sorni.png" alt="Sorrni" />
+          </div>
+          <div class="profile-card__meta">
+            <h2>Sorrni Control Center</h2>
+            <p>จัดซื้อ อนุมัติ เรียลไทม์</p>
+          </div>
+          <dl class="profile-stats">
             <div>
-              <strong><%= meeting.title %></strong>
-              <span><%= meeting.date %> · <%= meeting.time %> · <%= meeting.channel %></span>
+              <dt>ไฟล์ล่าสุด</dt>
+              <dd><%= fmtCount(safeLatestRecords.length || 0) %></dd>
             </div>
-            <a href="<%= meeting.href %>" class="btn ghost small">Join</a>
-          </li>
-        <% }) %>
-      </ul>
+            <div>
+              <dt>ยอดวันนี้</dt>
+              <dd><%= fmtTons(buyToday + sellToday) %></dd>
+            </div>
+            <div>
+              <dt>Location Map</dt>
+              <dd><%= fmtCount(provinceStats.totalProvinces || 0) %></dd>
+            </div>
+          </dl>
+        </article>
+
+        <article class="panel card meetings-card">
+          <header class="panel__header">
+            <div>
+              <h2>Today’s Meetings</h2>
+              <p class="muted">เตรียมตัวก่อนเข้าประชุม</p>
+            </div>
+          </header>
+          <ul class="meetings-list">
+            <% meetings.forEach((meeting) => { %>
+              <li>
+                <div>
+                  <strong><%= meeting.title %></strong>
+                  <span><%= meeting.date %> · <%= meeting.time %> · <%= meeting.channel %></span>
+                </div>
+                <a href="<%= meeting.href %>" class="btn ghost small">Join</a>
+              </li>
+            <% }) %>
+          </ul>
+        </article>
+
+        <article class="panel card quick-actions">
+          <header class="panel__header">
+            <div>
+              <h2>Quick Actions</h2>
+              <p class="muted">จัดการงานซ้ำ ๆ ในไม่กี่คลิก</p>
+            </div>
+          </header>
+          <div class="quick-actions__grid">
+            <% quickActions.forEach((action) => { %>
+              <a href="<%= action.href %>" class="quick-action">
+                <span class="quick-action__icon"><%= action.icon %></span>
+                <span class="quick-action__label"><%= action.label %></span>
+                <span class="quick-action__desc"><%= action.description %></span>
+              </a>
+            <% }) %>
+          </div>
+        </article>
+      </div>
     </section>
 
-    <section class="panel card quick-actions">
-      <header class="panel__header">
-        <div>
-          <h2>Quick Actions</h2>
-          <p class="muted">จัดการงานซ้ำ ๆ ในไม่กี่คลิก</p>
+    <section class="section-block section-block--side" id="cdp-pulse">
+      <header class="section-header">
+        <div class="section-header__titles">
+          <span class="section-pill section-pill--cdp">CDP</span>
+          <h2>LINE Activity Highlights</h2>
+          <p class="muted">หัวข้อยอดนิยมและผู้ใช้ล่าสุดจาก LINE Official Account</p>
         </div>
       </header>
-      <div class="quick-actions__grid">
-        <% quickActions.forEach((action) => { %>
-          <a href="<%= action.href %>" class="quick-action">
-            <span class="quick-action__icon"><%= action.icon %></span>
-            <span class="quick-action__label"><%= action.label %></span>
-            <span class="quick-action__desc"><%= action.description %></span>
-          </a>
-        <% }) %>
+      <div class="section-body">
+        <article class="panel card chat-card">
+          <header class="panel__header">
+            <div>
+              <h2>LINE Activity</h2>
+              <p class="muted">ภาพรวมการสนทนาช่องทาง LINE Official</p>
+            </div>
+          </header>
+          <div class="chat-metrics">
+            <div>
+              <span>Active 7 วัน</span>
+              <strong><%= fmtCount(chatStats.active7d) %></strong>
+            </div>
+            <div>
+              <span>ผู้ใช้ใหม่ 7 วัน</span>
+              <strong><%= fmtCount(chatStats.new7d) %></strong>
+            </div>
+            <div>
+              <span>ข้อความ 7 วัน</span>
+              <strong><%= fmtCount(chatStats.messages7d) %></strong>
+            </div>
+            <div>
+              <span>ข้อความรวม</span>
+              <strong><%= fmtCount(chatStats.messagesTotal) %></strong>
+            </div>
+          </div>
+          <div class="topic-list">
+            <h3>หัวข้อยอดนิยม</h3>
+            <ul>
+              <% if (chatTopics.length) { %>
+                <% chatTopics.forEach((topic) => { %>
+                  <li>
+                    <strong><%= topic.label %></strong>
+                    <span><%= fmtCount(topic.count) %> ข้อความ</span>
+                  </li>
+                <% }) %>
+              <% } else { %>
+                <li class="empty">ยังไม่มีบทสนทนา</li>
+              <% } %>
+            </ul>
+          </div>
+          <div class="latest-users">
+            <h3>ผู้ใช้ล่าสุด</h3>
+            <ul>
+              <% if (latestLineUsers.length) { %>
+                <% latestLineUsers.forEach((user) => { %>
+                  <li>
+                    <strong><%= user.displayName || user.userId %></strong>
+                    <span class="muted"><%= user.status || 'unknown' %></span>
+                  </li>
+                <% }) %>
+              <% } else { %>
+                <li class="empty">ยังไม่มีข้อมูลผู้ใช้</li>
+              <% } %>
+            </ul>
+          </div>
+        </article>
       </div>
     </section>
   </aside>

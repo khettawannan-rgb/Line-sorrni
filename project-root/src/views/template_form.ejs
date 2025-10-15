@@ -4,16 +4,28 @@
   const formAction = isEdit ? `/admin/templates/${t._id}/edit` : '/admin/templates/new';
 %>
 
-<div class="panel">
-  <div class="panel-header panel__header">
-    <h2><%= isEdit ? 'Edit Template' : 'New Template' %></h2>
-  </div>
+<section class="section-block">
+  <header class="section-header">
+    <div class="section-header__titles">
+      <span class="section-pill section-pill--cdp">Messaging</span>
+      <h2><%= isEdit ? 'ปรับปรุงเทมเพลต' : 'สร้างเทมเพลตใหม่' %></h2>
+      <p class="muted">จัดการข้อความมาตรฐานที่ใช้ในแคมเปญและการแจ้งเตือน</p>
+    </div>
+  </header>
 
-  <% if (error) { %>
-    <div class="alert error"><%= error %></div>
-  <% } %>
+  <article class="panel card">
+    <header class="panel__header">
+      <div>
+        <h3><%= isEdit ? 'รายละเอียดเทมเพลต' : 'ข้อมูลเทมเพลต' %></h3>
+        <p class="muted">ตั้งชื่อ รหัสอ้างอิง และเนื้อหาที่ต้องการส่ง</p>
+      </div>
+    </header>
 
-  <form class="form" action="<%= formAction %>" method="post">
+    <% if (error) { %>
+      <div class="alert error"><%= error %></div>
+    <% } %>
+
+    <form class="form" action="<%= formAction %>" method="post">
     <div class="form-row">
       <label>Name</label>
       <input type="text" name="name" value="<%= (t && t.name) || '' %>" required />
@@ -29,9 +41,10 @@
       <textarea name="content" rows="12" placeholder="Template content"><%= (t && t.content) || '' %></textarea>
     </div>
 
-    <div class="form-actions">
-      <a class="btn ghost" href="/admin/templates">Back</a>
-      <button class="btn primary" type="submit"><%= isEdit ? 'Save' : 'Create' %></button>
-    </div>
-  </form>
-</div>
+      <div class="form-actions">
+        <a class="btn ghost" href="/admin/templates">Back</a>
+        <button class="btn primary" type="submit"><%= isEdit ? 'Save' : 'Create' %></button>
+      </div>
+    </form>
+  </article>
+</section>

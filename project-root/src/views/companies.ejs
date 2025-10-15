@@ -1,15 +1,26 @@
 <!-- src/views/companies.ejs -->
-<div class="panel">
-  <div class="panel-header panel__header">
-    <h2>Companies</h2>
-  </div>
+<section class="section-block">
+  <header class="section-header">
+    <div class="section-header__titles">
+      <span class="section-pill">Organization</span>
+      <h2>Company Profiles</h2>
+      <p class="muted">การตั้งค่าเวลาส่งรายงานและข้อมูลพื้นฐานของบริษัท</p>
+    </div>
+    <div class="section-header__actions">
+      <a class="btn primary" href="/admin/companies/new">+ New Company</a>
+    </div>
+  </header>
 
-  <div class="panel-actions panel__actions">
-    <a class="btn primary" href="/admin/companies/new">+ New Company</a>
-  </div>
+  <article class="panel card">
+    <header class="panel__header">
+      <div>
+        <h3>รายการบริษัท</h3>
+        <p class="muted">กำหนด timezone และเวลาแจ้งสรุปรายวันให้ครบถ้วน</p>
+      </div>
+    </header>
 
-  <div class="table-wrap table-scroll">
-    <table class="table">
+    <div class="table-wrap table-scroll">
+      <table class="table">
       <thead>
         <tr>
           <th>ชื่อบริษัท</th>
@@ -33,6 +44,7 @@
           </tr>
         <% }) %>
       </tbody>
-    </table>
-  </div>
-</div>
+      </table>
+    </div>
+  </article>
+</section>

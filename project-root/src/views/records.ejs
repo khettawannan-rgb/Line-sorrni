@@ -5,11 +5,15 @@
   </div>
 </div>
 
-<div class="panel">
-  <div class="panel-header panel__header">
-    <h3>ค้นหา</h3>
-  </div>
-  <form class="form" method="get" action="/admin/records">
+<section class="section-block">
+  <article class="panel card">
+    <header class="panel__header">
+      <div>
+        <h3>ค้นหา</h3>
+        <p class="muted">กรองข้อมูลตามบริษัทเพื่อดูรายละเอียดที่เกี่ยวข้อง</p>
+      </div>
+    </header>
+    <form class="form" method="get" action="/admin/records">
     <div class="form-row">
       <label>Company ID</label>
       <input type="text" name="companyId" value="<%= companyId || '' %>" placeholder="เช่น: 65f0f7c6ab..." />
@@ -20,14 +24,17 @@
         <a class="btn ghost" href="/admin/records">ล้างตัวกรอง</a>
       <% } %>
     </div>
-  </form>
-</div>
+    </form>
+  </article>
 
-<div class="panel">
-  <div class="panel-header panel__header">
-    <h3>Counts by date (ล่าสุด 30 วัน)</h3>
-  </div>
-  <div class="table-wrap table-scroll">
+  <article class="panel card">
+    <header class="panel__header">
+      <div>
+        <h3>Counts by date (ล่าสุด 30 วัน)</h3>
+        <p class="muted">ดูปริมาณรายการในแต่ละวันเพื่อวางแผนโหลดงาน</p>
+      </div>
+    </header>
+    <div class="table-wrap table-scroll">
     <table class="table">
       <thead>
         <tr>
@@ -49,14 +56,17 @@
         <% } %>
       </tbody>
     </table>
-  </div>
-</div>
+    </div>
+  </article>
 
-<div class="panel">
-  <div class="panel-header panel__header">
-    <h3>Recent 50 records</h3>
-  </div>
-  <div class="table-wrap table-scroll">
+  <article class="panel card">
+    <header class="panel__header">
+      <div>
+        <h3>Recent 50 records</h3>
+        <p class="muted">ตรวจสอบข้อมูลล่าสุดที่นำเข้าเพื่อยืนยันความถูกต้อง</p>
+      </div>
+    </header>
+    <div class="table-wrap table-scroll">
     <table class="table">
       <thead>
         <tr>
@@ -90,5 +100,6 @@
         <% } %>
       </tbody>
     </table>
-  </div>
-</div>
+    </div>
+  </article>
+</section>

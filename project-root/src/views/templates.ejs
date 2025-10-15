@@ -1,15 +1,26 @@
 <!-- src/views/templates.ejs -->
-<div class="panel">
-  <div class="panel-header panel__header">
-    <h2>Templates</h2>
-  </div>
+<section class="section-block">
+  <header class="section-header">
+    <div class="section-header__titles">
+      <span class="section-pill section-pill--cdp">Messaging</span>
+      <h2>Template Library</h2>
+      <p class="muted">จัดการเนื้อหาที่ส่งให้ลูกค้าใน LINE อย่างเป็นระบบ</p>
+    </div>
+    <div class="section-header__actions">
+      <a class="btn primary" href="/admin/templates/new">+ New Template</a>
+    </div>
+  </header>
 
-  <div class="panel-actions panel__actions">
-    <a class="btn primary" href="/admin/templates/new">+ New Template</a>
-  </div>
+  <article class="panel card">
+    <header class="panel__header">
+      <div>
+        <h3>รายการเทมเพลต</h3>
+        <p class="muted">เก็บโค้ดและตัวอย่างเนื้อหาเพื่อใช้งานซ้ำได้เร็วขึ้น</p>
+      </div>
+    </header>
 
-  <div class="table-wrap table-scroll">
-    <table class="table">
+    <div class="table-wrap table-scroll">
+      <table class="table">
       <thead>
         <tr>
           <th>Name</th>
@@ -36,6 +47,7 @@
           <tr><td colspan="4" class="muted">ยังไม่มีเทมเพลต</td></tr>
         <% } %>
       </tbody>
-    </table>
-  </div>
-</div>
+      </table>
+    </div>
+  </article>
+</section>
