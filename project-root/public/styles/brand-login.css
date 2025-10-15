@@ -44,3 +44,206 @@
     color: var(--sorni-green-solid);
   }
 }
+
+/* ===== Login Hero Theme ===== */
+body.app-shell.use-fullwidth.auth.login-hero {
+  position: relative;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: clamp(32px, 8vh, 80px);
+  color: #f8fafc;
+  isolation: isolate;
+}
+
+body.app-shell.use-fullwidth.auth.login-hero::before,
+body.app-shell.use-fullwidth.auth.login-hero::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+}
+
+body.app-shell.use-fullwidth.auth.login-hero::before {
+  background: center / cover no-repeat url('/static/img/P1.jpg');
+  filter: blur(7px) saturate(1.08);
+  transform: scale(1.05);
+}
+
+body.app-shell.use-fullwidth.auth.login-hero::after {
+  z-index: -1;
+  background:
+    linear-gradient(120deg, rgba(7, 37, 52, 0.82) 0%, rgba(0, 0, 0, 0.35) 35%, rgba(8, 184, 111, 0.28) 100%);
+  mix-blend-mode: multiply;
+}
+
+body.app-shell.use-fullwidth.auth.login-hero .auth-shell.login-hero-shell {
+  width: min(100%, clamp(960px, 88vw, 1200px));
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+  gap: clamp(32px, 4vw, 60px);
+  padding: clamp(32px, 4.5vw, 64px);
+  border-radius: clamp(28px, 3.6vw, 44px);
+  background: rgba(13, 35, 48, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 60px 120px -48px rgba(6, 32, 47, 0.7);
+  backdrop-filter: blur(24px);
+  color: inherit;
+  align-items: center;
+}
+
+.login-hero__content {
+  display: grid;
+  gap: clamp(16px, 3vw, 28px);
+  color: inherit;
+  text-shadow: 0 20px 40px rgba(6, 32, 47, 0.65);
+}
+
+.login-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.login-hero__headline {
+  margin: 0;
+  font-size: clamp(2.4rem, 3vw + 1.6rem, 3.4rem);
+  line-height: 1.1;
+}
+
+.login-hero__intro {
+  margin: 0;
+  max-width: 42ch;
+  font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.login-hero__highlights {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  font-size: 0.98rem;
+}
+
+.login-hero__highlights li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.login-hero__highlights li::before {
+  content: '•';
+  font-size: 1.4rem;
+  color: rgba(111, 240, 188, 0.9);
+}
+
+body.app-shell.use-fullwidth.auth.login-hero .auth-panel.login-hero__panel {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  gap: clamp(20px, 3vw, 32px);
+  padding: clamp(36px, 4.8vw, 52px);
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: clamp(26px, 3vw, 36px);
+  box-shadow: 0 40px 80px -48px rgba(6, 32, 47, 0.55);
+  color: #0f1f2a;
+}
+
+.login-hero__welcome h2 {
+  margin: 0 0 6px;
+  font-size: clamp(1.8rem, 2.4vw, 2.2rem);
+  color: inherit;
+}
+
+.login-hero__welcome p {
+  margin: 0;
+  color: rgba(6, 32, 47, 0.6);
+}
+
+.login-hero__alert {
+  margin-bottom: 4px;
+}
+
+.login-hero__link {
+  align-self: flex-end;
+  font-size: 0.85rem;
+  color: rgba(6, 32, 47, 0.58);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.login-hero__link:hover,
+.login-hero__link:focus-visible {
+  color: var(--accent-600);
+  text-decoration: underline;
+}
+
+.login-hero__alt {
+  align-items: center;
+}
+
+.login-hero__footnote {
+  color: rgba(6, 32, 47, 0.55);
+  text-align: center;
+}
+
+@media (max-width: 1023.98px) {
+  body.app-shell.use-fullwidth.auth.login-hero {
+    padding: clamp(24px, 6vh, 48px);
+  }
+
+  body.app-shell.use-fullwidth.auth.login-hero .auth-shell.login-hero-shell {
+    grid-template-columns: minmax(0, 1fr);
+    text-align: center;
+  }
+
+  .login-hero__content {
+    text-align: center;
+    justify-items: center;
+  }
+
+  .login-hero__intro {
+    max-width: 48ch;
+  }
+
+  .login-hero__highlights {
+    justify-items: center;
+  }
+
+  .login-hero__highlights li {
+    justify-content: center;
+  }
+
+  .login-hero__panel {
+    justify-self: center;
+  }
+
+  .login-hero__link {
+    justify-self: center;
+  }
+}
+
+@media (max-width: 600px) {
+  body.app-shell.use-fullwidth.auth.login-hero::before {
+    transform: scale(1.12);
+  }
+
+  body.app-shell.use-fullwidth.auth.login-hero .auth-shell.login-hero-shell {
+    padding: clamp(24px, 5vw, 32px);
+  }
+
+  .login-hero__headline {
+    font-size: clamp(2rem, 8vw, 2.6rem);
+  }
+
+  .login-hero__panel {
+    padding: clamp(28px, 8vw, 36px);
+  }
+}

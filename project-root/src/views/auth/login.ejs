@@ -1,38 +1,54 @@
-<section class="auth-shell">
-  <div class="auth-panel">
+<section class="auth-shell login-hero-shell">
+  <div class="login-hero__content">
+    <span class="login-hero__eyebrow">SORRNI CONTROL</span>
+    <h1 class="login-hero__headline">Explore Operational Horizons</h1>
+    <p class="login-hero__intro">
+      เชื่อมข้อมูลจัดซื้อ อนุมัติเอกสาร และอัปเดตลูกค้าบน LINE จากศูนย์ควบคุมเดียว
+      ด้วยข้อมูลเรียลไทม์และเครื่องมือแจ้งเตือนอัตโนมัติ
+    </p>
+    <ul class="login-hero__highlights">
+      <li>แดชบอร์ดสถานะ PR/PO และสต็อกแบบวันต่อวัน</li>
+      <li>เวิร์กโฟลว์อนุมัติและแจ้งเตือนที่พร้อมใช้งานทันที</li>
+      <li>สรุปกิจกรรม LINE Official ให้ทีมพร้อมเริ่มงาน</li>
+    </ul>
+  </div>
+
+  <div class="auth-panel login-hero__panel">
     <div class="auth-brand">
       <img src="/img/sorni.png" alt="Sorni" />
       <div>
         <strong>Sorrni</strong>
-        <span>Admin Console</span>
+        <span>Control Center</span>
       </div>
     </div>
 
-    <div class="auth-heading">
-      <h1>Welcome Back</h1>
-      <p>เข้าสู่ระบบเพื่อจัดการเวิร์กโฟลว์ PR/PO และประสบการณ์ลูกค้าบน LINE ได้อย่างครบวงจร</p>
+    <div class="login-hero__welcome">
+      <h2 id="login-title">ยินดีต้อนรับกลับ</h2>
+      <p>ลงชื่อเข้าใช้เพื่อจัดการข้อมูลและสื่อสารกับลูกค้าของคุณแบบครบวงจร</p>
     </div>
 
-    <div class="auth-tabs" role="tablist" aria-label="Authentication mode">
-      <button type="button" class="auth-tab is-active" aria-selected="true">Sign In</button>
-      <button type="button" class="auth-tab" aria-selected="false" disabled>Sign Up</button>
-    </div>
-
-    <form method="post" action="/admin/login" class="auth-form">
+    <form method="post" action="/admin/login" class="auth-form" aria-labelledby="login-title">
       <input type="hidden" name="redirect" value="<%= redirect || '/admin' %>" />
 
       <% if (typeof error === 'string' && error) { %>
-        <div class="alert error"><%= error %></div>
+        <div class="alert error login-hero__alert"><%= error %></div>
       <% } %>
       <% if (isSuperAdminLocked) { %>
-        <div class="alert info">โหมด Super Admin ถูกล็อกไว้ คุณสามารถเข้าต่อได้จากอุปกรณ์ที่ได้รับอนุญาต</div>
+        <div class="alert info login-hero__alert">โหมด Super Admin ถูกล็อกไว้ คุณสามารถเข้าต่อได้จากอุปกรณ์ที่ได้รับอนุญาต</div>
       <% } %>
 
       <div class="field has-icon">
         <label for="username">Email Address</label>
         <div class="input-wrap">
           <span class="input-icon" aria-hidden="true">✉️</span>
-          <input id="username" name="username" type="text" autocomplete="username" placeholder="admin@yourcompany.com" required />
+          <input
+            id="username"
+            name="username"
+            type="text"
+            autocomplete="username"
+            placeholder="admin@yourcompany.com"
+            required
+          />
         </div>
       </div>
 
@@ -40,14 +56,22 @@
         <label for="password">Password</label>
         <div class="input-wrap">
           <span class="input-icon" aria-hidden="true">🔒</span>
-          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="••••••••"
+            required
+          />
         </div>
+        <a class="login-hero__link" href="mailto:support@sorrni.com">ลืมรหัสผ่าน?</a>
       </div>
 
       <button type="submit" class="btn primary btn-block">เข้าสู่ระบบ</button>
     </form>
 
-    <div class="auth-alt">
+    <div class="auth-alt login-hero__alt">
       <span>หรือเข้าสู่ระบบด้วย</span>
       <div class="auth-alt__buttons">
         <button type="button" class="btn ghost" aria-label="Continue with Google">G</button>
@@ -56,19 +80,8 @@
       </div>
     </div>
 
-    <p class="auth-footnote">
+    <p class="auth-footnote login-hero__footnote">
       ปัญหาในการล็อกอิน? ติดต่อผู้ดูแลระบบของคุณ
     </p>
   </div>
-
-  <aside class="auth-visual" aria-hidden="true">
-    <div class="auth-visual__glass">
-      <div class="auth-visual__badge">
-        <span>Smart Ops</span>
-        <strong>Efficiency Mode</strong>
-      </div>
-      <img src="/static/img/sorni.png" alt="" />
-      <p>จัดระเบียบงานจัดซื้อ กำกับการแจ้งเตือน และติดตามสรุปรายวันได้ในคลิกเดียว</p>
-    </div>
-  </aside>
 </section>

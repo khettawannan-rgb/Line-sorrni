@@ -1,0 +1,295 @@
+/* ===== Dashboard Neo Theme v1.0 ===== */
+
+body.app-shell.use-fullwidth {
+  --neo-gap: clamp(20px, 2.6vw, 36px);
+  --neo-gap-wide: clamp(28px, 3vw, 48px);
+  --neo-card-bg: rgba(255, 255, 255, 0.96);
+  --neo-card-border: rgba(6, 62, 74, 0.12);
+  --neo-card-shadow: 0 42px 80px -48px rgba(6, 62, 74, 0.55);
+  --neo-muted: rgba(6, 32, 47, 0.58);
+  --neo-gradient-soft: linear-gradient(135deg, rgba(8, 184, 111, 0.12) 0%, rgba(14, 165, 233, 0.1) 100%);
+  --neo-gradient-hero: radial-gradient(160% 120% at 0% 0%, rgba(8, 184, 111, 0.25) 0%, transparent 60%), radial-gradient(140% 120% at 100% 0%, rgba(14, 165, 233, 0.22) 0%, transparent 65%), rgba(255, 255, 255, 0.88);
+}
+
+body.app-shell.use-fullwidth .app-main > .container {
+  gap: var(--neo-gap-wide);
+}
+
+body.app-shell.use-fullwidth .dashboard-shell {
+  gap: var(--neo-gap-wide);
+}
+
+body.app-shell.use-fullwidth .dashboard-canvas {
+  gap: var(--neo-gap-wide);
+  align-items: start;
+}
+
+@media (min-width: 1360px) {
+  body.app-shell.use-fullwidth .dashboard-canvas {
+    grid-template-columns: minmax(0, 1.75fr) minmax(320px, 1fr);
+  }
+}
+
+body.app-shell.use-fullwidth .dashboard-main {
+  gap: var(--neo-gap-wide);
+}
+
+body.app-shell.use-fullwidth .dashboard-side {
+  gap: var(--neo-gap);
+}
+
+body.app-shell.use-fullwidth .topbar__inner,
+body.app-shell.use-fullwidth .app-footer {
+  background: rgba(255, 255, 255, 0.86);
+  border-radius: clamp(20px, 3vw, 32px);
+  box-shadow: 0 24px 60px -48px rgba(6, 62, 74, 0.45);
+}
+
+/* ----- Quick navigation rail ----- */
+body.app-shell.use-fullwidth .dashboard-quicknav {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(6, 62, 74, 0.1);
+  box-shadow: 0 32px 70px -48px rgba(6, 62, 74, 0.5);
+  gap: clamp(16px, 2.8vw, 26px);
+}
+
+body.app-shell.use-fullwidth .dashboard-quicknav__brand img {
+  box-shadow: 0 26px 55px -34px rgba(8, 184, 111, 0.45);
+}
+
+body.app-shell.use-fullwidth .dashboard-quicknav__list a {
+  background: rgba(246, 250, 255, 0.8);
+  border-radius: clamp(16px, 2vw, 22px);
+  border: 1px solid transparent;
+}
+
+body.app-shell.use-fullwidth .dashboard-quicknav__list a:hover,
+body.app-shell.use-fullwidth .dashboard-quicknav__list a:focus-visible {
+  border-color: rgba(8, 184, 111, 0.35);
+  background: rgba(111, 240, 188, 0.18);
+}
+
+body.app-shell.use-fullwidth .dashboard-quicknav__list a.is-active {
+  background: rgba(8, 184, 111, 0.16);
+  border-color: rgba(8, 184, 111, 0.32);
+  box-shadow: inset 0 0 0 1px rgba(8, 184, 111, 0.4);
+}
+
+/* ----- Global card surface ----- */
+body.app-shell.use-fullwidth .panel,
+body.app-shell.use-fullwidth .card {
+  background: var(--neo-card-bg);
+  border: 1px solid var(--neo-card-border);
+  box-shadow: var(--neo-card-shadow);
+  border-radius: clamp(24px, 3vw, 32px);
+  padding: clamp(22px, 3vw, 32px);
+  backdrop-filter: blur(18px);
+}
+
+body.app-shell.use-fullwidth .panel__header h2,
+body.app-shell.use-fullwidth .panel__header p {
+  color: #0f1f2a;
+}
+
+body.app-shell.use-fullwidth .panel__header p,
+body.app-shell.use-fullwidth .muted {
+  color: var(--neo-muted);
+}
+
+body.app-shell.use-fullwidth .panel__header {
+  margin-bottom: clamp(14px, 2.4vw, 24px);
+}
+
+/* ----- Hero area ----- */
+body.app-shell.use-fullwidth .dash-hero {
+  background: var(--neo-gradient-hero);
+  border: 1px solid rgba(6, 62, 74, 0.12);
+  box-shadow: 0 40px 90px -48px rgba(6, 62, 74, 0.55);
+  border-radius: clamp(28px, 3vw, 40px);
+  padding: clamp(28px, 4vw, 44px);
+  display: grid;
+  gap: clamp(20px, 2.6vw, 36px);
+  grid-template-columns: minmax(0, 1.35fr) minmax(240px, 0.9fr);
+}
+
+@media (max-width: 1023.98px) {
+  body.app-shell.use-fullwidth .dash-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+body.app-shell.use-fullwidth .dash-hero__actions {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: clamp(20px, 2.8vw, 28px);
+  padding: clamp(18px, 2.5vw, 24px);
+  flex-direction: column;
+  align-items: flex-start;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 26px 60px -44px rgba(6, 62, 74, 0.4);
+}
+
+@media (min-width: 640px) {
+  body.app-shell.use-fullwidth .dash-hero__actions {
+    align-items: stretch;
+  }
+}
+
+body.app-shell.use-fullwidth .dash-search {
+  border-radius: clamp(18px, 2vw, 24px);
+  border: 1px solid rgba(6, 62, 74, 0.12);
+  background: rgba(246, 250, 255, 0.85);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* ----- Sub navigation ----- */
+body.app-shell.use-fullwidth .dashboard-subnav {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(6, 62, 74, 0.1);
+  border-radius: 999px;
+  box-shadow: 0 22px 50px -38px rgba(6, 62, 74, 0.45);
+  padding: clamp(6px, 1vw, 10px);
+}
+
+/* ----- Highlights ----- */
+body.app-shell.use-fullwidth .ops-overview {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--neo-gap);
+}
+
+body.app-shell.use-fullwidth .highlight-card {
+  background: var(--neo-gradient-soft);
+  color: #0f1f2a;
+  box-shadow: 0 32px 60px -48px rgba(8, 184, 111, 0.5);
+}
+
+body.app-shell.use-fullwidth .highlight-card header span {
+  color: rgba(6, 32, 47, 0.55);
+  font-weight: 500;
+}
+
+body.app-shell.use-fullwidth .highlight-value {
+  color: #082f49;
+}
+
+body.app-shell.use-fullwidth .highlight-card.gradient--sunset {
+  background: linear-gradient(135deg, rgba(8, 184, 111, 0.18) 0%, rgba(14, 165, 233, 0.16) 50%, rgba(80, 210, 184, 0.24) 100%);
+}
+
+body.app-shell.use-fullwidth .highlight-card.gradient--lavender {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.18) 0%, rgba(99, 102, 241, 0.18) 48%, rgba(79, 70, 229, 0.22) 100%);
+  color: #0f172a;
+}
+
+/* ----- Operations grid ----- */
+body.app-shell.use-fullwidth .ops-grid {
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: var(--neo-gap);
+}
+
+@media (max-width: 1200px) {
+  body.app-shell.use-fullwidth .ops-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+body.app-shell.use-fullwidth .table-wrap {
+  border-radius: clamp(18px, 2vw, 24px);
+  background: rgba(246, 250, 255, 0.8);
+  border: 1px solid rgba(6, 62, 74, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+body.app-shell.use-fullwidth table.table {
+  color: #0b1f2a;
+}
+
+body.app-shell.use-fullwidth table.table thead th {
+  font-weight: 600;
+  color: rgba(6, 32, 47, 0.65);
+}
+
+body.app-shell.use-fullwidth table.table tbody tr:nth-child(odd) {
+  background: rgba(8, 184, 111, 0.04);
+}
+
+/* ----- Lists and cards ----- */
+body.app-shell.use-fullwidth .record-item,
+body.app-shell.use-fullwidth .task-list li,
+body.app-shell.use-fullwidth .province-list li,
+body.app-shell.use-fullwidth .progress-list li,
+body.app-shell.use-fullwidth .mix-list li,
+body.app-shell.use-fullwidth .company-list li,
+body.app-shell.use-fullwidth .product-list li,
+body.app-shell.use-fullwidth .meetings-list li,
+body.app-shell.use-fullwidth .latest-users li,
+body.app-shell.use-fullwidth .topic-list li {
+  background: rgba(246, 250, 255, 0.86);
+  border-radius: clamp(18px, 2vw, 22px);
+  border: 1px solid rgba(6, 62, 74, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+body.app-shell.use-fullwidth .record-item__icon.is-inbound {
+  background: rgba(8, 184, 111, 0.16);
+  color: #0b7a4e;
+}
+
+body.app-shell.use-fullwidth .record-item__icon.is-outbound {
+  background: rgba(14, 165, 233, 0.18);
+  color: #0c4a6e;
+}
+
+body.app-shell.use-fullwidth .progress-track {
+  background: rgba(148, 163, 184, 0.22);
+}
+
+body.app-shell.use-fullwidth .progress-track span {
+  background: linear-gradient(90deg, #0ea5e9 0%, #08b86f 100%);
+}
+
+body.app-shell.use-fullwidth .company-rank,
+body.app-shell.use-fullwidth .product-index {
+  background: rgba(8, 184, 111, 0.12);
+  color: #03624a;
+}
+
+body.app-shell.use-fullwidth .profile-card__avatar img {
+  box-shadow: 0 26px 60px -36px rgba(14, 165, 233, 0.45);
+}
+
+body.app-shell.use-fullwidth .quick-action {
+  background: rgba(246, 250, 255, 0.9);
+  border: 1px solid rgba(6, 62, 74, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border-radius: clamp(18px, 2vw, 24px);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+body.app-shell.use-fullwidth .quick-action:hover,
+body.app-shell.use-fullwidth .quick-action:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 24px 50px -36px rgba(8, 184, 111, 0.4);
+}
+
+/* ----- Chart frames ----- */
+body.app-shell.use-fullwidth .chart-frame {
+  background: rgba(246, 250, 255, 0.88);
+  border-radius: clamp(18px, 2vw, 26px);
+  border: 1px solid rgba(6, 62, 74, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  padding: clamp(16px, 2.4vw, 24px);
+}
+
+body.app-shell.use-fullwidth .chart-frame canvas {
+  filter: drop-shadow(0 18px 28px rgba(6, 62, 74, 0.15));
+}
+
+/* ----- Responsive tweaks ----- */
+@media (max-width: 1023.98px) {
+  body.app-shell.use-fullwidth .dashboard-canvas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.app-shell.use-fullwidth .dashboard-side {
+    position: static;
+  }
+}
