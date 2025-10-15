@@ -1,0 +1,195 @@
+/* ===== Console Redesign Overrides v1.0 ===== */
+
+body.app-shell.use-fullwidth {
+  --console-max-width: clamp(1080px, 92vw, 1820px);
+  --console-wide-width: clamp(1180px, 94vw, 1980px);
+  --console-inner-pad: clamp(24px, 5vw, 72px);
+  --console-tight-pad: clamp(18px, 4vw, 52px);
+  --console-section-gap: clamp(24px, 3vw, 48px);
+}
+
+body.app-shell.use-fullwidth {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+body.app-shell.use-fullwidth .topbar__inner,
+body.app-shell.use-fullwidth .app-footer {
+  width: min(100%, var(--console-wide-width));
+  padding-inline: var(--console-tight-pad);
+}
+
+body.app-shell.use-fullwidth .app-main {
+  width: 100%;
+  max-width: none;
+  padding-inline: var(--console-inner-pad);
+  gap: var(--console-section-gap);
+}
+
+body.app-shell.use-fullwidth .app-main > .container {
+  width: min(100%, var(--console-wide-width));
+  max-width: var(--console-wide-width);
+  padding-inline: var(--console-tight-pad);
+}
+
+body.app-shell.use-fullwidth .app-main > .full-container {
+  width: min(100%, var(--console-wide-width));
+}
+
+body.app-shell.use-fullwidth .app-main > .bare-container {
+  width: min(100%, clamp(560px, 88vw, 1280px));
+  padding-inline: var(--console-tight-pad);
+}
+
+body.app-shell.use-fullwidth.auth .app-main {
+  padding-inline: clamp(20px, 6vw, 64px);
+}
+
+body.app-shell.use-fullwidth.auth .app-main > .bare-container {
+  width: min(100%, clamp(720px, 92vw, 1400px));
+  padding-inline: 0;
+}
+
+body.app-shell.use-fullwidth.auth .auth-shell {
+  width: min(100%, clamp(960px, 90vw, 1480px));
+  grid-template-columns: minmax(360px, clamp(44%, 520px, 640px)) minmax(300px, 1fr);
+  gap: clamp(32px, 5vw, 72px);
+  padding: clamp(32px, 6vw, 64px);
+}
+
+body.app-shell.use-fullwidth.auth .auth-panel {
+  padding: clamp(48px, 5.6vw, 78px);
+  border-radius: 40px;
+}
+
+body.app-shell.use-fullwidth.auth .auth-visual {
+  padding: clamp(32px, 5vw, 60px);
+}
+
+body.app-shell.use-fullwidth.auth .auth-visual__glass {
+  border-radius: clamp(36px, 4vw, 52px);
+  min-height: clamp(280px, 38vh, 440px);
+}
+
+body.app-shell.use-fullwidth .topnav {
+  gap: clamp(18px, 2.6vw, 32px);
+}
+
+body.app-shell.use-fullwidth .dashboard-shell {
+  gap: clamp(24px, 3vw, 52px);
+  align-items: start;
+}
+
+body.app-shell.use-fullwidth .dashboard-quicknav {
+  padding: clamp(28px, 3.6vw, 48px);
+  border-radius: 36px;
+}
+
+body.app-shell.use-fullwidth .dashboard-canvas {
+  gap: clamp(24px, 2.6vw, 40px);
+}
+
+body.app-shell.use-fullwidth .dashboard-main {
+  gap: clamp(24px, 3vw, 40px);
+}
+
+body.app-shell.use-fullwidth .dashboard-side {
+  display: grid;
+  gap: clamp(20px, 2.4vw, 36px);
+}
+
+@media (max-width: 1199.98px) {
+  body.app-shell.use-fullwidth .dashboard-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.app-shell.use-fullwidth .dashboard-quicknav {
+    position: static;
+    order: -1;
+  }
+
+  body.app-shell.use-fullwidth .dashboard-canvas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  body.app-shell.use-fullwidth .dashboard-shell {
+    grid-template-columns: minmax(280px, clamp(320px, 24vw, 360px)) minmax(0, 1fr);
+  }
+
+  body.app-shell.use-fullwidth .dashboard-canvas {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, clamp(24vw, 380px, 460px));
+  }
+}
+
+@media (min-width: 1680px) {
+  body.app-shell.use-fullwidth .dashboard-shell {
+    grid-template-columns: minmax(320px, clamp(26vw, 360px, 420px)) minmax(0, 1fr);
+  }
+
+  body.app-shell.use-fullwidth .dashboard-canvas {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, clamp(22vw, 460px, 540px));
+  }
+}
+
+body.app-shell.use-fullwidth .dash-hero {
+  gap: clamp(20px, 3vw, 48px);
+  padding: clamp(32px, 4.8vw, 56px);
+}
+
+body.app-shell.use-fullwidth .dash-hero__actions {
+  gap: clamp(14px, 2vw, 24px);
+}
+
+body.app-shell.use-fullwidth .dash-search {
+  min-width: clamp(240px, 22vw, 420px);
+  padding: clamp(12px, 1.8vw, 18px) clamp(16px, 2vw, 24px);
+}
+
+body.app-shell.use-fullwidth .dashboard-subnav {
+  gap: clamp(10px, 1.8vw, 22px);
+}
+
+body.app-shell.use-fullwidth .dashboard-subnav__item {
+  padding: clamp(10px, 1.2vw, 16px) clamp(16px, 2vw, 28px);
+}
+
+body.app-shell.use-fullwidth .ops-overview {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+body.app-shell.use-fullwidth .ops-grid,
+body.app-shell.use-fullwidth .dashboard-main .panel-grid,
+body.app-shell.use-fullwidth .dashboard-main .card-grid,
+body.app-shell.use-fullwidth .dashboard-main .widgets {
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+}
+
+@media (min-width: 1600px) {
+  body.app-shell.use-fullwidth .ops-grid,
+  body.app-shell.use-fullwidth .dashboard-main .panel-grid,
+  body.app-shell.use-fullwidth .dashboard-main .card-grid,
+  body.app-shell.use-fullwidth .dashboard-main .widgets {
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  }
+}
+
+body.app-shell.use-fullwidth .section-header {
+  gap: clamp(16px, 2vw, 32px);
+}
+
+body.app-shell.use-fullwidth .section-body {
+  gap: clamp(20px, 2.6vw, 40px);
+}
+
+body.app-shell.use-fullwidth .table-wrap {
+  border-radius: clamp(18px, 2vw, 28px);
+}
+
+body.app-shell.use-fullwidth .app-footer {
+  margin-top: clamp(48px, 10vh, 96px);
+  padding-block: clamp(32px, 8vh, 72px);
+}
