@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCustomerInsightCharts();
   initProcurementDialogs();
   initDynamicItemRows();
+  initDashboardAnchors();
 });
 
 window.addEventListener('resize', debounce(setupTopbarHeight, 150));
@@ -67,6 +68,33 @@ function setupNavigationHighlight() {
         openDrawerGroup(group, false);
       }
     }
+  });
+}
+
+function initDashboardAnchors() {
+  const links = document.querySelectorAll('[data-scroll-group]');
+  if (!links.length) return;
+
+  const groups = new Map();
+
+  links.forEach((link) => {
+    const group = link.getAttribute('data-scroll-group');
+    if (!group) return;
+
+    if (!groups.has(group)) {
+      groups.set(group, []);
+    }
+    groups.get(group).push(link);
+
+    link.addEventListener('click', () => {
+      const siblings = groups.get(group) || [];
+      siblings.forEach((item) => {
+        item.classList.remove('is-active');
+        item.removeAttribute('aria-current');
+      });
+      link.classList.add('is-active');
+      link.setAttribute('aria-current', 'true');
+    });
   });
 }
 

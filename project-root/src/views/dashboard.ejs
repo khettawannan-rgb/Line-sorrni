@@ -65,7 +65,29 @@
   { label: 'Rich Menu Studio', description: 'อัปเดตเมนูและ CTA', href: '/admin/richmenu', icon: '🧭' },
 ]; %>
 
-<div class="dashboard-canvas">
+<div class="dashboard-shell">
+  <nav class="dashboard-quicknav" aria-label="เมนูลัดแดชบอร์ด">
+    <div class="dashboard-quicknav__brand">
+      <img src="/static/img/nila-logo.png" alt="Sorrni" />
+      <strong>Sorrni Workspace</strong>
+      <span>Unified Ops &amp; CDP</span>
+    </div>
+    <div class="dashboard-quicknav__meta">
+      <span>อัปเดตล่าสุด</span>
+      <strong><%= summaryTimestamp %></strong>
+    </div>
+    <ul class="dashboard-quicknav__list">
+      <li><a href="#ops-intel" class="is-active" data-scroll-group="dashboard-nav" aria-current="true">มุมมองหลัก</a></li>
+      <li><a href="#cdp-intel" data-scroll-group="dashboard-nav">พฤติกรรมผู้ใช้</a></li>
+      <li><a href="#control-center" data-scroll-group="dashboard-nav">ศูนย์ควบคุม</a></li>
+      <li><a href="#cdp-pulse" data-scroll-group="dashboard-nav">LINE Activity</a></li>
+    </ul>
+    <div class="dashboard-quicknav__cta">
+      <a class="btn secondary btn-block" href="/admin/tools/send-daily">ส่งสรุปรายวัน</a>
+    </div>
+  </nav>
+
+  <div class="dashboard-canvas">
   <main class="dashboard-main">
     <header class="dash-hero">
       <div class="dash-hero__intro">
@@ -81,6 +103,12 @@
         <a class="btn primary" href="/admin/upload">นำเข้าข้อมูล</a>
       </div>
     </header>
+
+    <nav class="dashboard-subnav" aria-label="สลับมุมมองแดชบอร์ด">
+      <a href="#ops-intel" class="dashboard-subnav__item is-active" data-scroll-group="dashboard-subnav" aria-current="true">มุมมองหลัก</a>
+      <a href="#cdp-intel" class="dashboard-subnav__item" data-scroll-group="dashboard-subnav">พฤติกรรมผู้ใช้</a>
+      <a href="#control-center" class="dashboard-subnav__item" data-scroll-group="dashboard-subnav">ศูนย์ควบคุม</a>
+    </nav>
 
     <section class="section-block" id="ops-intel">
       <header class="section-header">
@@ -531,4 +559,5 @@
       </div>
     </section>
   </aside>
+</div>
 </div>

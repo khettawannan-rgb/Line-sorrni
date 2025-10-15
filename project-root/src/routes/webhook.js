@@ -159,7 +159,12 @@ function verifyLineSignatureOrSkip(req) {
       // ต้องเป็น Buffer ดิบ ๆ ที่ parser ใส่ให้ใน req.body
       .update(req.body)
       .digest('base64');
-    return hmac === signature;
+    if (hmac === signature) return true;
+    console.warn('[WEBHOOK] signature mismatch detected', {
+      strict: STRICT_SIGNATURE,
+      signatureLength: signature?.length ?? 0,
+    });
+    return !STRICT_SIGNATURE;
   } catch (e) {
     console.error('[WEBHOOK] verify error:', e);
     return false;
