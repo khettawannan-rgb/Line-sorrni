@@ -32,6 +32,7 @@
   if (isLineShell) bodyClasses.push('line-shell');
   if (typeof bodyVariant === 'string' && bodyVariant) bodyClasses.push(bodyVariant);
 
+  const fullWidth = typeof locals.fullWidth === 'boolean' ? locals.fullWidth : false;
   const navGroups = [
     {
       label: 'Overview',
@@ -199,7 +200,7 @@
     <% } %>
   <% } %>
 
-  <main class="app-main">
+  <main class="app-main <%= fullWidth ? 'app-main--full' : '' %>">
     <% if (!hideChrome && isGuest) { %>
       <div class="guest-callout">
         <div>
@@ -209,7 +210,7 @@
         <a class="btn primary" href="/admin/login?redirect=<%= redirectQuery %>">ล็อกอิน</a>
       </div>
     <% } %>
-    <div class="<%= hideChrome ? 'bare-container' : 'container' %>">
+    <div class="<%= hideChrome ? (fullWidth ? 'full-container' : 'bare-container') : 'container' %>">
       <%- body %>
     </div>
   </main>

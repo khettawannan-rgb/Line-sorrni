@@ -14,22 +14,38 @@
      if (Number.isNaN(date.getTime())) return value;
      return date.toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' });
    }; %>
-<% const lastDaily = Array.isArray(dailySeries) && dailySeries.length ? dailySeries[dailySeries.length - 1] : null; %>
+<% const totalsData = (typeof totals === 'object' && totals) ? totals : { buyTons: 0, sellTons: 0, records: 0 }; %>
+<% const providedDailySeries = (typeof dailySeries !== 'undefined') ? dailySeries : []; %>
+<% const safeDailySeries = Array.isArray(providedDailySeries) ? providedDailySeries : []; %>
+<% const providedTrendSeries = (typeof trendSeries !== 'undefined') ? trendSeries : []; %>
+<% const safeTrendSeries = Array.isArray(providedTrendSeries) ? providedTrendSeries : []; %>
+<% const providedLatestRecords = (typeof latestRecords !== 'undefined') ? latestRecords : []; %>
+<% const safeLatestRecords = Array.isArray(providedLatestRecords) ? providedLatestRecords : []; %>
+<% const providedCompanySummary = (typeof companySummary !== 'undefined') ? companySummary : []; %>
+<% const safeCompanySummary = Array.isArray(providedCompanySummary) ? providedCompanySummary : []; %>
+<% const providedProductChart = (typeof productChart !== 'undefined') ? productChart : []; %>
+<% const safeProductChart = Array.isArray(providedProductChart) ? providedProductChart : []; %>
+<% const providedMixSummary = (typeof mixSummary !== 'undefined') ? mixSummary : []; %>
+<% const safeMixSummary = Array.isArray(providedMixSummary) ? providedMixSummary : []; %>
+<% const providedProvinceMap = (typeof provinceMap !== 'undefined') ? provinceMap : []; %>
+<% const safeProvinceMap = Array.isArray(providedProvinceMap) ? providedProvinceMap : []; %>
+<% const providedChat = (typeof chat !== 'undefined' && chat) ? chat : { topicSummary: [], latestUsers: [] }; %>
+<% const lastDaily = safeDailySeries.length ? safeDailySeries[safeDailySeries.length - 1] : null; %>
 <% const buyToday = Number(lastDaily?.buyTons || 0); %>
 <% const sellToday = Number(lastDaily?.sellTons || 0); %>
 <% const entriesToday = Number(lastDaily?.entryCount || 0); %>
-<% const inventoryBalance = Math.max(Number(totals?.buyTons || 0) - Number(totals?.sellTons || 0), 0); %>
-<% const dailyWindow = Array.isArray(dailySeries) ? [...dailySeries].slice(-7).reverse() : []; %>
-<% const recentRecords = Array.isArray(latestRecords) ? latestRecords.slice(0, 8) : []; %>
-<% const topCompanies = Array.isArray(companySummary) ? companySummary.slice(0, 6) : []; %>
-<% const topProducts = Array.isArray(productChart) ? productChart.slice(0, 6) : []; %>
-<% const topMix = Array.isArray(mixSummary) ? mixSummary.slice(0, 6) : []; %>
-<% const provinceLeaders = Array.isArray(provinceMap) ? provinceMap.slice(0, 6) : []; %>
-<% const chatTopics = Array.isArray(chat?.topicSummary) ? chat.topicSummary.slice(0, 5) : []; %>
-<% const latestLineUsers = Array.isArray(chat?.latestUsers) ? chat.latestUsers.slice(0, 5) : []; %>
-<% const chatStats = chatUserStats || { active7d: 0, new7d: 0, returning7d: 0, active30d: 0, totalUsers: 0, messages7d: 0, messagesTotal: 0 }; %>
+<% const inventoryBalance = Math.max(Number(totalsData.buyTons || 0) - Number(totalsData.sellTons || 0), 0); %>
+<% const dailyWindow = safeDailySeries.length ? [...safeDailySeries].slice(-7).reverse() : []; %>
+<% const recentRecords = safeLatestRecords.slice(0, 8); %>
+<% const topCompanies = safeCompanySummary.slice(0, 6); %>
+<% const topProducts = safeProductChart.slice(0, 6); %>
+<% const topMix = safeMixSummary.slice(0, 6); %>
+<% const provinceLeaders = safeProvinceMap.slice(0, 6); %>
+<% const chatTopics = Array.isArray(providedChat.topicSummary) ? providedChat.topicSummary.slice(0, 5) : []; %>
+<% const latestLineUsers = Array.isArray(providedChat.latestUsers) ? providedChat.latestUsers.slice(0, 5) : []; %>
+<% const chatStats = (typeof chatUserStats === 'object' && chatUserStats) ? chatUserStats : { active7d: 0, new7d: 0, returning7d: 0, active30d: 0, totalUsers: 0, messages7d: 0, messagesTotal: 0 }; %>
 <% const summaryTimestamp = new Date().toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }); %>
-<% const provinceStats = provinceMapStats || {}; %>
+<% const provinceStats = (typeof provinceMapStats === 'object' && provinceMapStats) ? provinceMapStats : {}; %>
 <% const focusAreas = [
   { label: 'On-time Delivery', ratio: provinceStats?.onTimeRate ?? 0.72 },
   { label: 'Invoice Accuracy', ratio: provinceStats?.accuracyRate ?? 0.63 },
@@ -73,7 +89,7 @@
           <span>จากยอดซื้อสะสม - ยอดขายสะสม</span>
         </header>
         <div class="highlight-value"><%= fmtTons(inventoryBalance) %><small> ตัน</small></div>
-        <p>ซื้อสะสม <strong><%= fmtTons(totals?.buyTons || 0) %></strong> ตัน • ขายสะสม <strong><%= fmtTons(totals?.sellTons || 0) %></strong> ตัน</p>
+        <p>ซื้อสะสม <strong><%= fmtTons(totalsData.buyTons || 0) %></strong> ตัน • ขายสะสม <strong><%= fmtTons(totalsData.sellTons || 0) %></strong> ตัน</p>
       </article>
       <article class="highlight-card gradient gradient--sunset">
         <header>
@@ -97,7 +113,7 @@
           <span>การเคลื่อนไหวทั้งหมด</span>
         </header>
         <div class="highlight-value"><%= fmtCount(entriesToday) %><small> รายการ</small></div>
-        <p>ข้อมูลทั้งหมด <strong><%= fmtCount(totals?.records || 0) %></strong> รายการในระบบ</p>
+        <p>ข้อมูลทั้งหมด <strong><%= fmtCount(totalsData.records || 0) %></strong> รายการในระบบ</p>
       </article>
     </section>
 
@@ -232,7 +248,7 @@
     </section>
 
     <section class="dash-panel-grid">
-      <article class="panel card chart-card insight-chart" data-chart-trend='<%- JSON.stringify(trendSeries.slice(-14)) %>'>
+      <article class="panel card chart-card insight-chart" data-chart-trend='<%- JSON.stringify(safeTrendSeries.slice(-14)) %>'>
         <header class="panel__header">
           <div>
             <h2>LINE Interaction Trend</h2>
@@ -355,7 +371,7 @@
       <dl class="profile-stats">
         <div>
           <dt>ไฟล์ล่าสุด</dt>
-          <dd><%= fmtCount(latestRecords.length || 0) %></dd>
+          <dd><%= fmtCount(safeLatestRecords.length || 0) %></dd>
         </div>
         <div>
           <dt>ยอดวันนี้</dt>
