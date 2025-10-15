@@ -1,20 +1,20 @@
-/* ===== Fluid Container System v2 – Non-destructive (2025-10-15) ===== */
+/* ===== Fluid Container System v3.1 – Non-destructive ===== */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { width: 100%; max-width: 100%; }
 html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; overflow-x: hidden; min-height: 100dvh; }
 
-/* FLUID TOKENS (ไม่แตะสี) */
+/* Fluid tokens (no color changes) */
 :root{
-  /* กว้างขึ้นบนจอ 1280 โดยยังมีระยะขอบ */
-  --container-max: 1360px;             /* เดิม 1280 → ขยับนิดให้เต็มจอ 13" มากขึ้น */
-  --container-max-wide: 1440px;        /* สำหรับ desktop กว้าง */
-  --gutter: clamp(16px, 3.2vw, 32px);  /* ระยะขอบซ้าย/ขวาแบบไหล */
+  --container-max: 1360px;          /* ดีต่อ 1280px (MacBook 13") */
+  --container-max-wide: 1440px;
+  --gutter: clamp(16px, 3.2vw, 32px);
   --gap: clamp(12px, 2vw, 24px);
-  --card-min: 320px;                   /* เพิ่มขั้นต่ำการ์ดเพื่ออ่านง่ายบน 1280px */
+  --card-min: 320px;
+  --app-header-h: 64px;              /* fallback จะถูก JS sync ให้อัตโนมัติ */
 }
 
-/* 1) ช่องหลักทุกหน้า: กึ่งกลาง + กว้างขึ้น (ดีบน 1280) */
+/* Centered container for all pages */
 :where(main, .main, .page, .page-content, .content, .dashboard, .app-shell){
   width: min(100%, var(--container-max));
   margin-inline: auto;
@@ -26,13 +26,14 @@ body { margin: 0; overflow-x: hidden; min-height: 100dvh; }
   }
 }
 
-/* 2) กันล้น */
+/* Media & tables never overflow */
 :where(img, svg, canvas, video){ max-width: 100%; height: auto; display: block; }
 :where(table, .table, .data-grid){ display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-/* 3) หน้า Login: จริง ๆ ต้องกึ่งกลางและไม่ถูกคอลัมน์ขวาดัน */
+/* Login/Auth: perfectly centered + safe on iOS */
 :where(.login, .auth, .login-page, .auth-page){
-  min-height: 100dvh;
+  min-height: 100dvh;               /* modern */
+  min-height: -webkit-fill-available; /* iOS fallback */
   display: grid;
   align-content: center;
   justify-items: center;
@@ -43,7 +44,7 @@ body { margin: 0; overflow-x: hidden; min-height: 100dvh; }
   margin-inline: auto;
 }
 
-/* 4) ซ่อนแถบ/การ์ด/ภาพตกแต่งทางขวา ที่ทำให้เกิดพื้นที่ว่างใหญ่บนจอกลาง */
+/* Hide decorative right column < 1600px for all relevant pages */
 @media (max-width: 1600px){
   :where(.auth [class*="promo"], .auth [class*="banner"], .login [class*="promo"], .login [class*="banner"],
          .auth [class*="right"], .login [class*="right"], .auth [class*="aside"], .login [class*="aside"],
@@ -52,48 +53,53 @@ body { margin: 0; overflow-x: hidden; min-height: 100dvh; }
   }
 }
 
-/* 5) โครง Layout + Sidebar */
+/* Sidebar layout */
 :where(.layout, .app-layout, .shell){
   display: grid;
-  grid-template-columns: minmax(0, 1fr); /* จอเล็ก: คอลัมน์เดียว */
+  grid-template-columns: minmax(0, 1fr); /* mobile-first */
   gap: var(--gap);
 }
 @media (min-width: 1024px){
   :where(.layout.with-sidebar, .app-layout.with-sidebar, .shell.with-sidebar,
          .layout.has-sidebar, .shell.has-sidebar){
-    grid-template-columns: 260px minmax(0, 1fr); /* sidebar + content */
+    grid-template-columns: 260px minmax(0, 1fr);
     align-items: start;
   }
 }
-:where(.sidebar, .sidenav, .left-nav){ max-width: 100%; }
+.sidebar{ position: sticky; top: calc(var(--app-header-h, 64px) + env(safe-area-inset-top)); max-width: 100%; }
 
-/* 6) กริดการ์ด KPI/Widgets – ใช้พื้นที่จอ 13" ให้คุ้ม */
+/* KPI/Card grids */
 :where(.cards, .card-grid, .widgets, .kpi-grid, .dashboard-cards){
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--card-min)), 1fr));
   gap: var(--gap);
 }
-/* เพิ่มกรณีพิเศษบนจอระหว่าง 1200–1400 ให้ชิด 3 คอลัมน์ได้พอดี */
-@media (min-width: 1200px) and (max-width: 1440px){
+/* Make 1280–1440 nicely filled (3 cols typical on MacBook 13") */
+@media (min-width:1200px) and (max-width:1440px){
   :where(.cards, .card-grid, .widgets, .kpi-grid, .dashboard-cards){
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0,1fr));
   }
 }
 
-/* 7) จังหวะเว้นวรรคแนวตั้ง */
+/* Vertical rhythm */
 :where(section, .section, .page-header, .group, .stack){ margin-block: clamp(16px, 4vh, 40px); }
 
-/* 8) ปุ่ม/อินพุตเต็มแถวบนจอเล็ก (ไม่แตะโทนสี) */
+/* Guard against 100vw/full-bleed culprits */
+[style*="width: 100vw"], .w-100vw, .full-bleed{ width:100% !important; max-width:100% !important; }
+:where(.bg, .background, .decor, .gradient, [class*="gradient"]){ max-width:100%; overflow:clip; pointer-events:none; }
+
+/* Buttons full-width on small screens (no color changes) */
 :where(form .field, form .input, .btn, .button){ min-width: 0; }
-@media (max-width: 768px){ :where(.btn, .button){ width: 100%; } }
+@media (max-width:768px){ :where(.btn, .button){ width: 100%; } }
 
-/* 9) ป้องกัน anti-pattern 100vw + full-bleed ที่ทำให้เกิดสกรอลล์แนวนอน */
-:where([style*="width: 100vw"], [class*="full-bleed"]){ width: 100% !important; }
-:where(.bg, .background, .decor, .gradient, [class*="gradient"]){
-  max-width: 100%;
-  overflow: clip;
-  pointer-events: none;
-}
-
-/* 10) การ์ดไม่ล้น/ไม่ดันรอบข้าง */
+/* Cards safety */
 :where(.card, .panel, .widget, .box){ overflow: hidden; border-radius: inherit; }
+
+/* Brand fallbacks (only when needed—see JS toggling) */
+.brand-logo.is-bg-fallback{ background:center/contain no-repeat url("/static/img/sorni.png"); }
+.brand-logo.is-bg-fallback img{ opacity:0; width:0; height:0; }
+.auth-brand.is-bg-fallback{ background:center/contain no-repeat url("/static/img/sorni.png"); }
+.auth-brand.is-bg-fallback img{ opacity:0; width:0; height:0; }
+
+/* Scope uppercase to the intended wordmark only */
+.brand-name[data-word="sorrni"]{ text-transform: uppercase; }

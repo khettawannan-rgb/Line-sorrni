@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/static/styles/responsive-fixes.css" />
   <link rel="stylesheet" href="/static/styles/brand-login.css" />
   <!-- hotfix responsive 20251015 -->
-  <link rel="stylesheet" href="/static/css/hotfix-layout-20251015.css" />
+  <link rel="stylesheet" href="/static/css/hotfix-layout-20251015.css?v=3.1" />
 </head>
 <%
   const hideChrome = (typeof noChrome !== 'undefined') ? !!noChrome : false;
@@ -233,5 +233,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" crossorigin="anonymous" defer></script>
   <script src="/static/js/main.js" defer></script>
+  <!-- hotfix layout helper -->
+  <script src="/static/js/layout-hotfix-v3.js?v=3.1" defer></script>
 </body>
 </html>
