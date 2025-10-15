@@ -1,30 +1,74 @@
-<section class="auth-container">
-  <div class="auth-illustration">
-    <img src="/static/img/nila-logo.png" alt="Sorrni" />
-    <h1>Sorrni · Admin Console</h1>
-    <p>จัดการเวิร์กโฟลว์ PR/PO และการแจ้งเตือนจาก LINE ได้จากศูนย์ควบคุมเดียว</p>
-  </div>
+<section class="auth-shell">
+  <div class="auth-panel">
+    <div class="auth-brand">
+      <img src="/static/img/nila-logo.png" alt="Sorrni" />
+      <div>
+        <strong>Sorrni</strong>
+        <span>Admin Console</span>
+      </div>
+    </div>
 
-  <div class="auth-card">
-    <h2>เข้าสู่ระบบ</h2>
-    <% if (typeof error === 'string' && error) { %>
-      <div class="alert error"><%= error %></div>
-    <% } %>
-    <% if (isSuperAdminLocked) { %>
-      <div class="alert info">โหมด Super Admin ถูกล็อกไว้ คุณสามารถเข้าต่อได้จากอุปกรณ์ที่ได้รับอนุญาต</div>
-    <% } %>
+    <div class="auth-heading">
+      <h1>Welcome Back</h1>
+      <p>เข้าสู่ระบบเพื่อจัดการเวิร์กโฟลว์ PR/PO และประสบการณ์ลูกค้าบน LINE ได้อย่างครบวงจร</p>
+    </div>
+
+    <div class="auth-tabs" role="tablist" aria-label="Authentication mode">
+      <button type="button" class="auth-tab is-active" aria-selected="true">Sign In</button>
+      <button type="button" class="auth-tab" aria-selected="false" disabled>Sign Up</button>
+    </div>
+
     <form method="post" action="/admin/login" class="auth-form">
       <input type="hidden" name="redirect" value="<%= redirect || '/admin' %>" />
-      <div class="field">
-        <label for="username">Username</label>
-        <input id="username" name="username" type="text" autocomplete="username" required />
+
+      <% if (typeof error === 'string' && error) { %>
+        <div class="alert error"><%= error %></div>
+      <% } %>
+      <% if (isSuperAdminLocked) { %>
+        <div class="alert info">โหมด Super Admin ถูกล็อกไว้ คุณสามารถเข้าต่อได้จากอุปกรณ์ที่ได้รับอนุญาต</div>
+      <% } %>
+
+      <div class="field has-icon">
+        <label for="username">Email Address</label>
+        <div class="input-wrap">
+          <span class="input-icon" aria-hidden="true">✉️</span>
+          <input id="username" name="username" type="text" autocomplete="username" placeholder="admin@yourcompany.com" required />
+        </div>
       </div>
-      <div class="field">
+
+      <div class="field has-icon">
         <label for="password">Password</label>
-        <input id="password" name="password" type="password" autocomplete="current-password" required />
+        <div class="input-wrap">
+          <span class="input-icon" aria-hidden="true">🔒</span>
+          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
+        </div>
       </div>
+
       <button type="submit" class="btn primary btn-block">เข้าสู่ระบบ</button>
     </form>
-    <p class="auth-footnote">ปัญหาในการล็อกอิน? ติดต่อผู้ดูแลระบบของคุณ</p>
+
+    <div class="auth-alt">
+      <span>หรือเข้าสู่ระบบด้วย</span>
+      <div class="auth-alt__buttons">
+        <button type="button" class="btn ghost" aria-label="Continue with Google">G</button>
+        <button type="button" class="btn ghost" aria-label="Continue with Apple"></button>
+        <button type="button" class="btn ghost" aria-label="Continue with Facebook">f</button>
+      </div>
+    </div>
+
+    <p class="auth-footnote">
+      ปัญหาในการล็อกอิน? ติดต่อผู้ดูแลระบบของคุณ
+    </p>
   </div>
+
+  <aside class="auth-visual" aria-hidden="true">
+    <div class="auth-visual__glass">
+      <div class="auth-visual__badge">
+        <span>Smart Ops</span>
+        <strong>Efficiency Mode</strong>
+      </div>
+      <img src="/static/img/sorni.png" alt="" />
+      <p>จัดระเบียบงานจัดซื้อ กำกับการแจ้งเตือน และติดตามสรุปรายวันได้ในคลิกเดียว</p>
+    </div>
+  </aside>
 </section>

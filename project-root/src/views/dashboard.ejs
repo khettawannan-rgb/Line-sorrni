@@ -1,37 +1,9 @@
 <!-- project-root/src/views/dashboard.ejs -->
 <% const fmtCount = (val) => Number(val || 0).toLocaleString('th-TH'); %>
-<% const fmtTons = (val, opts = {}) => Number(val || 0).toLocaleString('th-TH', { minimumFractionDigits: opts.min ?? 0, maximumFractionDigits: opts.max ?? 2 }); %>
-<% const isLitreProduct = (name = '', unit = '') => /น้ำมันเตา/i.test(String(name)) || /ลิตร/.test(String(unit)); %>
-<% const formatQuantity = (name, unit, tons) => {
-     const liter = isLitreProduct(name, unit);
-     const value = liter ? Number(tons || 0) * 1000 : Number(tons || 0);
-     const decimals = liter ? 0 : 2;
-     return {
-       value,
-       unit: liter ? 'ลิตร' : 'ตัน',
-       formatted: Number(value || 0).toLocaleString('th-TH', {
-         minimumFractionDigits: 0,
-         maximumFractionDigits: decimals,
-       }),
-     };
-   }; %>
+<% const fmtPercent = (ratio) => `${Math.round(Number(ratio || 0) * 100)}%`; %>
 <% const summaryTimestamp = new Date().toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }); %>
-<% const provinceDataJSON = JSON.stringify(provinceMap || []); %>
-<% const provinceTopList = Array.isArray(provinceMapTop) ? provinceMapTop : []; %>
-<% const provinceStats = provinceMapStats || { totalLocations: 0, uniqueUsers: 0, totalProvinces: 0, provincesWithCoords: 0, lastUpdatedAt: null }; %>
-<% const hasProvinceCoords = Number(provinceStats.provincesWithCoords || 0) > 0; %>
 <% const chatStats = chatUserStats || { active7d: 0, new7d: 0, returning7d: 0, active30d: 0, totalUsers: 0, messages7d: 0, messagesTotal: 0 }; %>
-<% const consentTotals = consentStatusSummary || {}; %>
-<% const chatTrendJSON = JSON.stringify(chatTrend || []); %>
-<% const chatTopicTopJSON = JSON.stringify((chat.topicSummary || []).slice(0, 5)); %>
-<% const consentStatusJSON = JSON.stringify(consentTotals); %>
-<% const behavior =
-     (typeof dashboardBehavior !== 'undefined' && dashboardBehavior !== null)
-       ? dashboardBehavior
-       : (locals.dashboardBehavior || {}); %>
-
-<%
-const sampleInteractionSeries = [
+<% const fallbackTrendSeries = [
   { date: '2024-09-01', messageCount: 18, uniqueUsers: 7 },
   { date: '2024-09-02', messageCount: 22, uniqueUsers: 8 },
   { date: '2024-09-03', messageCount: 24, uniqueUsers: 9 },
@@ -42,1499 +14,251 @@ const sampleInteractionSeries = [
   { date: '2024-09-08', messageCount: 29, uniqueUsers: 11 },
   { date: '2024-09-09', messageCount: 35, uniqueUsers: 13 },
   { date: '2024-09-10', messageCount: 32, uniqueUsers: 12 },
-];
+]; %>
+<% const trendSeries = Array.isArray(chatTrend) && chatTrend.length ? chatTrend : fallbackTrendSeries; %>
+<% const trendSeriesJSON = JSON.stringify(trendSeries.slice(-14)); %>
+<% const provinceStats = provinceMapStats || {}; %>
+<% const topProvinces = (provinceMapTop || []).slice(0, 5); %>
+<% const currentUser =
+     (typeof user !== 'undefined' && user)
+       ? user
+       : (locals && locals.user ? locals.user : null); %>
+<% const dashboardDisplayName =
+     (currentUser && (currentUser.fullName || currentUser.displayName || currentUser.username))
+       ? (currentUser.fullName || currentUser.displayName || currentUser.username)
+       : 'ทีม Sorrni'; %>
+<% const focusAreas = [
+  { label: 'On-time Delivery', ratio: provinceStats?.onTimeRate ?? 0.72 },
+  { label: 'Invoice Accuracy', ratio: provinceStats?.accuracyRate ?? 0.63 },
+  { label: 'Customer Satisfaction', ratio: (chatStats?.satisfactionRate ?? 0.81) },
+  { label: 'Open Issues Resolved', ratio: provinceStats?.issueCloseRate ?? 0.58 },
+]; %>
+<% const meetings = [
+  { title: 'Quick Daily Sync', date: 'Tue, 16 Jul', time: '08:30', channel: 'Zoom', href: '#daily-sync' },
+  { title: 'Vendor Check-in', date: 'Tue, 16 Jul', time: '11:00', channel: 'Google Meet', href: '#vendor-call' },
+  { title: 'PR Approval Board', date: 'Tue, 16 Jul', time: '15:30', channel: 'Teams', href: '#pr-board' },
+  { title: 'Customer Insight Review', date: 'Wed, 17 Jul', time: '09:00', channel: 'Zoom', href: '#insight-review' },
+]; %>
+<% const quickActions = [
+  { label: 'Upload Orders', description: 'อัปโหลด Excel รายการสั่งซื้อ', href: '/admin/upload', icon: '⤴️' },
+  { label: 'Send Daily Summary', description: 'ส่งสรุปประจำวันหา LINE ลูกค้า', href: '/admin/tools/send-daily', icon: '💬' },
+  { label: 'Manage Members', description: 'ผูกบัญชีพนักงานกับบริษัท', href: '/admin/members', icon: '👥' },
+  { label: 'Rich Menu Studio', description: 'อัปเดตเมนูและ CTA', href: '/admin/richmenu', icon: '🧭' },
+]; %>
 
-const sampleHeatmap = [
-  { dow: 1, hour: 9, volume: 12 },
-  { dow: 1, hour: 11, volume: 9 },
-  { dow: 2, hour: 10, volume: 16 },
-  { dow: 2, hour: 13, volume: 10 },
-  { dow: 3, hour: 14, volume: 19 },
-  { dow: 3, hour: 16, volume: 13 },
-  { dow: 4, hour: 9, volume: 14 },
-  { dow: 4, hour: 15, volume: 11 },
-  { dow: 5, hour: 10, volume: 18 },
-  { dow: 6, hour: 12, volume: 15 },
-];
-
-const sampleSentimentTrend = [
-  { date: '2024-09-01', positive: 14, neutral: 6, negative: 2 },
-  { date: '2024-09-02', positive: 16, neutral: 5, negative: 3 },
-  { date: '2024-09-03', positive: 18, neutral: 4, negative: 3 },
-  { date: '2024-09-04', positive: 17, neutral: 6, negative: 4 },
-  { date: '2024-09-05', positive: 19, neutral: 5, negative: 3 },
-  { date: '2024-09-06', positive: 22, neutral: 4, negative: 2 },
-  { date: '2024-09-07', positive: 21, neutral: 5, negative: 3 },
-  { date: '2024-09-08', positive: 20, neutral: 6, negative: 4 },
-  { date: '2024-09-09', positive: 24, neutral: 5, negative: 2 },
-  { date: '2024-09-10', positive: 23, neutral: 6, negative: 3 },
-];
-
-const sampleIntentStack = [
-  { week: '2024-W35', category: 'Inquiry', count: 48 },
-  { week: '2024-W35', category: 'Order', count: 36 },
-  { week: '2024-W35', category: 'Complaint', count: 12 },
-  { week: '2024-W35', category: 'Support', count: 22 },
-  { week: '2024-W35', category: 'Other', count: 8 },
-  { week: '2024-W36', category: 'Inquiry', count: 54 },
-  { week: '2024-W36', category: 'Order', count: 39 },
-  { week: '2024-W36', category: 'Complaint', count: 15 },
-  { week: '2024-W36', category: 'Support', count: 27 },
-  { week: '2024-W36', category: 'Other', count: 10 },
-];
-
-const sampleKeywordCloud = [
-  { text: 'ใบสั่งซื้อ', weight: 32 },
-  { text: 'จัดส่ง', weight: 24 },
-  { text: 'รับของ', weight: 18 },
-  { text: 'โครงการ', weight: 15 },
-  { text: 'ราคา', weight: 21 },
-  { text: 'เครดิต', weight: 12 },
-  { text: 'ติดตาม', weight: 19 },
-  { text: 'ตารางส่ง', weight: 14 },
-  { text: 'ใบเสนอราคา', weight: 17 },
-  { text: 'ยอดค้าง', weight: 11 },
-];
-
-const sampleSentimentCloud = {
-  positive: [
-    { text: 'รวดเร็ว', weight: 20 },
-    { text: 'ขอบคุณ', weight: 18 },
-    { text: 'เยี่ยม', weight: 16 },
-    { text: 'สะดวก', weight: 14 },
-    { text: 'บริการดี', weight: 12 },
-    { text: 'ครบถ้วน', weight: 10 },
-    { text: 'ประทับใจ', weight: 9 },
-    { text: 'เรียบร้อย', weight: 8 },
-    { text: 'ถูกต้อง', weight: 7 },
-    { text: 'เป็นกันเอง', weight: 6 },
-  ],
-  negative: [
-    { text: 'ล่าช้า', weight: 19 },
-    { text: 'ผิดนัด', weight: 16 },
-    { text: 'ยังไม่ส่ง', weight: 15 },
-    { text: 'ติดต่อยาก', weight: 13 },
-    { text: 'ขาดสินค้า', weight: 11 },
-    { text: 'แจ้งเตือน', weight: 10 },
-    { text: 'ตรวจสอบ', weight: 9 },
-    { text: 'ปัญหา', weight: 8 },
-    { text: 'เคลม', weight: 7 },
-    { text: 'รอคอนเฟิร์ม', weight: 6 },
-  ],
-};
-
-const sampleFunnel = [
-  { period: '2024-W35', stage: 'Inquiry', count: 128 },
-  { period: '2024-W35', stage: 'Quote', count: 102 },
-  { period: '2024-W35', stage: 'PurchaseOrder', count: 78 },
-  { period: '2024-W35', stage: 'Payment', count: 61 },
-  { period: '2024-W35', stage: 'Delivered', count: 54 },
-  { period: '2024-W36', stage: 'Inquiry', count: 134 },
-  { period: '2024-W36', stage: 'Quote', count: 110 },
-  { period: '2024-W36', stage: 'PurchaseOrder', count: 84 },
-  { period: '2024-W36', stage: 'Payment', count: 69 },
-  { period: '2024-W36', stage: 'Delivered', count: 58 },
-];
-
-const sampleAgentResponse = [
-  { agent_id: 'AG01', name: 'Ratchaphon.Don⚙️⚙️⚙️', avgFirstReplySec: 115, medianFirstReplySec: 92, p90FirstReplySec: 210, slaPct: 0.94 },
-  { agent_id: 'AG02', name: '🐧Rabbit_Bear🐧', avgFirstReplySec: 148, medianFirstReplySec: 120, p90FirstReplySec: 260, slaPct: 0.88 },
-  { agent_id: 'AG03', name: 'PM ภาคิน(เท็ด) (KRR)', avgFirstReplySec: 132, medianFirstReplySec: 104, p90FirstReplySec: 230, slaPct: 0.91 },
-  { agent_id: 'AG04', name: 'PUY ํ', avgFirstReplySec: 165, medianFirstReplySec: 138, p90FirstReplySec: 310, slaPct: 0.82 },
-  { agent_id: 'AG05', name: '💕Tonaor💕', avgFirstReplySec: 189, medianFirstReplySec: 150, p90FirstReplySec: 340, slaPct: 0.79 },
-  { agent_id: 'AG06', name: 'Man MinKhat', avgFirstReplySec: 124, medianFirstReplySec: 101, p90FirstReplySec: 216, slaPct: 0.9 },
-  { agent_id: 'AG07', name: '💚SP.KRR💚', avgFirstReplySec: 172, medianFirstReplySec: 143, p90FirstReplySec: 320, slaPct: 0.84 },
-  { agent_id: 'AG08', name: 'ศิริชัย กลัดสอาด', avgFirstReplySec: 156, medianFirstReplySec: 133, p90FirstReplySec: 298, slaPct: 0.86 },
-  { agent_id: 'AG09', name: 'NOK SUMALEE', avgFirstReplySec: 141, medianFirstReplySec: 118, p90FirstReplySec: 244, slaPct: 0.89 },
-  { agent_id: 'AG10', name: 'anndew3.กิตรุ่งเรือง', avgFirstReplySec: 167, medianFirstReplySec: 140, p90FirstReplySec: 305, slaPct: 0.83 },
-];
-
-const sampleAgentLeaderboard = [
-  { agent_id: 'AG01', name: 'Ratchaphon.Don⚙️⚙️⚙️', conversationCount: 64, avgFirstReplySec: 115, slaPct: 0.94, avgSentiment: 0.72 },
-  { agent_id: 'AG02', name: '🐧Rabbit_Bear🐧', conversationCount: 59, avgFirstReplySec: 148, slaPct: 0.88, avgSentiment: 0.65 },
-  { agent_id: 'AG03', name: 'PM ภาคิน(เท็ด) (KRR)', conversationCount: 61, avgFirstReplySec: 132, slaPct: 0.91, avgSentiment: 0.69 },
-  { agent_id: 'AG04', name: 'PUY ํ', conversationCount: 57, avgFirstReplySec: 165, slaPct: 0.82, avgSentiment: 0.62 },
-  { agent_id: 'AG05', name: '💕Tonaor💕', conversationCount: 55, avgFirstReplySec: 189, slaPct: 0.79, avgSentiment: 0.58 },
-  { agent_id: 'AG06', name: 'Man MinKhat', conversationCount: 53, avgFirstReplySec: 124, slaPct: 0.90, avgSentiment: 0.71 },
-  { agent_id: 'AG07', name: '💚SP.KRR💚', conversationCount: 52, avgFirstReplySec: 172, slaPct: 0.84, avgSentiment: 0.63 },
-  { agent_id: 'AG08', name: 'ศิริชัย กลัดสอาด', conversationCount: 51, avgFirstReplySec: 156, slaPct: 0.86, avgSentiment: 0.67 },
-  { agent_id: 'AG09', name: 'NOK SUMALEE', conversationCount: 49, avgFirstReplySec: 141, slaPct: 0.89, avgSentiment: 0.68 },
-  { agent_id: 'AG10', name: 'anndew3.กิตรุ่งเรือง', conversationCount: 47, avgFirstReplySec: 167, slaPct: 0.83, avgSentiment: 0.61 },
-];
-
-const sampleTopCustomers = [
-  { user_id: 'U1001', displayName: 'Coupé🇰🇷', messageCount: 42, sessionCount: 7, sentimentAvg: 0.68, engagementScore: 86 },
-  { user_id: 'U1002', displayName: 'Nuttinan', messageCount: 38, sessionCount: 6, sentimentAvg: 0.54, engagementScore: 79 },
-  { user_id: 'U1003', displayName: 'บุญส่ง', messageCount: 44, sessionCount: 8, sentimentAvg: 0.61, engagementScore: 91 },
-  { user_id: 'U1004', displayName: 'สมภูมิ', messageCount: 31, sessionCount: 5, sentimentAvg: 0.49, engagementScore: 73 },
-  { user_id: 'U1005', displayName: '🎄J_GiFT🎄', messageCount: 36, sessionCount: 6, sentimentAvg: 0.57, engagementScore: 84 },
-  { user_id: 'U1006', displayName: 'Chalomkarnyotha', messageCount: 29, sessionCount: 5, sentimentAvg: 0.46, engagementScore: 70 },
-  { user_id: 'U1007', displayName: 'พูล', messageCount: 33, sessionCount: 6, sentimentAvg: 0.59, engagementScore: 78 },
-  { user_id: 'U1008', displayName: 'Rotjamat', messageCount: 27, sessionCount: 4, sentimentAvg: 0.52, engagementScore: 66 },
-  { user_id: 'U1009', displayName: 'an ‘s', messageCount: 30, sessionCount: 5, sentimentAvg: 0.55, engagementScore: 74 },
-  { user_id: 'U1010', displayName: 'Somnuek 289', messageCount: 34, sessionCount: 6, sentimentAvg: 0.51, engagementScore: 80 },
-];
-
-const sampleRetention = [
-  { cohort: '2024-W32', weekOffset: 0, rate: 1.0 },
-  { cohort: '2024-W32', weekOffset: 1, rate: 0.76 },
-  { cohort: '2024-W32', weekOffset: 2, rate: 0.64 },
-  { cohort: '2024-W32', weekOffset: 3, rate: 0.56 },
-  { cohort: '2024-W33', weekOffset: 0, rate: 1.0 },
-  { cohort: '2024-W33', weekOffset: 1, rate: 0.72 },
-  { cohort: '2024-W33', weekOffset: 2, rate: 0.58 },
-  { cohort: '2024-W33', weekOffset: 3, rate: 0.49 },
-  { cohort: '2024-W34', weekOffset: 0, rate: 1.0 },
-  { cohort: '2024-W34', weekOffset: 1, rate: 0.69 },
-];
-
-const sampleChurn = [
-  { user_id: 'U2001', displayName: 'poon', lastSeen: '2024-08-28T09:30:00Z', gapDays: 12.2, sentimentTrend: -0.3 },
-  { user_id: 'U2002', displayName: 'pirustไพรัตน์มากุล', lastSeen: '2024-08-27T10:12:00Z', gapDays: 13.4, sentimentTrend: -0.1 },
-  { user_id: 'U2003', displayName: 'Khak', lastSeen: '2024-08-21T14:22:00Z', gapDays: 19.7, sentimentTrend: -0.4 },
-  { user_id: 'U2004', displayName: 'bus see', lastSeen: '2024-08-29T08:18:00Z', gapDays: 11.0, sentimentTrend: -0.2 },
-  { user_id: 'U2005', displayName: 'ฉลองการโยธา', lastSeen: '2024-08-24T16:08:00Z', gapDays: 15.8, sentimentTrend: -0.35 },
-  { user_id: 'U2006', displayName: 'Ko_phan.M', lastSeen: '2024-08-20T09:02:00Z', gapDays: 20.3, sentimentTrend: -0.25 },
-  { user_id: 'U2007', displayName: 'อดิคุณ แก้วคุณ', lastSeen: '2024-08-25T11:42:00Z', gapDays: 14.6, sentimentTrend: -0.28 },
-  { user_id: 'U2008', displayName: 'Aom ˚🐻🫧', lastSeen: '2024-08-30T13:15:00Z', gapDays: 9.9, sentimentTrend: -0.18 },
-  { user_id: 'U2009', displayName: 'Ratchaphon.Don⚙️⚙️⚙️', lastSeen: '2024-08-19T10:10:00Z', gapDays: 21.4, sentimentTrend: -0.32 },
-  { user_id: 'U2010', displayName: '🐧Rabbit_Bear🐧', lastSeen: '2024-08-23T07:52:00Z', gapDays: 16.5, sentimentTrend: -0.22 },
-];
-
-const sampleAnomalies = [
-  { date: '2024-09-01', metric: 'complaints', deltaSigma: 3.2, keyword: 'ล่าช้า' },
-  { date: '2024-09-02', metric: 'complaints', deltaSigma: 3.1, keyword: 'ยังไม่ส่ง' },
-  { date: '2024-09-03', metric: 'complaints', deltaSigma: 2.9, keyword: 'เคลม' },
-  { date: '2024-09-04', metric: 'negative_sentiment', deltaSigma: 3.4, keyword: 'ผิดนัด' },
-  { date: '2024-09-05', metric: 'complaints', deltaSigma: 3.0, keyword: 'แจ้งเตือน' },
-  { date: '2024-09-06', metric: 'negative_sentiment', deltaSigma: 3.5, keyword: 'ติดต่อยาก' },
-  { date: '2024-09-07', metric: 'complaints', deltaSigma: 3.3, keyword: 'ตรวจสอบ' },
-  { date: '2024-09-08', metric: 'negative_sentiment', deltaSigma: 3.1, keyword: 'คอนเฟิร์ม' },
-  { date: '2024-09-09', metric: 'complaints', deltaSigma: 3.6, keyword: 'ขาดสินค้า' },
-  { date: '2024-09-10', metric: 'negative_sentiment', deltaSigma: 3.2, keyword: 'ล่าช้า' },
-];
-
-const sampleNetwork = {
-  nodes: [
-    { id: 'U1001', label: 'Coupé🇰🇷', group: 'customer' },
-    { id: 'U1002', label: 'Nuttinan', group: 'customer' },
-    { id: 'U1003', label: 'บุญส่ง', group: 'customer' },
-    { id: 'U1004', label: 'สมภูมิ', group: 'customer' },
-    { id: 'U1005', label: '🎄J_GiFT🎄', group: 'customer' },
-    { id: 'AG01', label: 'Ratchaphon.Don⚙️⚙️⚙️', group: 'agent' },
-    { id: 'AG02', label: '🐧Rabbit_Bear🐧', group: 'agent' },
-    { id: 'AG03', label: 'PM ภาคิน(เท็ด) (KRR)', group: 'agent' },
-    { id: 'AG04', label: 'PUY ํ', group: 'agent' },
-    { id: 'AG05', label: '💕Tonaor💕', group: 'agent' },
-  ],
-  links: [
-    { source: 'U1001', target: 'AG01', conversations: 18 },
-    { source: 'U1002', target: 'AG02', conversations: 14 },
-    { source: 'U1003', target: 'AG03', conversations: 16 },
-    { source: 'U1004', target: 'AG02', conversations: 11 },
-    { source: 'U1005', target: 'AG01', conversations: 12 },
-    { source: 'U1001', target: 'AG04', conversations: 9 },
-    { source: 'U1003', target: 'AG05', conversations: 7 },
-    { source: 'U1002', target: 'AG03', conversations: 10 },
-    { source: 'U1004', target: 'AG05', conversations: 8 },
-    { source: 'U1005', target: 'AG04', conversations: 6 },
-  ],
-};
-%>
-
-<% const interactionSeries = (Array.isArray(behavior.timeSeries) && behavior.timeSeries.length) ? behavior.timeSeries : sampleInteractionSeries; %>
-<% const interactionSeriesJSON = JSON.stringify(interactionSeries); %>
-<% const heatmapData = (Array.isArray(behavior.heatmap) && behavior.heatmap.length) ? behavior.heatmap : sampleHeatmap; %>
-<% const heatmapJSON = JSON.stringify(heatmapData); %>
-<% const sentimentTrendData = (Array.isArray(behavior.sentimentTrend) && behavior.sentimentTrend.length) ? behavior.sentimentTrend : sampleSentimentTrend; %>
-<% const sentimentTrendJSON = JSON.stringify(sentimentTrendData); %>
-<% const intentStackData = (Array.isArray(behavior.intentDistribution) && behavior.intentDistribution.length) ? behavior.intentDistribution : sampleIntentStack; %>
-<% const intentStackJSON = JSON.stringify(intentStackData); %>
-<% const keywordCloudData = (Array.isArray(behavior.keywordCloud) && behavior.keywordCloud.length) ? behavior.keywordCloud : sampleKeywordCloud; %>
-<% const keywordCloudJSON = JSON.stringify(keywordCloudData); %>
-<% const sentimentCloudData = (behavior.sentimentWordCloud && (behavior.sentimentWordCloud.positive?.length || behavior.sentimentWordCloud.negative?.length)) ? behavior.sentimentWordCloud : sampleSentimentCloud; %>
-<% const sentimentCloudJSON = JSON.stringify(sentimentCloudData); %>
-<% const funnelData = (Array.isArray(behavior.conversionFunnel) && behavior.conversionFunnel.length) ? behavior.conversionFunnel : sampleFunnel; %>
-<% const funnelJSON = JSON.stringify(funnelData); %>
-<% const agentResponseData = (Array.isArray(behavior.agentResponse) && behavior.agentResponse.length) ? behavior.agentResponse : sampleAgentResponse; %>
-<% const agentResponseJSON = JSON.stringify(agentResponseData); %>
-<% const agentLeaderboard = (Array.isArray(behavior.agentLeaderboard) && behavior.agentLeaderboard.length) ? behavior.agentLeaderboard : sampleAgentLeaderboard; %>
-<% const topCustomers = (Array.isArray(behavior.topCustomers) && behavior.topCustomers.length) ? behavior.topCustomers : sampleTopCustomers; %>
-<% const retentionData = (Array.isArray(behavior.retentionCohorts) && behavior.retentionCohorts.length) ? behavior.retentionCohorts : sampleRetention; %>
-<% const retentionJSON = JSON.stringify(retentionData); %>
-<% const churnList = (Array.isArray(behavior.churnRisks) && behavior.churnRisks.length) ? behavior.churnRisks : sampleChurn; %>
-<% const anomalyList = (Array.isArray(behavior.anomalies) && behavior.anomalies.length) ? behavior.anomalies : sampleAnomalies; %>
-<% const networkData = (behavior.networkGraph && Array.isArray(behavior.networkGraph.links) && behavior.networkGraph.links.length) ? behavior.networkGraph : sampleNetwork; %>
-<% const networkJSON = JSON.stringify(networkData); %>
-<% const networkNodeLabel = new Map(networkData.nodes.map((node) => [node.id, node.label || node.name || node.id])); %>
-<% const networkLinksSorted = (networkData.links || []).slice().sort((a, b) => (Number(b.conversations || 0) - Number(a.conversations || 0))).slice(0, 10); %>
-<% const sentimentTotals = sentimentTrendData.reduce((acc, row) => ({
-  positive: acc.positive + Number(row.positive || row.pos || 0),
-  neutral: acc.neutral + Number(row.neutral || row.neu || 0),
-  negative: acc.negative + Number(row.negative || row.neg || 0),
-}), { positive: 0, neutral: 0, negative: 0 }); %>
-<% const intentTotals = intentStackData.reduce((acc, row) => {
-  const key = row.category || row.intent || 'อื่น ๆ';
-  acc[key] = (acc[key] || 0) + Number(row.count || row.volume || 0);
-  return acc;
-}, {}); %>
-<% const funnelStages = ['Inquiry', 'Quote', 'PurchaseOrder', 'Payment', 'Delivered']; %>
-<% const funnelTotals = funnelStages.map((stage) => ({
-  stage,
-  count: funnelData.filter((row) => (row.stage || row.status || '').toLowerCase() === stage.toLowerCase()).reduce((sum, row) => sum + Number(row.count || row.value || 0), 0),
-})); %>
-<% const heatmapTopSlots = heatmapData.slice().sort((a, b) => Number(b.volume || b.count || 0) - Number(a.volume || a.count || 0)).slice(0, 5); %>
-<% const retentionSummary = retentionData.slice(0, 6); %>
-<% const filters = behavior.filters || {}; %>
-<% const logicModules = behavior.logicModules || [
-     { name: 'Intent Classification', description: 'Classify each message into inquiry/order/complaint etc.', query: 'POST /nlp/intent -> intents collection update' },
-     { name: 'Sentiment Analysis', description: 'Thai language polarity + strength using finetuned model', query: 'db.chat_messages.updateOne({_id}, {$set:{sentiment_label,...}})' },
-     { name: 'Entity Extraction', description: 'Product/PO/location/date extraction with NER+regex', query: 'SELECT entity, type FROM message_entities WHERE message_id=?' },
-     { name: 'User Profiling', description: 'RFM-like metrics per user', query: 'INSERT INTO user_profiles (user_id, recency_days, frequency_30d, avg_msg_len)...' },
-     { name: 'Engagement Scoring', description: 'Score f(message frequency, session length, sentiment)', query: 'db.users.updateOne({_id:user_id}, {$set:{engagement_score:score}})' },
-     { name: 'Response Efficiency', description: 'First reply time + SLA tracking', query: 'SELECT AVG(first_reply_seconds) FROM agent_metrics' },
-     { name: 'Conversation Clustering', description: 'Topic modeling with BERTopic/HDBSCAN', query: 'INSERT INTO conversation_topics (conversation_id, cluster_id)' },
-     { name: 'Churn Prediction', description: 'Predict inactivity risk', query: 'UPDATE users SET churn_score=? WHERE user_id=?' },
-     { name: 'Next Best Action', description: 'Rule/ML recommended action', query: 'INSERT INTO nba_recommendations (user_id, action, reason)' },
-     { name: 'Anomaly Detection', description: 'Detect spikes using rolling z-score', query: 'INSERT INTO anomalies (date, metric, delta_sigma)' },
-   ]; %>
-
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  integrity="sha256-sA+e2jXUgXu3kGEXHOIa0GpCCMbnYIY01tZ5JfL0z0k="
-  crossorigin="" />
-<script
-  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  integrity="sha256-o9N1j7kC3U1JzDvsPWVn0AqfZbG9JQIvIDi64tT0+3s="
-  crossorigin=""></script>
-
-
-
-<div class="dashboard-shell dashboard-light">
-  <aside class="dashboard-sidebar">
-    <div class="sidebar-brand">
-      <div class="sidebar-logo">
-        <img src="/static/img/sorni.png" alt="Sorni" />
+<div class="dashboard-canvas">
+  <main class="dashboard-main">
+    <header class="dash-hero">
+      <div class="dash-hero__intro">
+        <span class="dash-pill">Sorrni Workspace</span>
+        <h1>ยินดีต้อนรับกลับ, <%= dashboardDisplayName %></h1>
+        <p>ข้อมูลปฏิบัติการล่าสุดอัปเดตเมื่อ <strong><%= summaryTimestamp %></strong></p>
       </div>
-      <span class="sidebar-title">Sorni</span>
-    </div>
-    <nav class="sidebar-nav">
-      <a href="#overview" class="active">
-        <span class="icon">🏠</span>
-        <span>ภาพรวม</span>
-      </a>
-      <a href="#excel">
-        <span class="icon">📦</span>
-        <span>สินค้า</span>
-      </a>
-      <a href="#companies">
-        <span class="icon">🏢</span>
-        <span>บริษัท</span>
-      </a>
-      <a href="#customer-insights" data-tab-jump="behavior">
-        <span class="icon">💬</span>
-        <span>พฤติกรรมผู้ใช้</span>
-      </a>
-      <a href="#tools">
-        <span class="icon">🛠️</span>
-        <span>เครื่องมือ</span>
-      </a>
-    </nav>
-    <div class="sidebar-meta">
-      <span>อัปเดตล่าสุด</span>
-      <strong><%= summaryTimestamp %></strong>
-    </div>
-    <div class="sidebar-footer">
-      <p>เข้าถึงข้อมูลหลักและสถานะของงานได้แบบเรียลไทม์</p>
-    </div>
-  </aside>
-
-  <div class="dashboard-main">
-    <header class="dashboard-top" id="overview" data-dashboard-section="core behavior">
-      <div>
-        <h1>รายงานภาพรวม</h1>
-        <p>ข้อมูลสรุปการผลิต การจัดส่ง และการสนับสนุนลูกค้าจากทุกภูมิภาค</p>
-      </div>
-      <div class="top-actions">
-        <div class="top-search">
-          <span class="icon">🔍</span>
-          <input type="search" placeholder="ค้นหารายงานหรือบริษัท" />
+      <div class="dash-hero__actions">
+        <div class="dash-search">
+          <span aria-hidden="true">🔍</span>
+          <input type="search" placeholder="ค้นหารายงาน บริษัท หรือผู้ใช้งาน" aria-label="ค้นหารายงาน" />
         </div>
-        <button class="btn primary">ส่งออกรายงาน</button>
+        <a class="btn primary" href="/admin/upload">สร้างรายงานใหม่</a>
       </div>
     </header>
 
-    <section class="dashboard-tabs">
-      <button type="button" class="is-active" data-dashboard-tab="core">มุมมองหลัก</button>
-      <button type="button" data-dashboard-tab="behavior">พฤติกรรมผู้ใช้</button>
-    </section>
-
-    <section class="panel-block panel-insights" id="customer-insights" data-dashboard-section="behavior">
-      <div class="panel-heading">
-        <div>
-          <h2>Customer Insights</h2>
-          <p>ภาพรวมพฤติกรรมและการตอบรับจาก LINE Official Account</p>
-        </div>
-        <div class="insight-meta">ข้อมูลย้อนหลัง 14 วันล่าสุด</div>
-      </div>
-      <div class="panel-body panel__body insight-body" data-behavior-root>
-        <div class="filter-block" data-filter-wrapper>
-          <div class="filter-toolbar">
-            <button type="button" class="btn ghost small" data-filter-toggle aria-expanded="true">ซ่อนฟิลเตอร์</button>
-          </div>
-          <form class="insight-filters glass" data-filter-section>
-            <div>
-              <label>ช่วงเวลา</label>
-              <select name="dateRange">
-                <% (filters.dateRanges || ['7d','14d','30d','90d','custom']).forEach(range => { %>
-                  <option value="<%= range %>"><%= range.toUpperCase() %></option>
-                <% }) %>
-              </select>
-            </div>
-            <div>
-              <label>Channel</label>
-              <select name="channel">
-                <option value="">ทั้งหมด</option>
-                <% (filters.channels || ['1-1','group','portal']).forEach(ch => { %>
-                  <option value="<%= ch %>"><%= ch %></option>
-                <% }) %>
-              </select>
-            </div>
-            <div>
-              <label>Project</label>
-              <select name="project">
-                <option value="">ทั้งหมด</option>
-                <% (filters.projects || []).forEach(project => { %>
-                  <option value="<%= project %>"><%= project %></option>
-                <% }) %>
-              </select>
-            </div>
-            <div>
-              <label>Customer Code</label>
-              <input type="text" name="customer_code" placeholder="ระบุรหัสลูกค้า" />
-            </div>
-            <div>
-              <label>Agent</label>
-              <select name="agent">
-                <option value="">ทั้งหมด</option>
-                <% (filters.agents || []).forEach(agent => { %>
-                  <option value="<%= agent.id || agent %>"><%= agent.name || agent %></option>
-                <% }) %>
-              </select>
-            </div>
-            <div>
-              <label>Intent</label>
-              <select name="intent">
-                <option value="">ทั้งหมด</option>
-                <% (filters.intents || []).forEach(intent => { %>
-                  <option value="<%= intent %>"><%= intent %></option>
-                <% }) %>
-              </select>
-            </div>
-            <div>
-              <label>Sentiment</label>
-              <select name="sentiment">
-                <option value="">ทั้งหมด</option>
-                <option value="positive">Positive</option>
-                <option value="neutral">Neutral</option>
-                <option value="negative">Negative</option>
-              </select>
-            </div>
-            <div class="filter-actions">
-              <button type="submit" class="btn primary">Apply</button>
-              <button type="button" class="btn ghost" data-export="json">Export JSON</button>
-              <button type="button" class="btn ghost" data-export="csv">Export CSV</button>
-            </div>
-          </form>
-        </div>
-        <div class="insight-metrics row-kpi">
-          <article class="metric-card primary">
-            <span class="metric-label">ผู้ใช้ Active (7 วัน)</span>
-            <div class="metric-value"><%= fmtCount(chatStats.active7d) %><span>คน</span></div>
-            <span class="metric-sub">รวมทั้งหมด <%= fmtCount(chatStats.totalUsers) %> คน</span>
-          </article>
-          <article class="metric-card">
-            <span class="metric-label">ผู้ใช้ใหม่ (7 วัน)</span>
-            <div class="metric-value"><%= fmtCount(chatStats.new7d) %><span>คน</span></div>
-            <span class="metric-sub"><%= chatStats.active7d ? ((chatStats.new7d / Math.max(chatStats.active7d, 1)) * 100).toFixed(1) : '0.0' %>% ของผู้ใช้ที่ active</span>
-          </article>
-          <article class="metric-card">
-            <span class="metric-label">ผู้ใช้กลับมา</span>
-            <div class="metric-value"><%= fmtCount(chatStats.returning7d) %><span>คน</span></div>
-            <span class="metric-sub">กลับมาพูดคุยอีกครั้งใน 7 วัน</span>
-          </article>
-          <article class="metric-card">
-            <span class="metric-label">ข้อความ (7 วัน)</span>
-            <div class="metric-value"><%= fmtCount(chatStats.messages7d) %><span>ข้อความ</span></div>
-            <span class="metric-sub">สะสมทั้งหมด <%= fmtCount(chatStats.messagesTotal) %> ข้อความ</span>
-          </article>
-        </div>
-        <details class="metric-definitions">
-          <summary>Metric Definitions</summary>
-          <ul>
-            <li><strong>Active Users (7d)</strong> = COUNT(DISTINCT user_id) WHERE message_ts &ge; (CURRENT_DATE - INTERVAL '7 day')</li>
-            <li><strong>Returning Users</strong> = Active 7d AND EXISTS message between 8–30 days ago</li>
-            <li><strong>First Reply Time</strong> = MIN(agent_ts) - MIN(user_ts) per conversation</li>
-            <li><strong>SLA%</strong> = conversations WHERE first_reply_time &le; SLA target ÷ total conversations</li>
-            <li><strong>Retention</strong> = returning_users / cohort_users per week offset</li>
-            <li><strong>Churn Risk</strong> = gap &gt; 2× median gap OR last 3 sentiments &le; 0</li>
-          </ul>
-        </details>
-        <div class="insight-row row-timeseries">
-          <div class="card glass insight-chart chart-card full" data-chart-trend='<%- interactionSeriesJSON %>' data-drilldown="interaction-volume">
-            <div class="card-heading chart-card__header">
-              <h3>แนวโน้มข้อความเข้า/ออกตามวัน</h3>
-              <span class="muted">สลับมุมมอง 7 / 14 / 30 / 90 วัน</span>
-            </div>
-            <div class="chart-frame chart-card__body">
-              <canvas id="chat-trend-chart" height="240"></canvas>
-              <div class="chart-fallback">
-                <strong>Top Activity</strong>
-                <ul>
-                  <% interactionSeries.slice(-5).forEach((row) => { %>
-                    <li>
-                      <strong><%= new Date(`${row.date}T00:00:00`).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) %></strong>
-                      · <%= Number(row.messageCount || 0).toLocaleString('th-TH') %> ข้อความ ·
-                      <%= Number(row.uniqueUsers || 0).toLocaleString('th-TH') %> ผู้ใช้
-                    </li>
-                  <% }) %>
-                </ul>
-              </div>
-            </div>
-            <p class="chart-note">จำนวนข้อความเข้า-ออกและผู้ใช้ไม่ซ้ำในแต่ละวัน</p>
-            <details class="card-foot chart-card__footer query-toggle">
-              <summary>ดูสูตร / Query</summary>
-              <pre><code>SELECT date::date AS d,
-SUM(CASE WHEN direction='in' THEN 1 ELSE 0 END) AS inbound,
-SUM(CASE WHEN direction='out' THEN 1 ELSE 0 END) AS outbound
-FROM fact_chat_message
-WHERE timestamp BETWEEN $start AND $end
-GROUP BY 1 ORDER BY 1</code></pre>
-            </details>
-          </div>
-          <div class="card glass insight-chart chart-card" data-heatmap='<%- heatmapJSON %>' data-drilldown="keyword-intent-heatmap">
-            <div class="card-heading chart-card__header">
-              <h3>Heatmap ชั่วโมงที่ใช้งาน</h3>
-              <span class="muted">จำนวนข้อความแบบ hour × weekday</span>
-            </div>
-            <div class="chart-frame chart-card__body">
-              <canvas id="chat-heatmap-chart" height="240"></canvas>
-              <div class="chart-fallback">
-                <strong>ช่วงเวลายอดนิยม</strong>
-                <ul>
-                  <% heatmapTopSlots.forEach((slot) => { %>
-                    <li>
-                      <strong>วัน <%= ['อา','จ','อ','พ','พฤ','ศ','ส'][Number(slot.dow || slot.day || 0)] || slot.dow %></strong>
-                      เวลา <%= String(slot.hour || slot.h || 0).padStart(2,'0') %>:00 ·
-                      <%= Number(slot.volume || slot.count || 0).toLocaleString('th-TH') %> ข้อความ
-                    </li>
-                  <% }) %>
-                </ul>
-              </div>
-            </div>
-            <p class="chart-note">ช่วงวันและเวลาที่ปริมาณแชทมากที่สุด (เข้ม=ข้อความมาก)</p>
-            <details class="card-foot chart-card__footer query-toggle">
-              <summary>ดูสูตร / Query</summary>
-              <pre><code>SELECT EXTRACT(DOW FROM timestamp) AS dow,
-EXTRACT(HOUR FROM timestamp) AS hour,
-COUNT(*) AS volume
-FROM fact_chat_message
-WHERE timestamp BETWEEN $start AND $end
-GROUP BY 1,2</code></pre>
-            </details>
-          </div>
-          <div class="card glass insight-chart chart-card" data-sentiment='<%- sentimentTrendJSON %>' data-drilldown="sentiment-trend">
-            <div class="card-heading chart-card__header">
-              <h3>Sentiment Distribution</h3>
-              <span class="muted">สัดส่วนข้อความเชิงบวก/กลาง/ลบ ล่าสุด 14 วัน</span>
-            </div>
-            <div class="chart-frame sentiment">
-              <canvas id="sentiment-pie-chart" height="220"></canvas>
-              <div class="chart-fallback">
-                <strong>รวม 14 วัน</strong>
-                <ul>
-                  <li>Positive · <%= sentimentTotals.positive.toLocaleString('th-TH') %> ข้อความ</li>
-                  <li>Neutral · <%= sentimentTotals.neutral.toLocaleString('th-TH') %> ข้อความ</li>
-                  <li>Negative · <%= sentimentTotals.negative.toLocaleString('th-TH') %> ข้อความ</li>
-                </ul>
-              </div>
-            </div>
-            <p class="chart-note">สัดส่วนข้อความเชิงบวก/กลาง/ลบ ในรอบ 14 วันล่าสุด</p>
-            <details class="card-foot chart-card__footer query-toggle">
-              <summary>ดูสูตร / Query</summary>
-              <pre><code>SELECT sentiment_label,
-COUNT(*) AS cnt,
-AVG(sentiment_score) AS avg_score
-FROM fact_chat_message
-WHERE timestamp BETWEEN $start AND $end
-GROUP BY 1</code></pre>
-            </details>
-          </div>
-        </div>
-
-        <div class="insight-row row-intents">
-          <div class="card glass insight-chart chart-card" data-intent-stack='<%- intentStackJSON %>' data-drilldown="intent-distribution">
-            <div class="card-heading chart-card__header">
-              <h3>Intent Distribution</h3>
-              <span class="muted">สัดส่วน Inquiry / Order / Complaint / อื่น ๆ รายสัปดาห์</span>
-            </div>
-            <div class="chart-frame chart-card__body">
-              <canvas id="intent-stack-chart" height="260"></canvas>
-              <div class="chart-fallback">
-                <strong>Intent ล่าสุด</strong>
-                <ul>
-                  <% Object.entries(intentTotals).slice(0,6).forEach(([label,value]) => { %>
-                    <li><strong><%= label %></strong> · <%= Number(value).toLocaleString('th-TH') %> ข้อความ</li>
-                  <% }) %>
-                </ul>
-              </div>
-            </div>
-            <p class="chart-note">เปรียบเทียบสัดส่วนข้อความแต่ละหมวด (Inquiry, Order, Complaint ฯลฯ) รายสัปดาห์</p>
-            <details class="card-foot chart-card__footer query-toggle">
-              <summary>ดูสูตร / Query</summary>
-              <pre><code>SELECT week_start, intent_category, COUNT(*)
-FROM fact_chat_message
-GROUP BY 1,2</code></pre>
-            </details>
-          </div>
-          <div class="card glass keyword-card" data-drilldown="top-keywords">
-            <div class="card-heading chart-card__header">
-              <h3>Top Keywords Cloud</h3>
-              <span class="muted">N-grams (stopwords removed)</span>
-            </div>
-            <div class="chart-frame keyword">
-              <div id="keyword-cloud" class="keyword-cloud" data-keyword-cloud='<%- keywordCloudJSON %>'></div>
-            </div>
-            <p class="chart-note">คำสำคัญที่ถูกกล่าวถึงบ่อยในบทสนทนาล่าสุด ขนาดคำแสดงความถี่</p>
-            <details class="card-foot chart-card__footer query-toggle">
-              <summary>ดูสูตร / Query</summary>
-              <pre><code>SELECT keyword, SUM(weight) AS score
-FROM keyword_stats
-WHERE period='current'
-GROUP BY 1
-ORDER BY score DESC LIMIT 200</code></pre>
-            </details>
-          </div>
-          <div class="card glass insight-chart chart-card" data-consent-status='<%- consentStatusJSON %>' data-drilldown="consent-status">
-            <div class="card-heading chart-card__header">
-              <h3>Consent Status</h3>
-              <span class="muted">Granted / Pending / Revoked</span>
-            </div>
-            <div class="chart-frame chart-card__body">
-              <canvas id="consent-status-chart" height="240"></canvas>
-            </div>
-            <p class="chart-note">สัดส่วนผู้ใช้ตามสถานะความยินยอมล่าสุดที่ระบบบันทึก</p>
-            <details class="card-foot chart-card__footer query-toggle">
-              <summary>ดูสูตร / Query</summary>
-              <pre><code>SELECT latest_status, COUNT(*)
-FROM consent_audit_latest
-GROUP BY 1</code></pre>
-            </details>
-          </div>
-          <div class="card glass sentiment-cloud" data-drilldown="sentiment-wordcloud">
-            <div class="card-heading chart-card__header">
-              <h3>Word Clouds แยกตาม Sentiment</h3>
-            </div>
-            <div class="sentiment-cloud-wrap" data-sentiment-cloud='<%- sentimentCloudJSON %>'>
-              <div class="sentiment-column" data-sentiment="positive">
-                <h4>Positive</h4>
-                <div class="cloud-list"></div>
-              </div>
-              <div class="sentiment-column" data-sentiment="negative">
-                <h4>Negative</h4>
-                <div class="cloud-list"></div>
-              </div>
-            </div>
-            <p class="chart-note">คำที่มักปรากฏในข้อความเชิงบวกและเชิงลบ เพื่อระบุสาเหตุของความพึงพอใจ/ไม่พอใจ</p>
-          </div>
-        </div>
-
-        <div class="insight-row row-agent">
-          <div class="card glass funnel-card" data-funnel='<%- funnelJSON %>' data-drilldown="conversion-funnel">
-            <div class="card-heading chart-card__header">
-              <h3>Conversion Funnel</h3>
-              <span class="muted">Inquiry → Quote → PO → Payment → Delivered</span>
-            </div>
-            <div class="chart-frame chart-card__body">
-              <canvas id="conversion-funnel-chart" height="260"></canvas>
-              <div class="chart-fallback">
-                <strong>จำนวนต่อขั้น</strong>
-                <ul>
-                  <% funnelTotals.forEach((item) => { %>
-                    <li><strong><%= item.stage %></strong> · <%= Number(item.count).toLocaleString('th-TH') %> รายการ</li>
-                  <% }) %>
-                </ul>
-              </div>
-            </div>
-            <p class="chart-note">ติดตามจำนวนเคสที่ไหลผ่านแต่ละขั้นจากคำถาม → ใบสั่งซื้อ → ส่งมอบ</p>
-            <details class="card-foot chart-card__footer query-toggle">
-              <summary>ดูสูตร / Query</summary>
-              <pre><code>SELECT stage, COUNT(*)
-FROM conversion_events
-WHERE event_ts BETWEEN $start AND $end
-GROUP BY stage
-ORDER BY stage_order</code></pre>
-            </details>
-          </div>
-          <div class="card glass insight-chart chart-card" data-agent-response='<%- agentResponseJSON %>' data-drilldown="agent-response">
-            <div class="card-heading chart-card__header">
-              <h3>Agent Response Time</h3>
-              <span class="muted">Avg / Median / P90 + SLA Target</span>
-            </div>
-            <div class="chart-frame chart-card__body">
-              <canvas id="agent-response-chart" height="260"></canvas>
-              <div class="chart-fallback">
-                <strong>ค่าเฉลี่ยตอบกลับ</strong>
-                <ul>
-                  <% agentResponseData.slice(0,6).forEach((agent) => { %>
-                    <li>
-                      <strong><%= agent.name || agent.agent_id %></strong>
-                      · <%= Number(agent.avgFirstReplySec || agent.avg || 0).toFixed(0) %>s · SLA <%= ((agent.slaPct || 0) * 100).toFixed(1) %>%
-                    </li>
-                  <% }) %>
-                </ul>
-              </div>
-            </div>
-            <p class="chart-note">เวลาเฉลี่ย/มัธยฐานการตอบกลับของแต่ละเอเจนต์ พร้อมสัดส่วนที่ทำ SLA ได้ทัน</p>
-            <details class="card-foot chart-card__footer query-toggle">
-              <summary>ดูสูตร / Query</summary>
-              <pre><code>SELECT agent_id,
-AVG(first_reply_sec) AS avg,
-PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY first_reply_sec) AS median,
-PERCENTILE_CONT(0.9) WITHIN GROUP(ORDER BY first_reply_sec) AS p90,
-AVG(CASE WHEN first_reply_sec &lt;= 300 THEN 1 ELSE 0 END) AS sla_pct
-FROM agent_metrics
-WHERE week_start BETWEEN $start AND $end
-GROUP BY agent_id</code></pre>
-            </details>
-          </div>
-          <div class="card glass" data-drilldown="agent-performance-table">
-            <div class="card-heading chart-card__header">
-              <h3>Agent Leaderboard</h3>
-              <span class="muted">เรียงตาม SLA% และ Sentiment</span>
-            </div>
-            <div class="table-wrap table-scroll">
-              <table class="table compact ghost">
-                <thead>
-                  <tr>
-                    <th>Agent</th>
-                    <th class="right">Conversations</th>
-                    <th class="right">First Reply (avg)</th>
-                    <th class="right">SLA%</th>
-                    <th class="right">Avg Sentiment</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% if (agentLeaderboard.length) { %>
-                    <% agentLeaderboard.forEach(agent => { %>
-                      <tr>
-                        <td><strong><%= agent.name || agent.agent_id %></strong></td>
-                        <td class="right"><%= fmtCount(agent.conversationCount) %></td>
-                        <td class="right"><%= (agent.avgFirstReplySec || 0).toFixed(1) %>s</td>
-                        <td class="right"><%= ((agent.slaPct || 0) * 100).toFixed(1) %>%</td>
-                        <td class="right"><%= (agent.avgSentiment || 0).toFixed(2) %></td>
-                      </tr>
-                    <% }) %>
-                  <% } else { %>
-                    <tr><td colspan="5" class="muted">ยังไม่มีข้อมูลเอเจนต์</td></tr>
-                  <% } %>
-                </tbody>
-              </table>
-            </div>
-            <p class="chart-note">ลูกค้าที่หายไปนานหรือมี sentiment ติดลบต่อเนื่อง ควรติดตามเชิงรุก</p>
-            <p class="chart-note">จัดอันดับจากจำนวนบทสนทนา ค่าเฉลี่ยตอบกลับ และคะแนนความรู้สึกโดยรวม</p>
-          </div>
-        </div>
-
-        <div class="insight-row row-engagement">
-          <div class="card glass" data-drilldown="customer-engagement">
-            <div class="card-heading chart-card__header">
-              <h3>Top Customers by Engagement</h3>
-              <span class="muted">Ranking โดย Frequency · Sessions · Sentiment</span>
-            </div>
-            <div class="table-wrap table-scroll">
-              <table class="table compact ghost">
-                <thead>
-                  <tr>
-                    <th>Customer</th>
-                    <th class="right">Messages</th>
-                    <th class="right">Sessions</th>
-                    <th class="right">Avg Sentiment</th>
-                    <th class="right">Engagement Score</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% if (topCustomers.length) { %>
-                    <% topCustomers.forEach(c => { %>
-                      <tr>
-                        <td><strong><%= c.displayName || c.user_id %></strong></td>
-                        <td class="right"><%= fmtCount(c.messageCount) %></td>
-                        <td class="right"><%= fmtCount(c.sessionCount) %></td>
-                        <td class="right"><%= (c.sentimentAvg || 0).toFixed(2) %></td>
-                        <td class="right"><%= (c.engagementScore || 0).toFixed(1) %></td>
-                      </tr>
-                    <% }) %>
-                  <% } else { %>
-                    <tr><td colspan="5" class="muted">ยังไม่มีข้อมูล engagement</td></tr>
-                  <% } %>
-                </tbody>
-              </table>
-            </div>
-            <p class="chart-note">ลูกค้าที่มีการมีส่วนร่วมสูงสุดโดยดูจากข้อความ จำนวนเซสชัน และคะแนน sentiment</p>
-            <details class="card-foot chart-card__footer query-toggle">
-              <summary>ดูสูตร / Query</summary>
-              <pre><code>SELECT user_id,
-COUNT(*) AS messages,
-COUNT(DISTINCT conversation_id) AS sessions,
-AVG(sentiment_score) AS avg_sentiment,
-engagement_score
-FROM user_daily_metrics
-WHERE date BETWEEN $start AND $end
-ORDER BY engagement_score DESC
-LIMIT 20</code></pre>
-            </details>
-          </div>
-        </div>
-
-        <div class="insight-row row-retention">
-          <div class="card glass insight-chart chart-card" data-retention='<%- retentionJSON %>' data-drilldown="retention-cohort">
-            <div class="card-heading chart-card__header">
-              <h3>Retention Cohort</h3>
-              <span class="muted">Cohort รายสัปดาห์</span>
-            </div>
-            <div class="chart-frame chart-card__body">
-              <canvas id="retention-cohort-chart" height="260"></canvas>
-              <div class="chart-fallback">
-                <strong>อัตรากลับมา</strong>
-                <ul>
-                  <% retentionSummary.forEach((row) => { %>
-                    <li>
-                      Cohort <strong><%= row.cohort %></strong> · สัปดาห์ <%= row.weekOffset %>
-                      · <%= ((row.rate || 0) * 100).toFixed(1) %>%
-                    </li>
-                  <% }) %>
-                </ul>
-              </div>
-            </div>
-            <p class="chart-note">ติดตามสัดส่วนลูกค้าที่กลับมาคุยซ้ำหลัง onboarding ในแต่ละสัปดาห์</p>
-            <details class="card-foot chart-card__footer query-toggle">
-              <summary>ดูสูตร / Query</summary>
-              <pre><code>SELECT cohort_week,
-week_offset,
-returning_users / total_users AS rate
-FROM retention_cohorts</code></pre>
-            </details>
-          </div>
-          <div class="card glass" data-drilldown="churn-risk">
-            <div class="card-heading chart-card__header">
-              <h3>Churn Risk (Top 10)</h3>
-              <span class="muted">คนที่ไม่มีข้อความ &gt; 2× median หรือ sentiment ติดลบ</span>
-            </div>
-            <div class="table-wrap table-scroll">
-              <table class="table compact ghost">
-                <thead>
-                  <tr>
-                    <th>User</th>
-                    <th>Last Seen</th>
-                    <th>Gap (days)</th>
-                    <th>Sentiment Trend</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% if (churnList.length) { %>
-                    <% churnList.forEach(item => { %>
-                      <tr>
-                        <td><strong><%= item.displayName || item.user_id %></strong></td>
-                        <td><%= item.lastSeen ? new Date(item.lastSeen).toLocaleDateString('th-TH') : '-' %></td>
-                        <td class="right"><%= (item.gapDays || 0).toFixed(1) %></td>
-                        <td class="right"><%= (item.sentimentTrend || 0).toFixed(2) %></td>
-                      </tr>
-                    <% }) %>
-                  <% } else { %>
-                    <tr><td colspan="4" class="muted">ยังไม่มีผู้ใช้ที่เสี่ยง churn</td></tr>
-                  <% } %>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div class="card glass" data-drilldown="anomaly-alerts">
-            <div class="card-heading chart-card__header">
-              <h3>Escalation &amp; Complaint Alerts</h3>
-              <span class="muted">ตรวจจับ negativity spike</span>
-            </div>
-            <div class="table-wrap table-scroll">
-              <table class="table compact ghost">
-                <thead>
-                  <tr>
-                    <th>วันที่</th>
-                    <th>Metric</th>
-                    <th>Δ Sigma</th>
-                    <th>Keyword</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% if (anomalyList.length) { %>
-                    <% anomalyList.forEach(alert => { %>
-                      <tr>
-                        <td><%= alert.date ? new Date(alert.date).toLocaleDateString('th-TH') : '-' %></td>
-                        <td><strong><%= alert.metric %></strong></td>
-                        <td class="right"><%= (alert.deltaSigma || 0).toFixed(2) %></td>
-                        <td><%= alert.keyword || '-' %></td>
-                      </tr>
-                    <% }) %>
-                  <% } else { %>
-                    <tr><td colspan="4" class="muted">ยังไม่พบความผิดปกติ</td></tr>
-                  <% } %>
-                </tbody>
-              </table>
-            </div>
-            <p class="chart-note">สัญญาณผิดปกติจากคำร้องเรียนหรือข้อความเชิงลบที่พุ่งสูงกว่าค่าเฉลี่ย</p>
-            <details class="card-foot chart-card__footer query-toggle">
-              <summary>ดูสูตร / Query</summary>
-              <pre><code>INSERT INTO anomalies(date, metric, delta_sigma)
-SELECT day, 'complaints', z_score
-FROM complaint_spike_detector</code></pre>
-            </details>
-          </div>
-        </div>
-
-        <div class="insight-row row-network">
-          <div class="card glass network-card" data-drilldown="customer-agent-network">
-            <div class="card-heading chart-card__header">
-              <h3>Customer ↔ Agent Network</h3>
-              <span class="muted">น้ำหนักตามจำนวนบทสนทนา</span>
-            </div>
-            <div class="chart-frame network">
-              <ul class="network-list">
-                <% if (networkLinksSorted.length) { %>
-                  <% networkLinksSorted.forEach((link) => { %>
-                    <% const sourceLabel = networkNodeLabel.get(link.source) || link.source; %>
-                    <% const targetLabel = networkNodeLabel.get(link.target) || link.target; %>
-                    <li>
-                      <span class="network-party customer"><%= sourceLabel %></span>
-                      <span class="network-connector">↔</span>
-                      <span class="network-party agent"><%= targetLabel %></span>
-                      <span class="network-volume"><%= Number(link.conversations || 0).toLocaleString('th-TH') %> บทสนทนา</span>
-                    </li>
-                  <% }) %>
-                <% } else { %>
-                  <li class="empty">ยังไม่มีบทสนทนาที่จับคู่ได้</li>
-                <% } %>
-              </ul>
-            </div>
-            <p class="chart-note">จับคู่ลูกค้ากับเอเจนต์ที่สนทนาบ่อยที่สุด เพื่อวางแผนติดตามหรือหมุนเวียนทีม</p>
-            <details class="card-foot chart-card__footer query-toggle">
-              <summary>ดูสูตร / Query</summary>
-              <pre><code>SELECT user_id,
-agent_id,
-COUNT(*) AS conversations
-FROM fact_conversation
-WHERE first_agent_reply_ts IS NOT NULL
-GROUP BY 1,2</code></pre>
-            </details>
-          </div>
-        </div>
-
-        <div class="insight-table-grid row-legacy">
-          <div class="card glass">
-            <div class="card-heading chart-card__header">
-              <h3>ข้อความตามประเภท</h3>
-            </div>
-            <div class="table-wrap table-scroll">
-              <table class="table compact ghost">
-                <thead>
-                  <tr>
-                    <th>ประเภท</th>
-                    <th class="right">จำนวน</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% const msgKeys = Object.keys(chat.messageTypeCount || {}); %>
-                  <% msgKeys.forEach(key => { %>
-                    <tr>
-                      <td><%= key %></td>
-                      <td class="right"><%= fmtCount(chat.messageTypeCount[key]) %></td>
-                    </tr>
-                  <% }) %>
-                  <% if (!msgKeys.length) { %>
-                    <tr><td colspan="2" class="muted">ยังไม่มีข้อมูลแชท</td></tr>
-                  <% } %>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="card glass">
-            <div class="card-heading chart-card__header">
-              <h3>หมวดข้อความตามคีย์เวิร์ด</h3>
-            </div>
-            <div class="table-wrap table-scroll">
-              <table class="table compact ghost">
-                <thead>
-                  <tr>
-                    <th>หมวด</th>
-                    <th class="right">จำนวน</th>
-                    <th>ตัวอย่าง</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% (chat.topicSummary || []).forEach(item => { %>
-                    <tr>
-                      <td><strong><%= item.label %></strong></td>
-                      <td class="right"><%= fmtCount(item.count) %></td>
-                      <td>
-                        <% (item.samples || []).forEach(sample => { %>
-                          <div class="muted">• <%= sample %></div>
-                        <% }) %>
-                      </td>
-                    </tr>
-                  <% }) %>
-                  <% if (!chat.topicSummary || chat.topicSummary.length === 0) { %>
-                    <tr><td colspan="3" class="muted">ยังไม่มีข้อความให้วิเคราะห์</td></tr>
-                  <% } %>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="card glass">
-            <div class="card-heading chart-card__header">
-              <h3>ผู้ใช้ที่อัปเดตล่าสุด</h3>
-            </div>
-            <div class="table-wrap table-scroll">
-              <table class="table compact ghost">
-                <thead>
-                  <tr>
-                    <th>Display Name</th>
-                    <th>userId</th>
-                    <th>สถานะ</th>
-                    <th>อัปเดตเมื่อ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% (chat.latestUsers || []).forEach(u => { %>
-                    <tr>
-                      <td><strong><%= u.displayName %></strong></td>
-                      <td><code><%= u.userId %></code></td>
-                      <td>
-                        <% if (u.status === 'granted') { %>
-                          <span class="badge success">granted</span>
-                        <% } else if (u.status === 'pending') { %>
-                          <span class="badge warn">pending</span>
-                        <% } else { %>
-                          <span class="badge gray"><%= u.status %></span>
-                        <% } %>
-                      </td>
-                      <td><%= u.updatedAt ? new Date(u.updatedAt).toLocaleString('th-TH') : '-' %></td>
-                    </tr>
-                  <% }) %>
-                  <% if (!chat.latestUsers || chat.latestUsers.length === 0) { %>
-                    <tr><td colspan="4" class="muted">ยังไม่มีผู้ใช้ในระบบ</td></tr>
-                  <% } %>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div class="card glass logic-card">
-          <div class="card-heading chart-card__header">
-            <h3>Analytics Logic &amp; Pipelines</h3>
-            <span class="muted">10 โมดูลหลักของระบบ</span>
-          </div>
-          <div class="logic-list">
-            <ol>
-              <% logicModules.forEach((module) => { %>
-                <li>
-                  <strong><%= module.name %></strong> – <%= module.description %>
-                  <pre><code><%= module.query %></code></pre>
-                </li>
-              <% }) %>
-            </ol>
-          </div>
-        </div>
-
-        <div class="card glass checklist-card">
-          <div class="card-heading chart-card__header">
-            <h3>Coverage Checklist</h3>
-            <span class="muted">10 Analysis · 10 Charts · 10 Logics</span>
-          </div>
-          <% const checklist = {
-               analysis: ['Customer Interaction Volume','Response Time Analysis','Topic/Intent Distribution','Sentiment Trend','Top Customers by Engagement','Keyword/Intent Heatmap','Agent Performance','Conversion Funnel','Customer Lifecycle/Retention','Escalation/Complaint Detection'],
-               charts: ['Messages Time Series','Intent Stacked Bar','Sentiment Pie+Trend','Active Hours Heatmap','Top Keywords Cloud','Conversion Funnel','Agent Response Bar','Customer-Agent Network','Retention Cohort','Word Clouds by Sentiment'],
-               logic: ['Intent Classification','Sentiment Analysis','Entity Extraction','User Profiling','Engagement Scoring','Response Efficiency','Conversation Clustering','Churn Prediction','Next Best Action','Anomaly Detection']
-             }; %>
-          <div class="checklist-columns">
-            <div>
-              <h4>Analysis</h4>
-              <ul>
-                <% checklist.analysis.forEach(item => { %>
-                  <li>✅ <%= item %></li>
-                <% }) %>
-              </ul>
-            </div>
-            <div>
-              <h4>Charts</h4>
-              <ul>
-                <% checklist.charts.forEach(item => { %>
-                  <li>✅ <%= item %></li>
-                <% }) %>
-              </ul>
-            </div>
-            <div>
-              <h4>Logic Pipelines</h4>
-              <ul>
-                <% checklist.logic.forEach(item => { %>
-                  <li>✅ <%= item %></li>
-                <% }) %>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="summary-cards" data-dashboard-section="core">
-      <article class="summary-card">
-        <div class="summary-label">ปริมาณรวม</div>
-        <div class="summary-value"><%= fmtTons(totals.totalTons, { max: 2 }) %><small>ตัน</small></div>
-        <span class="summary-foot">รวมทุกคำสั่งซื้อและโครงการ</span>
+    <section class="dash-highlights">
+      <article class="highlight-card gradient gradient--ocean">
+        <header>
+          <h3>Active Users (7 วัน)</h3>
+          <span>รวมทั้งหมด <%= fmtCount(chatStats.totalUsers) %> คน</span>
+        </header>
+        <div class="highlight-value"><%= fmtCount(chatStats.active7d) %></div>
+        <p>เพิ่มขึ้น <strong><%= fmtCount(chatStats.new7d) %></strong> ผู้ใช้ใหม่ในสัปดาห์นี้</p>
       </article>
-      <article class="summary-card">
-        <div class="summary-label">BUY</div>
-        <div class="summary-value"><%= fmtTons(totals.buyTons) %><small>ตัน</small></div>
-        <span class="summary-foot"><%= totals.totalTons ? ((totals.buyTons / totals.totalTons) * 100).toFixed(1) : 0 %>% ของทั้งหมด</span>
+
+      <article class="highlight-card gradient gradient--sunset">
+        <header>
+          <h3>Returning Users</h3>
+          <span>ช่วง 7 วันล่าสุด</span>
+        </header>
+        <div class="highlight-value"><%= fmtCount(chatStats.returning7d) %></div>
+        <p>คิดเป็น <strong><%= chatStats.active7d ? ((chatStats.returning7d / Math.max(chatStats.active7d, 1)) * 100).toFixed(1) : '0.0' %>%</strong> ของผู้ใช้ที่ยังคง engage</p>
       </article>
-      <article class="summary-card">
-        <div class="summary-label">SELL</div>
-        <div class="summary-value"><%= fmtTons(totals.sellTons) %><small>ตัน</small></div>
-        <span class="summary-foot"><%= totals.totalTons ? ((totals.sellTons / totals.totalTons) * 100).toFixed(1) : 0 %>% ของทั้งหมด</span>
-      </article>
-      <article class="summary-card">
-        <div class="summary-label">ผู้ใช้ LINE</div>
-        <div class="summary-value"><%= fmtCount(chat.distinctUsers) %><small>คน</small></div>
-        <span class="summary-foot"><%= fmtCount(chat.recentCount) %> ข้อความล่าสุด</span>
+
+      <article class="highlight-card gradient gradient--lavender">
+        <header>
+          <h3>Messages Volume</h3>
+          <span>สะสมทั้งหมด</span>
+        </header>
+        <div class="highlight-value"><%= fmtCount(chatStats.messages7d) %></div>
+        <p>ส่งข้อความทั้งหมด <strong><%= fmtCount(chatStats.messagesTotal) %></strong> รายการตั้งแต่เริ่มต้น</p>
       </article>
     </section>
 
-    <section class="panel-block" id="map-overview" data-dashboard-section="core">
-      <div
-        class="dashboard-map-card"
-        data-province-map
-        data-map-payload='<%- provinceDataJSON %>'
-        data-mapbox-token="<%= mapboxToken || '' %>">
-        <div class="map-card-header">
-          <span class="tag">Real-time map</span>
-          <h3>การกระจายผู้ใช้ตามจังหวัด</h3>
-          <p>อิงจากตำแหน่งที่แชร์ล่าสุด <strong><%= fmtCount(provinceStats.totalLocations) %></strong> ครั้ง</p>
+    <section class="dash-panel-grid">
+      <article class="panel card chart-card insight-chart" data-chart-trend='<%- trendSeriesJSON %>'>
+        <header class="panel__header">
+          <div>
+            <h2>Interaction Trend</h2>
+            <p class="muted">ข้อความเข้า-ออกและผู้ใช้ไม่ซ้ำในแต่ละวัน</p>
+          </div>
+          <button type="button" class="btn ghost small hide-md">ดูรายละเอียด</button>
+        </header>
+        <div class="chart-frame chart-card__body">
+          <canvas id="chat-trend-chart" height="240"></canvas>
         </div>
-        <div class="map-card-body">
-          <div class="map-card-figure <%= hasProvinceCoords ? 'has-data' : '' %>">
-            <div class="map-placeholder">
-              <img src="/static/img/Locations.png" alt="Locations illustration" />
+      </article>
+
+      <article class="panel card task-card">
+        <header class="panel__header">
+          <div>
+            <h2>วันนี้ต้องทำอะไรบ้าง</h2>
+            <p class="muted">ติดตามงานที่ค้างอยู่จาก Pipeline</p>
+          </div>
+        </header>
+        <ul class="task-list">
+          <li>
+            <div>
+              <strong>อนุมัติใบ PR ค้างอยู่</strong>
+              <span>12 รายการรอการอนุมัติ • SLA 4 ชม.</span>
             </div>
-            <div class="province-map" data-map-canvas></div>
-            <% if (hasProvinceCoords) { %>
-              <div class="map-overlay">
-                <div>
-                  <span>ตำแหน่งทั้งหมด</span>
-                  <strong><%= fmtCount(provinceStats.totalLocations) %></strong>
+            <a href="/admin/pr" class="btn ghost small">เปิดดู</a>
+          </li>
+          <li>
+            <div>
+              <strong>แจ้งยอดค้างชำระให้ลูกค้า</strong>
+              <span>ยอดรวม 1.28M บาท • 8 บริษัท</span>
+            </div>
+            <a href="/admin/tools/send-daily" class="btn ghost small">ส่งสรุป</a>
+          </li>
+          <li>
+            <div>
+              <strong>ตรวจสอบสถานะจัดส่ง</strong>
+              <span>5 ใบสั่งซื้อออกใบกำกับแล้ว</span>
+            </div>
+            <a href="/admin/po" class="btn ghost small">ติดตาม</a>
+          </li>
+          <li>
+            <div>
+              <strong>อัปเดต Rich Menu แคมเปญ</strong>
+              <span>เพิ่ม CTA ใหม่สำหรับโปรโมชัน ต.ค.</span>
+            </div>
+            <a href="/admin/richmenu" class="btn ghost small">แก้ไข</a>
+          </li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="dash-panel-grid">
+      <article class="panel card">
+        <header class="panel__header">
+          <div>
+            <h2>Top Provinces</h2>
+            <p class="muted">พื้นที่ที่มีจำนวนการจัดส่งสูงสุด</p>
+          </div>
+        </header>
+        <ul class="province-list">
+          <% if (topProvinces.length) { %>
+            <% topProvinces.forEach((prov, idx) => { %>
+              <li>
+                <span class="province-rank"><%= idx + 1 %></span>
+                <div class="province-meta">
+                  <strong><%= prov._id || prov.name || 'ไม่ระบุ' %></strong>
+                  <span><%= fmtCount(prov.count || prov.total || 0) %> รายการ</span>
                 </div>
-                <div>
-                  <span>จังหวัดที่แสดงผล</span>
-                  <strong><%= fmtCount(provinceStats.provincesWithCoords) %></strong>
+                <div class="province-bar">
+                  <span style="width: <%= Math.min(100, (prov.count || prov.total || 0) / Math.max(topProvinces[0]?.count || topProvinces[0]?.total || 1, 1) * 100) %>%"></span>
                 </div>
-              </div>
-            <% } %>
-            <% if (!hasProvinceCoords) { %>
-              <div class="map-empty">
-                <div class="map-empty__icon">🛰️</div>
-                <div class="map-empty__text">
-                  <strong>ยังไม่มีตำแหน่งที่มีพิกัด</strong>
-                  <span>เมื่อผู้ใช้แชร์ location ระบบจะแสดงบนแผนที่ทันที</span>
-                  <small>Tip: ส่งข้อความ “แชร์พิกัด” ใน LINE เพื่อทดสอบ</small>
-                </div>
-              </div>
-            <% } %>
+              </li>
+            <% }) %>
+          <% } else { %>
+            <li class="empty">ยังไม่มีข้อมูลจังหวัดที่นำส่ง</li>
+          <% } %>
+        </ul>
+      </article>
+
+      <article class="panel card">
+        <header class="panel__header">
+          <div>
+            <h2>Performance Pulse</h2>
+            <p class="muted">ตัวชี้วัดสำคัญที่ติดตามอยู่เสมอ</p>
           </div>
-          <aside class="map-card-sidebar">
-            <div class="map-stat">
-              <span>ผู้ใช้ที่แชร์ตำแหน่ง</span>
-              <strong><%= fmtCount(provinceStats.uniqueUsers) %></strong>
-            </div>
-            <div class="map-stat">
-              <span>จังหวัดที่มีข้อมูล</span>
-              <strong><%= fmtCount(provinceStats.provincesWithCoords) %></strong>
-              <small>จากทั้งหมด <%= fmtCount(provinceStats.totalProvinces) %></small>
-            </div>
-            <ul class="map-top-list">
-              <% if (provinceTopList.length) { %>
-                <% provinceTopList.forEach(function(item, idx){
-                     const provinceName = (item.province || '').replace(/^จังหวัด\s*/, '');
-                %>
-                  <li>
-                    <span class="rank"><%= idx + 1 %></span>
-                    <div>
-                      <strong><%= provinceName || item.province %></strong>
-                      <small><%= fmtCount(item.count) %> ครั้ง</small>
-                    </div>
-                  </li>
-                <% }) %>
-              <% } else { %>
-                <li class="empty">ยังไม่มีข้อมูลตำแหน่ง</li>
-              <% } %>
-            </ul>
-            <% if (provinceStats.lastUpdatedAt) { %>
-              <span class="map-updated">อัปเดตล่าสุด <%= new Date(provinceStats.lastUpdatedAt).toLocaleString('th-TH') %></span>
-            <% } %>
-          </aside>
-        </div>
+        </header>
+        <ul class="progress-list">
+          <% focusAreas.forEach((item) => { %>
+            <li>
+              <div>
+                <strong><%= item.label %></strong>
+                <span><%= fmtPercent(item.ratio) %></span>
+              </div>
+              <div class="progress-track">
+                <span style="width: <%= Math.min(100, Number(item.ratio || 0) * 100) %>%"></span>
+              </div>
+            </li>
+          <% }) %>
+        </ul>
+      </article>
+    </section>
+  </main>
+
+  <aside class="dashboard-side">
+    <section class="panel card profile-card">
+      <div class="profile-card__avatar">
+        <img src="/static/img/sorni.png" alt="Sorrni logo" />
       </div>
+      <div class="profile-card__meta">
+        <h2>Sorni HQ</h2>
+        <p>Smart procurement · LINE ERP Notifier</p>
+      </div>
+      <dl class="profile-stats">
+        <div>
+          <dt>PR/PO วันนี้</dt>
+          <dd>42</dd>
+        </div>
+        <div>
+          <dt>ผู้ดูแลออนไลน์</dt>
+          <dd>8</dd>
+        </div>
+        <div>
+          <dt>Avg. SLA</dt>
+          <dd>92%</dd>
+        </div>
+      </dl>
     </section>
 
-    <section class="panel-block" id="excel" data-dashboard-section="core">
-      <div class="panel-heading">
+    <section class="panel card meetings-card">
+      <header class="panel__header">
         <div>
-          <h2>ภาพรวมสินค้า</h2>
-          <p>สัดส่วนสินค้าและปริมาณเคลื่อนไหวล่าสุด</p>
+          <h2>Today’s Meetings</h2>
+          <p class="muted">เตรียมตัวก่อนเข้าห้องประชุม</p>
         </div>
-      </div>
-      <div class="panel-body panel__body grid-2 gap-xl">
-        <div class="card glass donut-card">
-          <div class="card-heading chart-card__header">
-            <h3>Top รายการสินค้า</h3>
-            <span class="muted">จากไฟล์ล่าสุด (สูงสุด 8 รายการ)</span>
-          </div>
-          <div class="donut-layout">
-            <div class="donut-wrap" data-chart="product" data-chart-payload='<%- JSON.stringify(productChart || []) %>' data-chart-total="<%= productChartTotal %>">
-              <canvas width="260" height="260"></canvas>
-              <div class="donut-total">
-                <span>รวม</span>
-                <strong><%= fmtTons(productChartTotal, { min: 0, max: 0 }) %></strong>
-                <small>ตัน</small>
-              </div>
+      </header>
+      <ul class="meetings-list">
+        <% meetings.forEach((meeting) => { %>
+          <li>
+            <div>
+              <strong><%= meeting.title %></strong>
+              <span><%= meeting.date %> · <%= meeting.time %> · <%= meeting.channel %></span>
             </div>
-            <div class="donut-legend">
-              <% if (productChart && productChart.length) { %>
-                <ul>
-                  <% (productChart || []).forEach((item, idx) => { %>
-                    <% const percent = productChartTotal ? Math.round((item.totalTons / productChartTotal) * 10000) / 100 : 0; %>
-                    <% const qty = formatQuantity(item.product, '', item.totalTons); %>
-                    <li>
-                      <span class="donut-legend__dot" data-color-index="<%= idx %>"></span>
-                      <div>
-                        <strong><%= item.product %></strong>
-                        <span><%= `${qty.formatted} ${qty.unit} · ${percent.toFixed(1)}%` %></span>
-                      </div>
-                    </li>
-                  <% }) %>
-                </ul>
-              <% } else { %>
-                <p class="muted">ยังไม่มีข้อมูลสินค้า</p>
-              <% } %>
-            </div>
-          </div>
-        </div>
-        <div class="card glass">
-          <div class="card-heading chart-card__header">
-            <h3>แนวโน้ม 7 วันที่ผ่านมา</h3>
-            <span class="muted">รวมตามวันที่นำเข้า</span>
-          </div>
-          <div class="table-wrap table-scroll">
-            <table class="table compact ghost">
-              <thead>
-                <tr>
-                  <th>วันที่</th>
-                  <th class="right">รวมตัน</th>
-                  <th class="right">BUY</th>
-                  <th class="right">SELL</th>
-                  <th class="right">จำนวนแถว</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% (dailySeries || []).forEach(day => { %>
-                  <tr>
-                    <td><strong><%= day.date %></strong></td>
-                    <td class="right"><%= fmtTons(day.totalTons) %></td>
-                    <td class="right"><%= fmtTons(day.buyTons) %></td>
-                    <td class="right"><%= fmtTons(day.sellTons) %></td>
-                    <td class="right"><%= fmtCount(day.entryCount) %></td>
-                  </tr>
-                <% }) %>
-                <% if (!dailySeries || dailySeries.length === 0) { %>
-                  <tr><td colspan="5" class="muted">ยังไม่มีสถิติรายวัน</td></tr>
-                <% } %>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-      <div class="panel-body panel__body">
-        <div class="card glass">
-          <div class="card-heading chart-card__header">
-            <h3>สรุป MIX ตามโครงการ</h3>
-            <span class="muted">รวม netWeight <strong><%= fmtTons(mixSummaryTotalTons || 0, { max: 2 }) %></strong> ตัน</span>
-          </div>
-          <div class="table-wrap table-scroll">
-            <table class="table compact ghost">
-              <thead>
-                <tr>
-                  <th>โครงการ (Name)</th>
-                  <th>รหัส</th>
-                  <th>Mix</th>
-                  <th class="right">ปริมาณ (ตัน)</th>
-                  <th class="right">จำนวนแถว</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% if (mixSummary && mixSummary.length) { %>
-                  <% mixSummary.forEach(item => { %>
-                    <tr>
-                      <td><strong><%= item.projectName %></strong></td>
-                      <td><%= item.projectCode || '-' %></td>
-                      <td><%= item.mixName || '-' %></td>
-                      <td class="right"><%= fmtTons(item.totalNetWeightTons, { max: 2 }) %></td>
-                      <td class="right"><%= fmtCount(item.entryCount) %></td>
-                    </tr>
-                  <% }) %>
-                <% } else { %>
-                  <tr><td colspan="5" class="muted">ยังไม่มีข้อมูลจาก MIX</td></tr>
-                <% } %>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-      <div class="panel-body panel__body">
-        <div class="card glass line-card" data-chart="daily-lines" data-chart-payload='<%- dailySeriesPayload %>'>
-          <div class="card-heading chart-card__header">
-            <h3>เส้นแนวโน้มรายวัน</h3>
-            <span class="muted">ปริมาณขาเข้าและขาออก (ตัน)</span>
-          </div>
-          <div class="line-chart-wrap">
-            <canvas height="220"></canvas>
-          </div>
-        </div>
-      </div>
+            <a href="<%= meeting.href %>" class="btn ghost small">Join</a>
+          </li>
+        <% }) %>
+      </ul>
     </section>
 
-    <section class="panel-block" id="companies" data-dashboard-section="core">
-      <div class="panel-heading">
+    <section class="panel card quick-actions">
+      <header class="panel__header">
         <div>
-          <h2>ข้อมูลตามบริษัท</h2>
-          <p>ลำดับบริษัทที่มีปริมาณสูงสุดและรายการล่าสุด</p>
+          <h2>Quick Actions</h2>
+          <p class="muted">จัดการงานซ้ำ ๆ ในไม่กี่คลิก</p>
         </div>
-      </div>
-      <div class="panel-body panel__body grid-2 gap-xl">
-        <div class="card glass">
-          <div class="card-heading chart-card__header">
-            <h3>อันดับตามปริมาณ</h3>
-          </div>
-          <div class="table-wrap table-scroll">
-            <table class="table compact ghost">
-              <thead>
-                <tr>
-                  <th>บริษัท</th>
-                  <th class="right">รวมตัน</th>
-                  <th class="right">BUY</th>
-                  <th class="right">SELL</th>
-                  <th class="right">จำนวนแถว</th>
-                  <th>วันที่ล่าสุด</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% (companySummary || []).forEach(item => { %>
-                  <tr>
-                    <td><strong><%= item.name %></strong></td>
-                    <td class="right"><%= fmtTons(item.totalTons) %></td>
-                    <td class="right"><%= fmtTons(item.buyTons) %></td>
-                    <td class="right"><%= fmtTons(item.sellTons) %></td>
-                    <td class="right"><%= fmtCount(item.entryCount) %></td>
-                    <td><%= item.latestDate || '-' %></td>
-                  </tr>
-                <% }) %>
-                <% if (!companySummary || companySummary.length === 0) { %>
-                  <tr><td colspan="6" class="muted">ยังไม่มีบริษัทที่อัปโหลดข้อมูล</td></tr>
-                <% } %>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div class="card glass">
-          <div class="card-heading chart-card__header">
-            <h3>รายการที่เพิ่งอัปโหลด</h3>
-          </div>
-          <div class="table-wrap table-scroll">
-            <table class="table compact ghost">
-              <thead>
-                <tr>
-                  <th>บริษัท</th>
-                  <th>วันที่</th>
-                  <th>ประเภท</th>
-                  <th>สินค้า</th>
-                  <th class="right">ปริมาณ</th>
-                  <th>หน่วย</th>
-                  <th>อัปโหลดเมื่อ</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% (latestRecords || []).forEach(rec => { %>
-                  <% const qty = formatQuantity(rec.product, rec.unit, rec.weightTons); %>
-                  <tr>
-                    <td><strong><%= rec.companyId ? rec.companyId.name : (rec.sourceCompanyName || rec.sourceCompanyId || 'Unknown') %></strong></td>
-                    <td><%= rec.dateStr %></td>
-                    <td><%= rec.type || '-' %></td>
-                    <td><%= rec.product || '-' %></td>
-                    <td class="right"><%= qty.formatted %></td>
-                    <td><%= qty.unit %></td>
-                    <td><%= rec.createdAt ? new Date(rec.createdAt).toLocaleString('th-TH') : '-' %></td>
-                  </tr>
-                <% }) %>
-                <% if (!latestRecords || latestRecords.length === 0) { %>
-                  <tr><td colspan="7" class="muted">ไม่มีข้อมูลล่าสุด</td></tr>
-                <% } %>
-              </tbody>
-            </table>
-          </div>
-        </div>
+      </header>
+      <div class="quick-actions__grid">
+        <% quickActions.forEach((action) => { %>
+          <a href="<%= action.href %>" class="quick-action">
+            <span class="quick-action__icon"><%= action.icon %></span>
+            <span class="quick-action__label"><%= action.label %></span>
+            <span class="quick-action__desc"><%= action.description %></span>
+          </a>
+        <% }) %>
       </div>
     </section>
-
-    <section class="panel-block" id="tools" data-dashboard-section="core">
-      <div class="panel-heading">
-        <div>
-          <h2>เครื่องมือด่วน</h2>
-          <p>เข้าถึงหน้าต่าง ๆ เพื่อจัดการระบบ</p>
-        </div>
-      </div>
-      <div class="panel-body panel__body quick-actions">
-        <a class="action-card" href="/admin/upload">
-          <span class="icon">⤴️</span>
-          <span>
-            <strong>Upload Excel</strong>
-            <em>อัปโหลดไฟล์หลายบริษัทพร้อมกัน</em>
-          </span>
-        </a>
-        <a class="action-card" href="/admin/test">
-          <span class="icon">🧪</span>
-          <span>
-            <strong>Test &amp; Send</strong>
-            <em>ทดลองส่งข้อความและพรีวิว LINE</em>
-          </span>
-        </a>
-        <a class="action-card" href="/admin/richmenu">
-          <span class="icon">🧭</span>
-          <span>
-            <strong>Rich Menu</strong>
-            <em>จัดการเมนูและภาพล่าสุด</em>
-          </span>
-        </a>
-        <a class="action-card" href="/admin/tools/purge">
-          <span class="icon">🗑️</span>
-          <span>
-            <strong>Purge Data</strong>
-            <em>ล้างข้อมูลเป็นช่วงวันหรือทั้งหมด</em>
-          </span>
-        </a>
-        <a class="action-card" href="/admin/consents">
-          <span class="icon">✅</span>
-          <span>
-            <strong>Consents</strong>
-            <em>จัดการสถานะความยินยอมผู้ใช้</em>
-          </span>
-        </a>
-      </div>
-    </section>
-  </div>
+  </aside>
 </div>
-
-<script src="/static/js/dashboard_map.js"></script>
-<script>
-  (function () {
-    const TAB_KEYS = ['core', 'behavior'];
-    const sections = Array.prototype.slice.call(document.querySelectorAll('[data-dashboard-section]'));
-    const tabButtons = Array.prototype.slice.call(document.querySelectorAll('[data-dashboard-tab]'));
-    const behaviorLink = document.querySelector('[data-tab-jump="behavior"]');
-
-    function parseGroups(section) {
-      return String(section.dataset.dashboardSection || '')
-        .split(/\s+/)
-        .map((s) => s.trim())
-        .filter(Boolean);
-    }
-
-    function showTab(key) {
-      const target = TAB_KEYS.includes(key) ? key : 'core';
-      tabButtons.forEach((btn) => {
-        btn.classList.toggle('is-active', btn.dataset.dashboardTab === target);
-      });
-      sections.forEach((section) => {
-        const groups = parseGroups(section);
-        const visible = groups.includes(target) || (target === 'core' && groups.length === 0);
-        section.classList.toggle('dashboard-tab-hidden', !visible);
-      });
-      try {
-        window.localStorage.setItem('dashboard-tab', target);
-      } catch (_) {
-        /* ignore storage errors */
-      }
-    }
-
-    tabButtons.forEach((btn) => {
-      btn.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        showTab(btn.dataset.dashboardTab);
-      });
-    });
-
-    if (behaviorLink) {
-      behaviorLink.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        showTab('behavior');
-        document.querySelector('#customer-insights')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    }
-
-    let initial = 'core';
-    try {
-      const stored = window.localStorage.getItem('dashboard-tab');
-      if (TAB_KEYS.includes(stored)) initial = stored;
-    } catch (_) {
-      /* ignore storage errors */
-    }
-    showTab(initial);
-  })();
-</script>
-  .network-list{
-    list-style:none;
-    padding:0;
-    margin:0;
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-  }
-  .network-list li{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    flex-wrap:wrap;
-    background:rgba(15,23,42,0.05);
-    border-radius:14px;
-    padding:12px 16px;
-  }
-  .network-list li.empty{
-    justify-content:center;
-    color:#6b7280;
-    font-style:italic;
-  }
-  .network-party{
-    font-weight:600;
-  }
-  .network-party.customer{ color:#2563eb; }
-  .network-party.agent{ color:#ef476f; }
-  .network-volume{
-    margin-left:auto;
-    font-weight:600;
-    color:#0f172a;
-  }
