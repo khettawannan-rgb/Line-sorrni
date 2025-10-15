@@ -11,6 +11,7 @@ const debounce = (fn, wait = 100) => {
 document.addEventListener('DOMContentLoaded', () => {
   setupTopbarHeight();
   setupNavigationHighlight();
+  setupTopNavMenus();
   setupDrawer();
   setupDrawerGroups();
   setupConfirmPrompts();
@@ -65,6 +66,68 @@ function setupNavigationHighlight() {
       if (group) {
         openDrawerGroup(group, false);
       }
+    }
+  });
+}
+
+function setupTopNavMenus() {
+  const menus = document.querySelectorAll('[data-topnav-menu]');
+  if (!menus.length) return;
+
+  const closeAll = (except) => {
+    menus.forEach((menu) => {
+      if (menu === except) return;
+      const trigger = menu.querySelector('[data-menu-trigger]');
+      const list = menu.querySelector('[data-menu-list]');
+      menu.classList.remove('is-open');
+      trigger?.setAttribute('aria-expanded', 'false');
+      if (list) list.setAttribute('hidden', '');
+    });
+  };
+
+  menus.forEach((menu) => {
+    const trigger = menu.querySelector('[data-menu-trigger]');
+    const list = menu.querySelector('[data-menu-list]');
+    if (!trigger || !list) return;
+
+    const setOpen = (open) => {
+      if (open) {
+        menu.classList.add('is-open');
+        trigger.setAttribute('aria-expanded', 'true');
+        list.removeAttribute('hidden');
+        closeAll(menu);
+      } else {
+        menu.classList.remove('is-open');
+        if (!menu.classList.contains('is-active')) {
+          trigger.setAttribute('aria-expanded', 'false');
+        }
+        list.setAttribute('hidden', '');
+      }
+    };
+
+    const isPointerFine = window.matchMedia('(pointer: fine)').matches;
+
+    trigger.addEventListener('click', (event) => {
+      event.preventDefault();
+      const open = menu.classList.contains('is-open');
+      setOpen(!open);
+    });
+
+    if (isPointerFine) {
+      menu.addEventListener('mouseenter', () => setOpen(true));
+      menu.addEventListener('mouseleave', () => setOpen(false));
+    }
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest('[data-topnav-menu]')) {
+      closeAll();
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeAll();
     }
   });
 }

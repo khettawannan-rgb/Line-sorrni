@@ -36,6 +36,18 @@
   { label: 'Customer Satisfaction', ratio: (chatStats?.satisfactionRate ?? 0.81) },
   { label: 'Open Issues Resolved', ratio: provinceStats?.issueCloseRate ?? 0.58 },
 ]; %>
+<% const meetings = [
+  { title: 'Daily Logistics Sync', date: 'Tue, 16 Jul', time: '08:30', channel: 'Zoom', href: '#daily-sync' },
+  { title: 'Vendor Check-in', date: 'Tue, 16 Jul', time: '11:00', channel: 'Google Meet', href: '#vendor-call' },
+  { title: 'PR Approval Board', date: 'Tue, 16 Jul', time: '15:30', channel: 'Teams', href: '#pr-board' },
+  { title: 'Customer Insight Review', date: 'Wed, 17 Jul', time: '09:00', channel: 'Zoom', href: '#insight-review' },
+]; %>
+<% const quickActions = [
+  { label: 'Upload Orders', description: 'อัปโหลด Excel รายการสั่งซื้อ', href: '/admin/upload', icon: '⤴️' },
+  { label: 'Send Daily Summary', description: 'ส่งสรุปประจำวันหา LINE ลูกค้า', href: '/admin/tools/send-daily', icon: '💬' },
+  { label: 'Manage Members', description: 'ผูกบัญชีพนักงานกับบริษัท', href: '/admin/members', icon: '👥' },
+  { label: 'Rich Menu Studio', description: 'อัปเดตเมนูและ CTA', href: '/admin/richmenu', icon: '🧭' },
+]; %>
 
 <div class="dashboard-canvas">
   <main class="dashboard-main">

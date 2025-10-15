@@ -83,6 +83,7 @@
     if (active === 'tools' && typeof item.href === 'string' && item.href.startsWith('/admin/tools')) return true;
     return false;
   };
+  const isGroupActive = (group) => group.items.some((item) => isNavItemActive(item));
 %>
 <body class="<%= bodyClasses.join(' ') %>">
   <% if (!hideChrome) { %>
@@ -119,17 +120,27 @@
           </div>
           <nav class="topnav" id="main-nav" aria-label="เมนูหลัก">
             <div class="topnav__content">
-              <% navGroups.forEach((group) => { %>
-                <section class="topnav-group" data-nav-group="<%= group.label %>">
-                  <span class="topnav-label"><%= group.label %></span>
-                  <ul>
+              <% navGroups.forEach((group, groupIndex) => { const groupActive = isGroupActive(group); %>
+                <div class="topnav-menu <%= groupActive ? 'is-active' : '' %>" data-topnav-menu>
+                  <button
+                    type="button"
+                    class="topnav-menu__trigger"
+                    aria-expanded="<%= groupActive ? 'true' : 'false' %>"
+                    data-menu-trigger
+                  >
+                    <span><%= group.label %></span>
+                    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+                      <path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <ul class="topnav-menu__list" data-menu-list role="menu" <%= groupActive ? '' : 'hidden' %>>
                     <% group.items.forEach((item) => { %>
-                      <li>
-                        <a href="<%= item.href %>" class="<%= isNavItemActive(item) ? 'active' : '' %>"><%= item.title %></a>
+                      <li role="none">
+                        <a role="menuitem" href="<%= item.href %>" class="<%= isNavItemActive(item) ? 'active' : '' %>"><%= item.title %></a>
                       </li>
                     <% }) %>
                   </ul>
-                </section>
+                </div>
               <% }) %>
             </div>
           </nav>
