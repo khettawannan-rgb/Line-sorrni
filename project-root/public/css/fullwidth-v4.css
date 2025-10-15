@@ -1,0 +1,85 @@
+/* ===== Full-Width Redesign v4 (Non-destructive) ===== */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { width: 100%; max-width: 100%; }
+body { margin: 0; overflow-x: hidden; }
+
+/* Fluid tokens (no color changes) */
+:root{
+  --fw-gutter: clamp(16px, 2.4vw, 36px); /* ระยะขอบซ้าย/ขวา */
+  --fw-gap: clamp(12px, 1.8vw, 28px);    /* ช่องไฟกริด */
+  --fw-card-min: 360px;                  /* การ์ดขั้นต่ำสำหรับวิดเจ็ต/กราฟ */
+  --fw-hero-min: 420px;                  /* กล่องฮีโร่ขั้นต่ำ */
+  --fw-content-max: none;                /* ใช้ none = เต็มจอ */
+}
+
+/* 1) เปิดโหมดเต็มจอ: main/container ใส่ padding อย่างเดียว ไม่จำกัดความกว้าง */
+.use-fullwidth :where(main, .main, .page, .page-content, .content, .dashboard, .app-shell){
+  width: 100%;
+  max-width: var(--fw-content-max);
+  margin: 0;
+  padding-inline: var(--fw-gutter);
+}
+
+/* 2) ซ่อนคอลัมน์/การ์ดตกแต่งฝั่งขวา < 1600px เพื่อไม่ให้ดันเลย์เอาต์ */
+@media (max-width: 1600px){
+  :where(.login, .auth, .dashboard, .page)
+  :where([class*="promo"], [class*="right"], [class*="aside"], [class*="banner"]) {
+    display: none !important;
+  }
+}
+
+/* 3) กริดหลักสำหรับวิดเจ็ต/กราฟ/ตาราง: auto-fit → เต็มจออย่างสมเหตุสมผล */
+:where(.widgets, .kpi-grid, .dashboard-cards, .card-grid, .charts, .tables){
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--fw-card-min)), 1fr));
+  gap: var(--fw-gap);
+}
+
+/* 4) ยูทิลิตีช่วย "บังคับ layout" เฉพาะส่วนที่ต้องการ */
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: var(--fw-gap); }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: var(--fw-gap); }
+.grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: var(--fw-gap); }
+
+/* 5) Section เต็มจอแบบมีกรอบหายใจ (เช่น Hero/สรุปใหญ่) */
+.full-bleed-section{
+  width: 100%;
+  margin-inline: calc(-1 * var(--fw-gutter));
+  padding-inline: var(--fw-gutter);
+}
+
+/* 6) ฮีโร่/บล็อกสรุป: จัดเป็น 2 คอลัมน์ เมื่อหน้ากว้างพอ */
+:where(.overview-hero, .welcome-hero){
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--fw-hero-min)), 1fr));
+  align-items: center;
+  gap: var(--fw-gap);
+}
+
+/* 7) ตาราง/กราฟไม่ล้นแนวนอน + สกอลล์ได้บนมือถือ */
+:where(table, .table, .data-grid, .scrollable){
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 8) ปุ่ม/อินพุตเต็มแถวบนจอแคบ */
+@media (max-width: 768px){
+  :where(.btn, .button){ width: 100%; }
+}
+
+/* 9) หน้า Login ยังกึ่งกลางเหมือนเดิม (ไม่แตะโทนสี) */
+:where(.login, .auth, .login-page, .auth-page){
+  min-height: 100dvh; min-height: -webkit-fill-available;
+  display: grid; align-content: center; justify-items: center;
+  padding-inline: var(--fw-gutter);
+}
+:where(.login .card, .auth .card, .auth-card, .login-card, form.login, form.auth){
+  width: min(100%, 560px);
+}
+
+/* 10) การ์ด/พาเนลปลอดภัย */
+:where(.card, .panel, .widget, .box){ overflow: hidden; border-radius: inherit; }
+
+/* 11) กันต้นตอ overflow จาก 100vw */
+[style*="width: 100vw"], .w-100vw, .full-bleed { width: 100% !important; max-width: 100% !important; }
+:where(.bg,.background,.decor,.gradient,[class*="gradient"]){ max-width:100%; overflow:clip; pointer-events:none; }
