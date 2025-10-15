@@ -899,6 +899,8 @@ textarea:focus {
   grid-template-columns: minmax(360px, 520px) minmax(320px, 1fr);
   min-height: 100dvh;
   background: radial-gradient(120% 120% at 0% 0%, rgba(59, 130, 246, 0.12) 0%, transparent 55%), var(--bg);
+  width: min(100%, 1200px);
+  margin: 0 auto;
 }
 
 .auth-panel {
@@ -1177,14 +1179,14 @@ textarea:focus {
 ----------------------------------------- */
 .dashboard-canvas {
   display: grid;
-  gap: var(--gap-5);
+  gap: var(--grid-gutter);
   grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
   align-items: start;
 }
 
 .dashboard-main {
   display: grid;
-  gap: var(--gap-5);
+  gap: var(--grid-gutter);
 }
 
 .dash-hero {
@@ -1254,8 +1256,10 @@ textarea:focus {
 
 .dash-highlights {
   display: grid;
-  gap: var(--gap-4);
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--grid-gutter);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  max-width: 100%;
+  margin-inline: auto;
 }
 
 .highlight-card {
@@ -1308,7 +1312,7 @@ textarea:focus {
 
 .dash-panel-grid {
   display: grid;
-  gap: var(--gap-4);
+  gap: var(--grid-gutter);
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
 }
 
@@ -1320,7 +1324,7 @@ textarea:focus {
   padding: 0;
   margin: 0;
   display: grid;
-  gap: var(--gap-3);
+  gap: var(--grid-gutter);
 }
 
 .task-list li {
@@ -1474,7 +1478,7 @@ textarea:focus {
 
 .quick-actions__grid {
   display: grid;
-  gap: var(--gap-2);
+  gap: var(--grid-gutter);
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
@@ -1512,7 +1516,7 @@ textarea:focus {
 
 .dashboard-side {
   display: grid;
-  gap: var(--gap-4);
+  gap: var(--grid-gutter);
 }
 
 .toast {
@@ -1646,50 +1650,64 @@ textarea:focus {
   }
 }
 
+@media (min-width: 768px) {
+  :root {
+    --dash-highlight-cols: 2;
+  }
+}
+
 @media (min-width: 1024px) {
   :root {
-    --container-max: 960px;
+    --dash-highlight-cols: 3;
   }
 }
 
 @media (min-width: 1280px) {
   :root {
-    --container-max: 1120px;
+    --container-max: 1100px;
+  }
+
+  .dash-highlights {
+    max-width: calc(var(--dash-highlight-cols) * 320px + 4 * var(--grid-gutter));
   }
 }
 
 @media (min-width: 1440px) {
   :root {
-    --container-max: 1280px;
+    --container-max: 1200px;
+    --grid-gutter: 20px;
+    --dash-highlight-cols: 4;
+  }
+}
+
+@media (min-width: 1600px) {
+  :root {
+    --container-max: 1320px;
   }
 }
 
 @media (min-width: 1728px) {
   :root {
-    --container-max: 1440px;
+    --container-max: 1400px;
   }
 }
 
 @media (min-width: 1920px) {
   :root {
-    --container-max: 1560px;
+    --container-max: 1520px;
+    --grid-gutter: 24px;
+    --dash-highlight-cols: 5;
   }
 }
 
 @media (min-width: 2560px) {
   :root {
-    --container-max: 1680px;
-  }
-
-  .container,
-  .section--stretched {
-    padding-inline: max(32px, calc((100vw - var(--container-max)) / 2));
+    --container-max: 1640px;
   }
 }
 
-@media (min-width: 3200px) {
-  .container,
-  .section--stretched {
-    padding-inline: max(48px, calc((100vw - var(--container-max)) / 2));
+@media (min-width: 3440px) {
+  :root {
+    --container-max: 1760px;
   }
 }
