@@ -1,0 +1,14 @@
+{
+  "locationText": "แพลนท์หลัก บางใหญ่",
+  "now": { "tempC": 28.4, "windKmh": 9, "rainMm": 0, "humidity": 65 },
+  "today": { "tMaxC": 30.8, "tMinC": 26.5, "rainMm": 0.8 },
+  "hourly": [
+    { "time": "2024-10-15T09:00:00+07:00", "tempC": 28.0, "rainMm": 0, "windKmh": 8 },
+    { "time": "2024-10-15T10:00:00+07:00", "tempC": 28.6, "rainMm": 0, "windKmh": 9 },
+    { "time": "2024-10-15T11:00:00+07:00", "tempC": 29.4, "rainMm": 0, "windKmh": 10 },
+    { "time": "2024-10-15T12:00:00+07:00", "tempC": 30.0, "rainMm": 0.2, "windKmh": 10 },
+    { "time": "2024-10-15T13:00:00+07:00", "tempC": 30.5, "rainMm": 0.3, "windKmh": 9 }
+  ],
+  "source": "mock",
+  "updatedAt": "2024-10-15T08:30:00+07:00"
+}

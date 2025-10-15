@@ -1,0 +1,206 @@
+/* ===== Responsive Layout Overrides (Non-destructive) ===== */
+
+/* Scale-only custom properties (no colors) */
+:root {
+  --container-max: 1280px;
+  --container-max-wide: 1440px;
+  --gutter: clamp(16px, 2.5vw, 32px);
+  --gutter-tight: clamp(12px, 2vw, 24px);
+  --gap: clamp(12px, 1.8vw, 24px);
+  --gap-wide: clamp(16px, 2.4vw, 32px);
+  --card-min: 280px;
+}
+
+/* Center primary shells and provide breathable padding */
+:where(main, .main, .app-main, .page, .page-content, .content, .container, .dashboard, .app-shell, .layout) {
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+@media (min-width: 1600px) {
+  :where(main, .main, .app-main, .page, .page-content, .content, .container, .dashboard, .app-shell, .layout) {
+    max-width: var(--container-max-wide);
+  }
+}
+
+/* Keep media responsive by default */
+:where(img, svg, canvas, video) {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Tables and long blocks scroll horizontally on narrow screens */
+:where(.table-wrap, .table-scroll, .table-responsive, .scrollable, .table, table) {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  display: block;
+}
+
+/* Soft vertical rhythm */
+:where(section, .section, .page-section, .page-header, .group, .stack) {
+  margin-block: clamp(16px, 4vh, 40px);
+}
+
+/* ===== Auth / Login overrides ===== */
+:where(body.auth, .auth) {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding-block: clamp(32px, 8vh, 72px);
+}
+
+:where(.auth-shell) {
+  max-width: min(var(--container-max), 1080px);
+  width: min(100%, 1080px);
+  margin-inline: auto;
+  align-items: center;
+  justify-items: center;
+  gap: var(--gap);
+}
+
+:where(.auth-panel, .auth-card, form.auth, form.login) {
+  width: min(100%, 520px);
+  margin-inline: auto;
+  padding: clamp(32px, 5vw, 56px);
+  border-radius: clamp(24px, 3vw, 36px);
+}
+
+:where(.auth-visual) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(24px, 6vw, 48px);
+}
+
+@media (max-width: 768px) {
+  :where(.auth-shell) {
+    grid-template-columns: 1fr;
+    width: min(100%, 580px);
+  }
+
+  :where(.auth-visual) {
+    order: 1;
+  }
+
+  :where(.auth-panel) {
+    order: 2;
+  }
+}
+
+/* ===== Dashboard & analytics cards ===== */
+:where(.dash-highlights, .ops-overview, .dash-panel-grid, .cards, .card-grid, .widgets, .kpi-grid, .dashboard-cards, .panel-grid) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--card-min), 100%), 1fr));
+  gap: var(--gap-wide);
+}
+
+:where(.highlight-card, .card, .panel, .widget, .box, .stats-card) {
+  border-radius: clamp(16px, 2.2vw, 28px);
+  overflow: hidden;
+}
+
+/* ===== Sidebar & layout shells ===== */
+:where(.dashboard-shell, .shell, .layout, .app-layout, .with-sidebar, .has-sidebar) {
+  display: grid;
+  gap: var(--gap);
+}
+
+@media (min-width: 1024px) {
+  :where(.dashboard-shell, .shell.has-sidebar, .layout.has-sidebar, .app-layout.has-sidebar, .with-sidebar) {
+    grid-template-columns: clamp(220px, 18vw, 260px) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  :where(.dashboard-quicknav, .sidebar, .sidenav, .left-nav) {
+    position: sticky;
+    top: clamp(88px, 10vh, 120px);
+    align-self: start;
+  }
+}
+
+@media (max-width: 1023.98px) {
+  :where(.dashboard-shell, .shell, .layout, .app-layout, .with-sidebar, .has-sidebar) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  :where(.dashboard-quicknav, .sidebar, .sidenav, .left-nav) {
+    position: static;
+    width: 100%;
+  }
+}
+
+/* Inline spacing for quick access areas */
+:where(.dashboard-quicknav__list) {
+  display: grid;
+  gap: var(--gap);
+}
+
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  :where(.dashboard-quicknav__list) {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+  }
+}
+
+/* Ensure quick nav buttons fill available width gracefully */
+:where(.dashboard-quicknav__list a) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter-tight);
+  padding: clamp(10px, 1.8vw, 14px) clamp(14px, 2vw, 18px);
+}
+
+/* ===== Tables & scroll blocks ===== */
+:where(.table, table) th,
+:where(.table, table) td {
+  white-space: nowrap;
+}
+
+:where(.table-wrap, .table-scroll, .table-responsive, .scrollable, .table, table)::-webkit-scrollbar {
+  height: 8px;
+}
+
+:where(.table-wrap, .table-scroll, .table-responsive, .scrollable, .table, table)::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 22%, transparent);
+}
+
+/* ===== Misc layout helpers ===== */
+:where(.dash-hero, .highlight-card, .panel, .card, .widget, .box) {
+  gap: var(--gutter-tight);
+}
+
+:where(.quick-actions__grid, .quick-actions) {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+@media (max-width: 640px) {
+  :where(.dash-hero__actions) {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--gap);
+  }
+}
+
+/* Prevent horizontal scroll from buttons/cards inside sidebars */
+:where(.dashboard-quicknav__cta .btn, .sidebar .btn, .sidenav .btn) {
+  width: 100%;
+}
+
+/* Harmonise hero/search width on large screens */
+@media (min-width: 1440px) {
+  :where(.dash-search) {
+    min-width: clamp(280px, 22vw, 360px);
+  }
+}
+
+/* Slightly tighter gutters on compact phones */
+@media (max-width: 480px) {
+  :root {
+    --gutter: clamp(12px, 6vw, 20px);
+    --gap: clamp(10px, 5vw, 18px);
+  }
+}

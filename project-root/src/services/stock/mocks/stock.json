@@ -1,0 +1,15 @@
+{
+  "items": [
+    { "itemId": "ac60", "itemName": "ยางแอสฟัลต์ซีเมนต์ AC60/70", "unit": "ตัน", "siteId": "plant-main", "siteName": "แพลนท์หลัก", "currentQty": 18, "safetyStock": 20, "reorderPoint": 22, "avgDailyUsage": 12, "leadTimeDays": 2, "supplier": { "id": "sup-ac", "name": "บริษัท ยางไทย" } },
+    { "itemId": "emul-tack", "itemName": "ยางอิมัลชัน (Tack)", "unit": "ลิตร", "siteId": "plant-main", "siteName": "แพลนท์หลัก", "currentQty": 1500, "safetyStock": 1800, "reorderPoint": 2000, "avgDailyUsage": 900, "leadTimeDays": 1, "supplier": { "id": "sup-emul", "name": "บริษัท อิมัลชัน จำกัด" } },
+    { "itemId": "emul-prime", "itemName": "ยางอิมัลชัน (Prime)", "unit": "ลิตร", "siteId": "plant-main", "siteName": "แพลนท์หลัก", "currentQty": 3200, "safetyStock": 2500, "reorderPoint": 2800, "avgDailyUsage": 700, "leadTimeDays": 2 },
+    { "itemId": "stone34", "itemName": "หิน 3/4\"", "unit": "ตัน", "siteId": "site-west", "siteName": "ไซท์ตะวันตก", "currentQty": 110, "safetyStock": 90, "reorderPoint": 100, "avgDailyUsage": 45, "leadTimeDays": 3 },
+    { "itemId": "stone-dust", "itemName": "หินฝุ่น", "unit": "ตัน", "siteId": "site-west", "siteName": "ไซท์ตะวันตก", "currentQty": 65, "safetyStock": 70, "reorderPoint": 80, "avgDailyUsage": 25, "leadTimeDays": 2 },
+    { "itemId": "cement-fill", "itemName": "ฟิลเลอร์ซีเมนต์", "unit": "ตัน", "siteId": "plant-main", "siteName": "แพลนท์หลัก", "currentQty": 12, "safetyStock": 15, "reorderPoint": 18, "avgDailyUsage": 6, "leadTimeDays": 4 },
+    { "itemId": "diesel", "itemName": "ดีเซล", "unit": "ลิตร", "siteId": "plant-main", "siteName": "แพลนท์หลัก", "currentQty": 480, "safetyStock": 800, "reorderPoint": 900, "avgDailyUsage": 350, "leadTimeDays": 2, "supplier": { "id": "sup-oil", "name": "PTT" } },
+    { "itemId": "lpg", "itemName": "LPG/FO", "unit": "กก.", "siteId": "plant-main", "siteName": "แพลนท์หลัก", "currentQty": 950, "safetyStock": 900, "reorderPoint": 950, "avgDailyUsage": 280, "leadTimeDays": 3 },
+    { "itemId": "water", "itemName": "น้ำอุตสาหกรรม", "unit": "ลูกบาศก์เมตร", "siteId": "site-east", "siteName": "ไซท์ตะวันออก", "currentQty": 40, "safetyStock": 35, "reorderPoint": 30, "avgDailyUsage": 12, "leadTimeDays": 1 },
+    { "itemId": "antistrip", "itemName": "สาร Anti-stripping", "unit": "ลิตร", "siteId": "plant-main", "siteName": "แพลนท์หลัก", "currentQty": 260, "safetyStock": 250, "reorderPoint": 280, "avgDailyUsage": 110, "leadTimeDays": 3 },
+    { "itemId": "filter", "itemName": "ถุงกรองฝุ่น", "unit": "ใบ", "siteId": "plant-main", "siteName": "แพลนท์หลัก", "currentQty": 45, "safetyStock": 40, "reorderPoint": 60, "avgDailyUsage": 8, "leadTimeDays": 5 }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "locationText": "ด่านผิวทางภาคเหนือ",
+  "now": { "tempC": 20.5, "windKmh": 6, "rainMm": 0, "humidity": 48 },
+  "today": { "tMaxC": 24.0, "tMinC": 12.0, "rainMm": 0 },
+  "hourly": [
+    { "time": "2024-12-05T06:00:00+07:00", "tempC": 14.0, "rainMm": 0, "humidity": 52 },
+    { "time": "2024-12-05T07:00:00+07:00", "tempC": 15.5, "rainMm": 0, "humidity": 50 },
+    { "time": "2024-12-05T08:00:00+07:00", "tempC": 18.0, "rainMm": 0, "humidity": 46 },
+    { "time": "2024-12-05T09:00:00+07:00", "tempC": 21.0, "rainMm": 0, "humidity": 44 },
+    { "time": "2024-12-05T10:00:00+07:00", "tempC": 23.5, "rainMm": 0, "humidity": 40 }
+  ],
+  "source": "mock",
+  "updatedAt": "2024-12-05T05:45:00+07:00"
+}

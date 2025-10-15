@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>PO · LIFF</title>
+  <link rel="stylesheet" href="/liff/liff.css" />
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="/liff/config.js"></script>
+</head>
+<body>
+  <div class="container stack">
+    <div class="line-only">หน้านี้เหมาะสำหรับเปิดภายใน LINE เพื่อเข้าถึงข้อมูลจริง หากเปิดนอก LINE จะแสดงข้อมูลตัวอย่าง</div>
+    <div class="card stack">
+      <div>
+        <div class="h1">ใบสั่งซื้อ (PO)</div>
+        <p class="p">ติดตามและสร้างใบสั่งซื้อในไม่กี่คลิก</p>
+      </div>
+      <input id="poNo" class="input" placeholder="กรอกเลข PO เช่น PO-2024-00045" />
+      <div class="stack">
+        <button class="btn" id="btnPOStatus">ดูสถานะ</button>
+        <button class="btn secondary" id="btnPOCreate">สร้าง PO ใหม่ (mock)</button>
+      </div>
+    </div>
+    <div id="poOut" class="card" aria-live="polite"></div>
+    <footer>Powered by Sorni · LIFF demo</footer>
+  </div>
+
+  <script>
+  (async () => {
+    const out = document.getElementById('poOut');
+    const qp = new URLSearchParams(location.search);
+    const companyId = qp.get('companyId') || 'demo';
+    let uuid = qp.get('uuid') || 'mock-user';
+    const userAgent = navigator.userAgent || '';
+    const isLine = /Line/i.test(userAgent);
+    document.body.classList.toggle('line-app', isLine);
+
+    const safeJSON = async (res) => {
+      if (!res || !res.ok) throw new Error('network');
+      return res.json();
+    };
+
+    const fetchJson = async (url, fallback) => {
+      try {
+        return await safeJSON(await fetch(url));
+      } catch (err) {
+        if (!fallback) throw err;
+        return safeJSON(await fetch(fallback));
+      }
+    };
+
+    const initLiff = async () => {
+      const liffId = window.__LIFF__?.PO;
+      if (!liff || !liffId) return;
+      await liff.init({ liffId });
+      if (!liff.isLoggedIn()) {
+        liff.login({});
+        return;
+      }
+      const profile = await liff.getProfile();
+      if (profile?.userId) uuid = profile.userId;
+    };
+
+    try {
+      if (isLine) {
+        await initLiff();
+      }
+    } catch (err) {
+      console.warn('LIFF init fallback:', err);
+    }
+
+    const render = (data, label) => {
+      out.innerHTML = `<div class="h2">${label}</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+    };
+
+    document.getElementById('btnPOStatus').onclick = async () => {
+      const poNo = document.getElementById('poNo').value.trim();
+      if (!poNo) return render({ error: 'กรุณากรอกเลข PO' }, 'ข้อผิดพลาด');
+      const apiUrl = `/api/po/${encodeURIComponent(poNo)}?companyId=${encodeURIComponent(companyId)}&uuid=${encodeURIComponent(uuid)}`;
+      const data = await fetchJson(apiUrl, '/liff/mock/po-status.json');
+      render(data, `สถานะของ ${poNo}`);
+    };
+
+    document.getElementById('btnPOCreate').onclick = async () => {
+      const data = await fetchJson('/liff/mock/po-create.json');
+      render(data, 'ตัวอย่าง PO ใหม่');
+    };
+
+    if (qp.get('po')) {
+      document.getElementById('poNo').value = qp.get('po');
+      document.getElementById('btnPOStatus').click();
+    }
+  })();
+  </script>
+</body>
+</html>

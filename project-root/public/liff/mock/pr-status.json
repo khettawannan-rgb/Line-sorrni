@@ -1,0 +1,17 @@
+{
+  "prNo": "PR-2024-00123",
+  "companyId": "demo",
+  "status": "awaiting_approval",
+  "total": 152300.5,
+  "currency": "THB",
+  "requester": "คุณอร",
+  "createdAt": "2024-10-10T09:12:00+07:00",
+  "items": [
+    { "name": "ยางมะตอย AC60/70", "qty": 10, "unit": "ตัน", "price": 15000 },
+    { "name": "น้ำมันดีเซล", "qty": 2000, "unit": "ลิตร", "price": 32.5 }
+  ],
+  "approvers": [
+    { "name": "ผู้จัดการจัดซื้อ", "status": "approved", "at": "2024-10-10T10:00:00+07:00" },
+    { "name": "ผู้อำนวยการ", "status": "pending" }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "locationText": "ลานผลิตลาดพร้าว",
+  "now": { "tempC": 26.5, "windKmh": 18, "rainMm": 1.2, "humidity": 88, "wcode": 96 },
+  "today": { "tMaxC": 30.0, "tMinC": 25.5, "rainMm": 35 },
+  "hourly": [
+    { "time": "2024-10-15T09:00:00+07:00", "tempC": 27.1, "rainMm": 1.5, "wcode": 80, "windKmh": 14 },
+    { "time": "2024-10-15T10:00:00+07:00", "tempC": 27.5, "rainMm": 2.4, "wcode": 95, "windKmh": 20 },
+    { "time": "2024-10-15T11:00:00+07:00", "tempC": 27.0, "rainMm": 4.2, "wcode": 96, "windKmh": 28 },
+    { "time": "2024-10-15T12:00:00+07:00", "tempC": 26.6, "rainMm": 3.8, "wcode": 96, "windKmh": 30 },
+    { "time": "2024-10-15T13:00:00+07:00", "tempC": 26.1, "rainMm": 2.0, "wcode": 95, "windKmh": 26 },
+    { "time": "2024-10-15T14:00:00+07:00", "tempC": 26.0, "rainMm": 1.0, "wcode": 80, "windKmh": 18 }
+  ],
+  "source": "mock",
+  "updatedAt": "2024-10-15T08:45:00+07:00"
+}

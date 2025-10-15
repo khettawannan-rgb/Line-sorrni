@@ -1,0 +1,23 @@
+{
+  "rain": {
+    "lightMaxMmPerHr": 1.0,
+    "holdPavingMmPerHr": 2.0,
+    "heavyMmPerHr": 5.0,
+    "holdByDailyMm": 10.0
+  },
+  "wind": {
+    "tackSprayCautionKmh": 15,
+    "tackSprayHoldKmh": 25
+  },
+  "heat": {
+    "crewCautionC": 32,
+    "crewDangerC": 36,
+    "humidityHigh": 80
+  },
+  "cold": {
+    "pavingMinAmbientC": 10
+  },
+  "thunder": {
+    "weatherCodes": [95, 96, 99]
+  }
+}

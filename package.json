@@ -13,7 +13,9 @@
     "richmenu:init": "node project-root/src/scripts/setup_richmenu.js",
     "richmenu:list": "node project-root/src/scripts/setup_richmenu.js --list",
     "richmenu:nuke": "node project-root/src/scripts/setup_richmenu.js --nuke",
-    "seed:procurement": "node project-root/src/scripts/seed_procurement.js"
+    "seed:procurement": "node project-root/src/scripts/seed_procurement.js",
+    "demo:weather": "node tools/demo-weather.js",
+    "demo:stock": "node tools/demo-stock.js"
   },
   "dependencies": {
     "axios": "^1.7.7",

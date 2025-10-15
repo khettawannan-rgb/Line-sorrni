@@ -1,5 +1,6 @@
 import 'dotenv/config.js';
 import path from 'path';
+import fs from 'node:fs';
 import { fileURLToPath } from 'url';
 
 import express from 'express';
@@ -18,6 +19,8 @@ import lineRouter from './routes/line.js';
 import authLineRouter from './routes/auth_line.js';
 import { setupDailyCron } from './jobs/scheduler.js';
 import { liffLink } from './utils/liff.js';
+import { getBotInfo } from './services/line.js';
+import adviceRouter from './routes/advice.js';
 import checkSuperAdmin from './middleware/checkSuperAdmin.js';
 import viewHelpers from './middleware/viewHelpers.js';
 
@@ -110,6 +113,24 @@ console.log('[VIEW ENGINE] ejs');
 // ===== Static =====
 app.use('/static', express.static(path.join(__dirname, '../public')));
 app.use('/storage', express.static(path.resolve('storage')));
+const liffPublicDir = path.join(__dirname, '../public/liff');
+if (fs.existsSync(liffPublicDir)) {
+  app.use(
+    '/liff',
+    (req, res, next) => {
+      res.set('X-Robots-Tag', 'noindex, nofollow');
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      next();
+    },
+    express.static(liffPublicDir, { extensions: ['html', 'htm', 'json'], etag: false })
+  );
+}
+
+const FEATURE_WEATHER = String(process.env.FEATURE_WEATHER_ADVICE || '').toLowerCase() === 'true';
+const FEATURE_STOCK = String(process.env.FEATURE_STOCK_ALERTS || '').toLowerCase() === 'true';
+if (FEATURE_WEATHER || FEATURE_STOCK) {
+  app.use(adviceRouter);
+}
 
 // ===== Webhook (raw body) =====
 app.use(['/webhook/line', '/webhook'], webhookRouter);
@@ -193,6 +214,16 @@ app.get('/healthz', (req, res) => res.send('ok'));
 app.get('/health', (req, res) => {
   console.log('✅ Health check pinged');
   res.status(200).send('OK');
+});
+app.get('/health/line', async (req, res) => {
+  try {
+    const info = await getBotInfo();
+    res.json({ ok: true, info });
+  } catch (err) {
+    const status = err?.response?.status || 500;
+    const code = err?.response?.data?.message || err?.code || err?.message || 'unknown';
+    res.status(status).json({ ok: false, error: code });
+  }
 });
 
 // ===== Routes =====

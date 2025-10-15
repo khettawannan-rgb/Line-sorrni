@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>PR · LIFF</title>
+  <link rel="stylesheet" href="/liff/liff.css" />
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="/liff/config.js"></script>
+</head>
+<body>
+  <div class="container stack">
+    <div class="line-only">หน้านี้ออกแบบให้ใช้งานบน LINE application หากเปิดในเบราว์เซอร์ อาจแสดงข้อมูลตัวอย่างแทน</div>
+    <div class="card stack">
+      <div>
+        <div class="h1">ใบขอซื้อ (PR)</div>
+        <p class="p">เวอร์ชัน LIFF สำหรับทีมจัดซื้อ</p>
+      </div>
+      <input id="prNo" class="input" placeholder="กรอกเลข PR เช่น PR-2024-00123" />
+      <button class="btn" id="btnStatus">ดูสถานะ</button>
+      <button class="btn secondary" id="btnCreate">สร้าง PR ใหม่ (mock)</button>
+    </div>
+    <div id="out" class="card" aria-live="polite"></div>
+    <footer>Powered by Sorni · LIFF demo</footer>
+  </div>
+
+  <script>
+  (async () => {
+    const out = document.getElementById('out');
+    const qp = new URLSearchParams(location.search);
+    const companyId = qp.get('companyId') || 'demo';
+    let uuid = qp.get('uuid') || 'mock-user';
+    const userAgent = navigator.userAgent || '';
+    const isLine = /Line/i.test(userAgent);
+    document.body.classList.toggle('line-app', isLine);
+
+    const safeJSON = async (res) => {
+      if (!res || !res.ok) throw new Error('network');
+      return res.json();
+    };
+
+    const fetchJson = async (url, fallback) => {
+      try {
+        return await safeJSON(await fetch(url));
+      } catch (err) {
+        if (!fallback) throw err;
+        return safeJSON(await fetch(fallback));
+      }
+    };
+
+    const initLiff = async () => {
+      const liffId = window.__LIFF__?.PR;
+      if (!liff || !liffId) return;
+      await liff.init({ liffId });
+      if (!liff.isLoggedIn()) {
+        liff.login({});
+        return;
+      }
+      const profile = await liff.getProfile();
+      if (profile?.userId) uuid = profile.userId;
+    };
+
+    try {
+      if (isLine) {
+        await initLiff();
+      }
+    } catch (err) {
+      console.warn('LIFF init fallback:', err);
+    }
+
+    const render = (data, label) => {
+      out.innerHTML = `<div class="h2">${label}</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+    };
+
+    document.getElementById('btnStatus').onclick = async () => {
+      const prNo = document.getElementById('prNo').value.trim();
+      if (!prNo) return render({ error: 'กรุณากรอกเลข PR' }, 'ข้อผิดพลาด');
+      const apiUrl = `/api/pr/${encodeURIComponent(prNo)}?companyId=${encodeURIComponent(companyId)}&uuid=${encodeURIComponent(uuid)}`;
+      const data = await fetchJson(apiUrl, '/liff/mock/pr-status.json');
+      render(data, `สถานะของ ${prNo}`);
+    };
+
+    document.getElementById('btnCreate').onclick = async () => {
+      const data = await fetchJson('/liff/mock/pr-create.json');
+      render(data, 'ตัวอย่าง PR ใหม่');
+    };
+
+    if (qp.get('pr')) {
+      document.getElementById('prNo').value = qp.get('pr');
+      document.getElementById('btnStatus').click();
+    }
+  })();
+  </script>
+</body>
+</html>

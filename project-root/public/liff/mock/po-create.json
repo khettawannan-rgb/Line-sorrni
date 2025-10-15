@@ -1,0 +1,7 @@
+{
+  "poNo": "PO-2024-00046",
+  "message": "ระบบได้สร้างใบสั่งซื้อ mock ให้เรียบร้อย",
+  "attachments": [
+    { "type": "pdf", "name": "PO-2024-00046.pdf", "url": "https://example.com/mock.pdf" }
+  ]
+}

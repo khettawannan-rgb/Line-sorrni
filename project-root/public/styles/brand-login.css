@@ -1,0 +1,46 @@
+/* ===== Login Brand Overrides (Non-destructive) ===== */
+
+/* Scope helpers (no-op to keep selectors grouped) */
+:where(.login, .auth, .login-page, .auth-page) {}
+
+/* Sorni brand gradient tokens */
+:root {
+  --sorni-green-1: #0bd37a;
+  --sorni-green-2: #00c389;
+  --sorni-green-3: #2dd4bf;
+  --sorni-green-solid: #10b981;
+}
+
+/* Logo sizing and fallback background */
+:where(.auth .auth-brand > img, .login .auth-brand > img) {
+  display: inline-block;
+  width: clamp(28px, 4vw, 40px);
+  height: clamp(28px, 4vw, 40px);
+  object-fit: contain;
+  background: center/contain no-repeat url('/img/sorni.png');
+}
+
+/* Optional background fallback when <img> fails */
+:where(.auth .auth-brand, .login .auth-brand) {
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(8px, 1vw, 12px);
+}
+
+/* Wordmark styling */
+:where(.auth .auth-brand > div > strong, .login .auth-brand > div > strong) {
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  background-image: linear-gradient(90deg, var(--sorni-green-1), var(--sorni-green-2), var(--sorni-green-3));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  line-height: 1.1;
+}
+
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  :where(.auth .auth-brand > div > strong, .login .auth-brand > div > strong) {
+    color: var(--sorni-green-solid);
+  }
+}

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Approve · LIFF</title>
+  <link rel="stylesheet" href="/liff/liff.css" />
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="/liff/config.js"></script>
+</head>
+<body>
+  <div class="container stack">
+    <div class="line-only">ควรเปิดหน้านี้จากเมนูใน LINE เพื่ออนุมัติเอกสารจริง</div>
+    <div class="card stack">
+      <div>
+        <div class="h1">อนุมัติเอกสาร</div>
+        <p class="p">ตรวจสอบและอนุมัติ PR/PO แบบรวดเร็ว</p>
+      </div>
+      <select id="docType" class="select">
+        <option value="pr">ใบขอซื้อ (PR)</option>
+        <option value="po">ใบสั่งซื้อ (PO)</option>
+      </select>
+      <input id="docNo" class="input" placeholder="ระบุเลขเอกสาร" />
+      <textarea id="remark" class="input" rows="3" placeholder="หมายเหตุ (ไม่บังคับ)"></textarea>
+      <div class="stack">
+        <button class="btn" id="btnApprove">อนุมัติ</button>
+        <button class="btn danger" id="btnReject">ปฏิเสธ</button>
+      </div>
+    </div>
+    <div id="approveOut" class="card" aria-live="polite"></div>
+    <footer>Powered by Sorni · LIFF demo</footer>
+  </div>
+
+  <script>
+  (async () => {
+    const out = document.getElementById('approveOut');
+    const qp = new URLSearchParams(location.search);
+    const companyId = qp.get('companyId') || 'demo';
+    let uuid = qp.get('uuid') || 'mock-approver';
+    const userAgent = navigator.userAgent || '';
+    const isLine = /Line/i.test(userAgent);
+    document.body.classList.toggle('line-app', isLine);
+
+    const safeJSON = async (res) => {
+      if (!res || !res.ok) throw new Error('network');
+      return res.json();
+    };
+
+    const fetchJson = async (url, fallback) => {
+      try {
+        return await safeJSON(await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) }));
+      } catch (err) {
+        if (!fallback) throw err;
+        return safeJSON(await fetch(fallback));
+      }
+    };
+
+    const initLiff = async () => {
+      const liffId = window.__LIFF__?.APPROVE;
+      if (!liff || !liffId) return;
+      await liff.init({ liffId });
+      if (!liff.isLoggedIn()) {
+        liff.login({});
+        return;
+      }
+      const profile = await liff.getProfile();
+      if (profile?.userId) uuid = profile.userId;
+    };
+
+    try {
+      if (isLine) {
+        await initLiff();
+      }
+    } catch (err) {
+      console.warn('LIFF init fallback:', err);
+    }
+
+    const render = (data, label) => {
+      out.innerHTML = `<div class="h2">${label}</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+    };
+
+    const handleAction = async (decision) => {
+      const docNo = document.getElementById('docNo').value.trim();
+      if (!docNo) return render({ error: 'กรุณาระบุเลขเอกสาร' }, 'ข้อผิดพลาด');
+      const docType = document.getElementById('docType').value;
+      const remark = document.getElementById('remark').value.trim();
+      const apiUrl = `/api/approve?companyId=${encodeURIComponent(companyId)}&uuid=${encodeURIComponent(uuid)}`;
+      try {
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ docType, docNo, remark, decision }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.message || 'approve-failed');
+        render(data, decision === 'approve' ? 'อนุมัติสำเร็จ' : 'ปฏิเสธสำเร็จ');
+      } catch (err) {
+        const mock = await safeJSON(await fetch('/liff/mock/approve.json'));
+        render(mock, 'ตอบกลับตัวอย่าง (mock)');
+      }
+    };
+
+    document.getElementById('btnApprove').onclick = () => handleAction('approve');
+    document.getElementById('btnReject').onclick = () => handleAction('reject');
+
+    if (qp.get('doc')) {
+      document.getElementById('docNo').value = qp.get('doc');
+    }
+  })();
+  </script>
+</body>
+</html>

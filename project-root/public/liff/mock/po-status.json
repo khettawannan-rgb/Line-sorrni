@@ -1,0 +1,19 @@
+{
+  "poNo": "PO-2024-00045",
+  "companyId": "demo",
+  "status": "delivery",
+  "total": 265800,
+  "currency": "THB",
+  "vendor": {
+    "name": "บริษัท ตัวอย่าง จำกัด",
+    "contact": "+66-2-123-4567"
+  },
+  "deliveries": [
+    { "date": "2024-10-15", "qty": 5, "unit": "ตัน", "status": "complete" },
+    { "date": "2024-10-18", "qty": 5, "unit": "ตัน", "status": "scheduled" }
+  ],
+  "tracking": {
+    "carrier": "Sorni Logistics",
+    "trackingNumber": "SRN123456789"
+  }
+}

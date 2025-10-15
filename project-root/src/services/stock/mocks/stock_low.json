@@ -1,0 +1,7 @@
+{
+  "items": [
+    { "itemId": "diesel", "itemName": "ดีเซล", "unit": "ลิตร", "siteId": "plant-main", "siteName": "แพลนท์หลัก", "currentQty": 420, "safetyStock": 800, "reorderPoint": 900, "avgDailyUsage": 360, "leadTimeDays": 2 },
+    { "itemId": "ac60", "itemName": "ยางแอสฟัลต์ซีเมนต์ AC60/70", "unit": "ตัน", "siteId": "plant-main", "siteName": "แพลนท์หลัก", "currentQty": 15, "safetyStock": 20, "reorderPoint": 22, "avgDailyUsage": 11, "leadTimeDays": 2 },
+    { "itemId": "stone34", "itemName": "หิน 3/4\"", "unit": "ตัน", "siteId": "site-west", "siteName": "ไซท์ตะวันตก", "currentQty": 70, "safetyStock": 90, "reorderPoint": 100, "avgDailyUsage": 40, "leadTimeDays": 3 }
+  ]
+}

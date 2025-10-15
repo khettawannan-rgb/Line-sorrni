@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>LIFF Settings Mock</title>
+  <link rel="stylesheet" href="/liff/liff.css" />
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="/liff/config.js"></script>
+</head>
+<body>
+  <div class="container stack">
+    <div class="card stack">
+      <div>
+        <div class="h1">ตั้งค่าเชื่อมต่อ (mock)</div>
+        <p class="p">ผูก companyId กับผู้ใช้ LINE สำหรับเดโม</p>
+      </div>
+      <input id="companyId" class="input" placeholder="Company ID" />
+      <input id="uuid" class="input" placeholder="LINE UUID" />
+      <button class="btn" id="btnSave">บันทึก (mock)</button>
+    </div>
+    <div id="settingsOut" class="card" aria-live="polite"></div>
+  </div>
+
+  <script>
+  (async () => {
+    const out = document.getElementById('settingsOut');
+    const qp = new URLSearchParams(location.search);
+    document.getElementById('companyId').value = qp.get('companyId') || '';
+    document.getElementById('uuid').value = qp.get('uuid') || '';
+
+    document.getElementById('btnSave').onclick = () => {
+      const companyId = document.getElementById('companyId').value.trim();
+      const uuid = document.getElementById('uuid').value.trim();
+      out.innerHTML = `<pre>${JSON.stringify({ companyId, uuid, savedAt: new Date().toISOString() }, null, 2)}</pre>`;
+    };
+  })();
+  </script>
+</body>
+</html>

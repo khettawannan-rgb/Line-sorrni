@@ -34,8 +34,31 @@ import {
   createVendor,
   STATUS_LABELS,
 } from '../services/procurement/index.js';
+import { buildWeatherAdvice } from '../services/advice/weather-advice.js';
+import { buildFlexWeatherAdvice } from '../line/buildFlexWeatherAdvice.js';
+import { buildStockAlert } from '../services/stock/stock-alert.js';
+import { buildFlexStockAlert } from '../line/buildFlexStockAlert.js';
+import stockMock from '../services/stock/mocks/stock.json' assert { type: 'json' };
 
 const router = Router();
+
+const REQUIRED_LINE_ENVS = [
+  'LINE_CHANNEL_SECRET',
+  'LINE_CHANNEL_ACCESS_TOKEN',
+  'LIFF_ID',
+  'LIFF_ID_PR',
+  'LIFF_ID_PO',
+  'LIFF_ID_APPROVE',
+];
+
+const FEATURE_WEATHER = String(process.env.FEATURE_WEATHER_ADVICE || '').toLowerCase() === 'true';
+const FEATURE_STOCK = String(process.env.FEATURE_STOCK_ALERTS || '').toLowerCase() === 'true';
+
+REQUIRED_LINE_ENVS.forEach((key) => {
+  if (!process.env[key]) {
+    console.warn(`[WEBHOOK][CONFIG] Missing env ${key}`);
+  }
+});
 
 // ใช้ raw parser เฉพาะเส้นทางนี้ (สำคัญสำหรับ signature)
 router.use(
@@ -177,11 +200,20 @@ router.get('/', (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  console.log('✅ Received event from LINE');
+  const start = Date.now();
+  const signatureHeader = req.headers['x-line-signature'];
+  const bodySize = Buffer.isBuffer(req.body) ? req.body.length : Buffer.byteLength(String(req.body || ''));
+  console.log('[WEBHOOK][IN]', {
+    at: new Date().toISOString(),
+    method: req.method,
+    path: req.originalUrl,
+    signature: signatureHeader ? 'present' : 'missing',
+    bodySize,
+  });
   // LOG หัวข้อเบื้องต้น (ช่วยดีบัก 500)
   console.log('[WEBHOOK][HEADERS]', {
     'content-type': req.headers['content-type'],
-    'x-line-signature': req.headers['x-line-signature'] ? '[present]' : '[missing]',
+    'x-line-signature': signatureHeader ? '[present]' : '[missing]',
     'content-length': req.headers['content-length'] || (req.body?.length ?? 0),
   });
 
@@ -221,15 +253,27 @@ router.post('/', async (req, res) => {
         }
       }
     }
+    console.log('[WEBHOOK][DONE]', {
+      events: events.length,
+      status: res.statusCode,
+      elapsedMs: Date.now() - start,
+    });
   } catch (err) {
     // ถ้ามี exception ก่อนส่ง 200
     console.error('[WEBHOOK] fatal error:', err);
     // พยายามตอบข้อความธรรมดาแทน 500 (บางระบบจะดีบักง่ายกว่า)
     try {
-      return res.status(200).send('ok');
+      res.status(200).send('ok');
     } catch {
       return; // เงียบไว้
     }
+    console.log('[WEBHOOK][DONE]', {
+      events: 0,
+      error: err?.message || err,
+      status: res.statusCode,
+      elapsedMs: Date.now() - start,
+    });
+    return;
   }
 });
 
@@ -526,6 +570,20 @@ async function handleText(ev) {
     return replyText(ev.replyToken, 'pong');
   }
 
+  if (FEATURE_WEATHER && /(อากาศ|พยากรณ์|ฝน|พายุ|ฟ้าแลบ|ลมแรง|ร้อน|หนาว)/i.test(text)) {
+    let scenario = 'ok';
+    if (/พายุ|ฟ้าแลบ/i.test(text)) scenario = 'thunderstorm';
+    else if (/ลม/i.test(text)) scenario = 'strong_wind';
+    else if (/ฝนหนัก|ฝนตก/i.test(text)) scenario = 'heavy_rain';
+    else if (/ร้อน/i.test(text)) scenario = 'heat_wave';
+    else if (/หนาว|เย็น/i.test(text)) scenario = 'cool_dry';
+    return replyWeatherAdvice(ev, scenario);
+  }
+
+  if (FEATURE_STOCK && /(สต็อก|ใกล้หมด|แจ้งเตือนสต็อก|stock)/i.test(text)) {
+    return replyStockAlertMessage(ev);
+  }
+
   if (text === 'เมนู') {
     return replyActionCard(ev.replyToken, {
       title: 'เมนูหลัก',
@@ -725,6 +783,11 @@ async function replyStockSummary(ev) {
 
 async function replyPrLink(ev) {
   if (!ev.replyToken) return null;
+  const userId = getUserId(ev) || '';
+  const params = new URLSearchParams();
+  if (DEFAULT_COMPANY_ID) params.set('companyId', DEFAULT_COMPANY_ID);
+  if (userId) params.set('uuid', userId);
+  const liffUrl = `${BASE_URL_CLEAN || ''}/liff/pr${params.toString() ? `?${params.toString()}` : ''}`;
   const url = `${BASE_URL_CLEAN}/admin/pr`; // updated to use BASE_URL
   return replyActionCard(ev.replyToken, {
     title: 'เปิดใบขอซื้อ (PR)',
@@ -735,7 +798,8 @@ async function replyPrLink(ev) {
       'ใช้บัญชีที่ได้รับสิทธิ์ในพอร์ทัล ERP เพื่อดำเนินการ',
     ],
     actions: [
-      { label: 'เปิดหน้า PR', uri: url, style: 'primary' },
+      { label: 'เปิด PR (LIFF)', uri: liffUrl, style: 'primary' },
+      { label: 'เปิดหน้า PR (เว็บ)', uri: url, style: 'secondary' },
       { label: 'กลับเมนูหลัก', text: 'เมนู', style: 'secondary' },
     ],
     color: '#16a34a',
@@ -950,6 +1014,46 @@ function buildQuickReplyItems(items = []) {
         },
       };
     });
+}
+
+async function loadWeatherScenario(name = 'ok') {
+  const module = await import(`../services/advice/mocks/${name}.json`, { assert: { type: 'json' } });
+  return module.default || module;
+}
+
+async function replyWeatherAdvice(ev, scenario) {
+  if (!ev.replyToken) return null;
+  try {
+    const data = await loadWeatherScenario(scenario || 'ok');
+    const advice = buildWeatherAdvice(data);
+    const flex = buildFlexWeatherAdvice(advice);
+    const textMessage = advice.formattedText.length > 1100
+      ? `${advice.formattedText.slice(0, 1100)}…`
+      : advice.formattedText;
+    return replyFlex(ev.replyToken, 'พยากรณ์อากาศพร้อมคำแนะนำ', flex, [{ type: 'text', text: textMessage }]);
+  } catch (err) {
+    console.error('[WEBHOOK] weather advice error:', err?.message || err);
+    return replyText(ev.replyToken, 'ขออภัย ไม่สามารถสร้างคำแนะนำอากาศได้ในขณะนี้');
+  }
+}
+
+async function replyStockAlertMessage(ev, options = {}) {
+  if (!ev.replyToken) return null;
+  try {
+    const rawAlert = buildStockAlert(stockMock.items, null, {
+      baseUrl: BASE_URL_CLEAN || '',
+      companyId: options.companyId || process.env.DEFAULT_COMPANY_ID || 'demo',
+      uuid: getUserId(ev) || '',
+    });
+    const alert = rawAlert.items ? rawAlert : rawAlert.groups?.[0] || rawAlert;
+    const flex = buildFlexStockAlert(alert);
+    const textBlock = alert.formattedText || rawAlert.formattedText || 'ไม่มีรายการแจ้งเตือน';
+    const textMessage = textBlock.length > 1100 ? `${textBlock.slice(0, 1100)}…` : textBlock;
+    return replyFlex(ev.replyToken, 'แจ้งเตือนสต็อก', flex, [{ type: 'text', text: textMessage }]);
+  } catch (err) {
+    console.error('[WEBHOOK] stock alert error:', err?.message || err);
+    return replyText(ev.replyToken, 'ยังไม่สามารถดึงข้อมูลสต็อกได้ กรุณาลองใหม่');
+  }
 }
 
 function buildActionCardBubble({
@@ -1229,6 +1333,10 @@ async function replyPoCreationFlex(ev) {
   if (await isSuperAdminUser(userId)) {
     return replySuperAdminPoStart(ev);
   }
+  const params = new URLSearchParams();
+  if (DEFAULT_COMPANY_ID) params.set('companyId', DEFAULT_COMPANY_ID);
+  if (userId) params.set('uuid', userId);
+  const liffPoUrl = `${BASE_URL_CLEAN || ''}/liff/po${params.toString() ? `?${params.toString()}` : ''}`;
 
   const contents = {
     type: 'bubble',
@@ -1311,6 +1419,11 @@ async function replyPoCreationFlex(ev) {
         {
           type: 'button',
           style: 'primary',
+          action: { type: 'uri', label: 'เปิด PO (LIFF)', uri: liffPoUrl },
+        },
+        {
+          type: 'button',
+          style: 'secondary',
           action: { type: 'postback', label: 'เริ่มกรอกผ่านแชท', data: 'po-create?step=start', displayText: 'PO ใหม่' },
         },
         {

@@ -1,0 +1,14 @@
+{
+  "locationText": "โครงการสายเอเชีย กม.45",
+  "now": { "tempC": 33.0, "windKmh": 10, "rainMm": 0, "humidity": 78 },
+  "today": { "tMaxC": 37.2, "tMinC": 27.8, "rainMm": 0.5 },
+  "hourly": [
+    { "time": "2024-05-12T09:00:00+07:00", "tempC": 32.1, "rainMm": 0, "humidity": 75 },
+    { "time": "2024-05-12T10:00:00+07:00", "tempC": 34.0, "rainMm": 0, "humidity": 78 },
+    { "time": "2024-05-12T11:00:00+07:00", "tempC": 35.5, "rainMm": 0, "humidity": 76 },
+    { "time": "2024-05-12T12:00:00+07:00", "tempC": 36.8, "rainMm": 0, "humidity": 74 },
+    { "time": "2024-05-12T13:00:00+07:00", "tempC": 37.2, "rainMm": 0.1, "humidity": 72 }
+  ],
+  "source": "mock",
+  "updatedAt": "2024-05-12T08:30:00+07:00"
+}

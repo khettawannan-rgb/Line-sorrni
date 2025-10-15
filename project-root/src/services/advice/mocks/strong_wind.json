@@ -1,0 +1,15 @@
+{
+  "locationText": "ย่าน คลังวัสดุบางปู",
+  "now": { "tempC": 29.4, "windKmh": 22, "rainMm": 0, "humidity": 70 },
+  "today": { "tMaxC": 32.0, "tMinC": 27.5, "rainMm": 2 },
+  "hourly": [
+    { "time": "2024-10-15T09:00:00+07:00", "tempC": 29.0, "rainMm": 0, "windKmh": 18 },
+    { "time": "2024-10-15T10:00:00+07:00", "tempC": 30.0, "rainMm": 0, "windKmh": 22 },
+    { "time": "2024-10-15T11:00:00+07:00", "tempC": 31.0, "rainMm": 0, "windKmh": 27 },
+    { "time": "2024-10-15T12:00:00+07:00", "tempC": 31.3, "rainMm": 0, "windKmh": 32 },
+    { "time": "2024-10-15T13:00:00+07:00", "tempC": 31.1, "rainMm": 0, "windKmh": 30 },
+    { "time": "2024-10-15T14:00:00+07:00", "tempC": 30.4, "rainMm": 0, "windKmh": 26 }
+  ],
+  "source": "mock",
+  "updatedAt": "2024-10-15T08:00:00+07:00"
+}

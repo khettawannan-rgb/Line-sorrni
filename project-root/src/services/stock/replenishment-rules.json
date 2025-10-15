@@ -1,0 +1,9 @@
+{
+  "defaultSafetyFactor": 1.2,
+  "urgencyDays": 1.5,
+  "lowDays": 3,
+  "heatUsageMultiplier": 1.15,
+  "rainUsageMultiplier": 0.6,
+  "thunderUsageMultiplier": 0.5,
+  "okUsageMultiplier": 1.0
+}

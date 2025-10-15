@@ -1,0 +1,7 @@
+{
+  "items": [
+    { "itemId": "diesel", "itemName": "ดีเซล", "unit": "ลิตร", "siteId": "plant-main", "siteName": "แพลนท์หลัก", "currentQty": 180, "safetyStock": 800, "reorderPoint": 900, "avgDailyUsage": 380, "leadTimeDays": 2 },
+    { "itemId": "ac60", "itemName": "ยางแอสฟัลต์ซีเมนต์ AC60/70", "unit": "ตัน", "siteId": "plant-main", "siteName": "แพลนท์หลัก", "currentQty": 10, "safetyStock": 20, "reorderPoint": 22, "avgDailyUsage": 12, "leadTimeDays": 2 },
+    { "itemId": "lpg", "itemName": "LPG/FO", "unit": "กก.", "siteId": "plant-main", "siteName": "แพลนท์หลัก", "currentQty": 400, "safetyStock": 900, "reorderPoint": 950, "avgDailyUsage": 260, "leadTimeDays": 3 }
+  ]
+}
