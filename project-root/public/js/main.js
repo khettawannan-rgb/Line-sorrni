@@ -90,7 +90,10 @@ function setupTopNavMenus() {
     const list = menu.querySelector('[data-menu-list]');
     if (!trigger || !list) return;
 
+    let hoverTimeout = null;
+
     const setOpen = (open) => {
+      window.clearTimeout(hoverTimeout);
       if (open) {
         menu.classList.add('is-open');
         trigger.setAttribute('aria-expanded', 'true');
@@ -114,8 +117,17 @@ function setupTopNavMenus() {
     });
 
     if (isPointerFine) {
-      menu.addEventListener('mouseenter', () => setOpen(true));
-      menu.addEventListener('mouseleave', () => setOpen(false));
+      menu.addEventListener('mouseenter', () => {
+        window.clearTimeout(hoverTimeout);
+        setOpen(true);
+      });
+      menu.addEventListener('mouseleave', () => {
+        hoverTimeout = window.setTimeout(() => setOpen(false), 150);
+      });
+      list.addEventListener('mouseenter', () => window.clearTimeout(hoverTimeout));
+      list.addEventListener('mouseleave', () => {
+        hoverTimeout = window.setTimeout(() => setOpen(false), 150);
+      });
     }
   });
 
