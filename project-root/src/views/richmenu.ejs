@@ -2,38 +2,33 @@
 <div class="grid grid-2">
   <!-- LEFT: Actions & List -->
   <div class="panel">
-    <div class="panel-header">
+    <div class="panel-header panel__header">
       <h3>Rich Menu</h3>
       <div class="toolbar">
-        <!-- สร้าง + อัปโหลดรูป + ตั้ง Default -->
         <form action="/admin/richmenu/create" method="post">
           <button type="submit" class="btn primary">สร้าง + อัปโหลดรูป + ตั้ง Default</button>
         </form>
-
-        <!-- Debug -->
         <a class="btn secondary" href="/admin/richmenu/debug">Debug</a>
-
-        <!-- ลบทั้งหมด -->
-        <form action="/admin/richmenu/delete" method="post" onsubmit="return confirm('ลบ Rich Menu ทั้งหมดหรือไม่?')">
-          <button type="submit" class="btn danger">ลบทั้งหมด</button>
+        <form action="/admin/richmenu/delete" method="post">
+          <button type="submit" class="btn danger" data-confirm="ลบ Rich Menu ทั้งหมดหรือไม่?">ลบทั้งหมด</button>
         </form>
       </div>
     </div>
+    <div class="panel-body panel__body">
+      <% if (result) { %>
+        <div class="note mb-2">
+          <% if (result.ok) { %>
+            ✅ <%= result.message || 'สำเร็จ' %>
+          <% } else if (result.error) { %>
+            ❌ <%= result.error %>
+          <% } %>
+        </div>
+      <% } %>
 
-    <% if (result) { %>
-      <div class="note mb-2">
-        <% if (result.ok) { %>
-          ✅ <%= result.message || 'สำเร็จ' %>
-        <% } else if (result.error) { %>
-          ❌ <%= result.error %>
-        <% } %>
-      </div>
-    <% } %>
+      <h4 class="mt-2 mb-2">รายการ Rich Menu</h4>
 
-    <h4 class="mt-2 mb-2">รายการ Rich Menu</h4>
-
-    <div class="table-wrap">
-      <table class="table">
+      <div class="table-wrap table-scroll">
+        <table class="table">
         <thead>
           <tr>
             <th>id</th>
@@ -60,9 +55,9 @@
                     <input type="hidden" name="id" value="<%= m.richMenuId %>">
                     <button class="btn small primary" type="submit">ตั้ง Default</button>
                   </form>
-                  <form action="/admin/richmenu/delete" method="post" onsubmit="return confirm('ลบเมนูนี้?')">
+                  <form action="/admin/richmenu/delete" method="post">
                     <input type="hidden" name="id" value="<%= m.richMenuId %>">
-                    <button class="btn small danger" type="submit">ลบ</button>
+                    <button class="btn small danger" type="submit" data-confirm="ลบเมนูนี้?">ลบ</button>
                   </form>
                 </td>
               </tr>
@@ -74,19 +69,22 @@
           <% } %>
         </tbody>
       </table>
+      </div>
     </div>
   </div>
 
   <!-- RIGHT: Tips -->
   <div class="panel">
-    <div class="panel-header">
+    <div class="panel-header panel__header">
       <h3>Tips</h3>
     </div>
-    <ul class="clean">
-      <li>ขนาด Half menu: <b>2500×843 px</b></li>
-      <li>อัปโหลดรูปแล้วอาจต้องรอ CDN พร้อม <b>0.5–2 นาที</b> ก่อนตั้ง default</li>
-      <li>ถ้าเจอ 413 จาก LINE CDN ให้บีบอัดรูปให้ต่ำกว่า ~ <b>1.5MB</b></li>
-      <li>หลังสร้างแล้วกด <b>ตั้ง Default</b> ให้ผู้ใช้เห็นเมนูนี้ทันที</li>
-    </ul>
+    <div class="panel-body panel__body">
+      <ul class="clean">
+        <li>ขนาด Half menu: <b>2500×843 px</b></li>
+        <li>อัปโหลดรูปแล้วอาจต้องรอ CDN พร้อม <b>0.5–2 นาที</b> ก่อนตั้ง default</li>
+        <li>ถ้าเจอ 413 จาก LINE CDN ให้บีบอัดรูปให้ต่ำกว่า ~ <b>1.5MB</b></li>
+        <li>หลังสร้างแล้วกด <b>ตั้ง Default</b> ให้ผู้ใช้เห็นเมนูนี้ทันที</li>
+      </ul>
+    </div>
   </div>
 </div>

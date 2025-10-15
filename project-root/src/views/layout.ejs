@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title><%= (typeof title === 'string' && title ? `${title} · ` : '') %>NILA · Admin</title>
-  <link rel="icon" href="/static/img/Nila_Flatcolour_Logo-.png" />
+  <title><%= (typeof title === 'string' && title ? `${title} · ` : '') %>Sorrni · Admin Console</title>
+  <link rel="icon" href="/static/img/nila-logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" />
   <link rel="stylesheet" href="/static/css/main.css" />
 </head>
 <%
@@ -26,13 +26,15 @@
     : (isGuest ? 'โหมดอ่านอย่างเดียว' : 'พร้อมดำเนินการ');
 
   const bodyClasses = ['app-shell'];
+  if (hideChrome) bodyClasses.push('auth');
+  if (!hideChrome) bodyClasses.push('has-chrome');
   if (hideChrome) bodyClasses.push('no-chrome');
   if (isLineShell) bodyClasses.push('line-shell');
   if (typeof bodyVariant === 'string' && bodyVariant) bodyClasses.push(bodyVariant);
 
   const navGroups = [
     {
-      label: 'ภาพรวม',
+      label: 'Overview',
       items: [
         { key: 'dashboard', href: '/admin', title: 'Dashboard' },
         { key: 'insights', href: '/admin/insights', title: 'Insights' },
@@ -41,33 +43,53 @@
       ],
     },
     {
-      label: 'งานจัดซื้อ',
+      label: 'Data Ops',
       items: [
+        { key: 'upload', href: '/admin/upload', title: 'Upload' },
+        { key: 'test', href: '/admin/test', title: 'Test & Send' },
+        { key: 'keywords', href: '/admin/keywords', title: 'Keywords' },
         { key: 'procurement-pr', href: '/admin/pr', title: 'PR Board' },
         { key: 'procurement-po', href: '/admin/po', title: 'PO Board' },
         { key: 'procurement-vendors', href: '/admin/vendors', title: 'Vendors' },
         { key: 'procurement-settings', href: '/admin/settings/procurement', title: 'Settings' },
-        { key: 'upload', href: '/admin/upload', title: 'Upload' },
       ],
     },
     {
-      label: 'Directory',
+      label: 'Organization',
       items: [
         { key: 'companies', href: '/admin/companies', title: 'Companies' },
         { key: 'members', href: '/admin/members', title: 'Members' },
         { key: 'link', href: '/admin/members/link', title: 'Link Users' },
-        { key: 'keywords', href: '/admin/keywords', title: 'Keywords' },
+      ],
+    },
+    {
+      label: 'LINE',
+      items: [
+        { key: 'richmenu', href: '/admin/richmenu', title: 'Rich Menu' },
         { key: 'bot-faq', href: '/admin/bot-faq', title: 'Bot Q&A' },
       ],
     },
+    {
+      label: 'Tools',
+      items: [
+        { key: 'tools', href: '/admin/tools/purge', title: 'Purge Data' },
+        { key: 'tools-send-daily', href: '/admin/tools/send-daily', title: 'Send Daily' },
+      ],
+    },
   ];
+
+  const isNavItemActive = (item) => {
+    if (active === item.key) return true;
+    if (active === 'tools' && typeof item.href === 'string' && item.href.startsWith('/admin/tools')) return true;
+    return false;
+  };
 %>
 <body class="<%= bodyClasses.join(' ') %>">
   <% if (!hideChrome) { %>
     <% if (isLineShell) { %>
       <header class="line-header">
         <div class="line-header__brand">
-          <img src="/static/img/Nila_Flatcolour_Logo-.png" alt="NILA" />
+          <img src="/static/img/nila-logo.png" alt="Sorrni" />
           <div>
             <strong><%= headerTitle %></strong>
             <span><%= headerSubtitle %></span>
@@ -91,8 +113,8 @@
               <span></span><span></span><span></span>
             </button>
             <a href="/admin" class="brand">
-              <img src="/static/img/Nila_Flatcolour_Logo-.png" alt="NILA" />
-              <span>NILA · Admin</span>
+              <img src="/static/img/nila-logo.png" alt="Sorrni" />
+              <span>Sorrni · Admin Console</span>
             </a>
           </div>
           <nav class="topnav" id="main-nav" aria-label="เมนูหลัก">
@@ -103,7 +125,7 @@
                   <ul>
                     <% group.items.forEach((item) => { %>
                       <li>
-                        <a href="<%= item.href %>" class="<%= active === item.key ? 'active' : '' %>"><%= item.title %></a>
+                        <a href="<%= item.href %>" class="<%= isNavItemActive(item) ? 'active' : '' %>"><%= item.title %></a>
                       </li>
                     <% }) %>
                   </ul>
@@ -121,7 +143,48 @@
           </div>
         </div>
       </header>
-      <div class="topnav-backdrop" data-nav-backdrop aria-hidden="true"></div>
+      <aside class="drawer" data-nav-drawer aria-hidden="true">
+        <div class="drawer__header">
+          <a href="/admin" class="brand">
+            <img src="/static/img/nila-logo.png" alt="Sorrni" />
+            <span>Sorrni · Admin Console</span>
+          </a>
+          <button type="button" class="btn icon ghost" data-drawer-close aria-label="ปิดเมนู">
+            ✕
+          </button>
+        </div>
+        <nav class="drawer__nav" aria-label="เมนูหลัก (มือถือ)">
+          <% navGroups.forEach((group, idx) => { const groupId = `drawer-group-${idx}`; %>
+            <section class="drawer-group" data-drawer-group data-group-key="<%= group.label %>">
+              <button
+                type="button"
+                class="drawer-group__toggle"
+                aria-expanded="false"
+                aria-controls="<%= groupId %>"
+              >
+                <span><%= group.label %></span>
+                <span class="drawer-group__icon" aria-hidden="true">▾</span>
+              </button>
+              <ul id="<%= groupId %>" class="drawer-group__list" hidden>
+                <% group.items.forEach((item) => { %>
+                  <li>
+                    <a href="<%= item.href %>" class="<%= isNavItemActive(item) ? 'is-active' : '' %>"><%= item.title %></a>
+                  </li>
+                <% }) %>
+              </ul>
+            </section>
+          <% }) %>
+        </nav>
+        <div class="drawer__meta">
+          <span class="user-pill"><%= displayName %></span>
+          <% if (isGuest) { %>
+            <a class="btn primary btn-block" href="/admin/login?redirect=<%= redirectQuery %>">Login</a>
+          <% } else { %>
+            <a class="btn ghost btn-block" href="/admin/logout">Logout</a>
+          <% } %>
+        </div>
+      </aside>
+      <div class="drawer-backdrop" data-drawer-backdrop aria-hidden="true"></div>
     <% } %>
   <% } %>
 

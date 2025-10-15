@@ -1,6 +1,6 @@
 <% if (result) { %>
   <div class="panel upload-result-panel">
-    <div class="panel-header">
+    <div class="panel-header panel__header">
       <h3>ผลการนำเข้า</h3>
     </div>
 
@@ -42,7 +42,7 @@
 
         <div>
           <h4>วันที่ล่าสุดในระบบ</h4>
-          <div class="table-scroll">
+          <div class="table-wrap table-scroll">
             <table class="table compact">
               <thead><tr><th>วันที่ (dateStr)</th><th>จำนวน</th></tr></thead>
               <tbody>
@@ -61,7 +61,7 @@
       <% if (result.sourceSummary && result.sourceSummary.length) { %>
         <hr />
         <h4>สรุปตามบริษัทจากไฟล์</h4>
-        <div class="table-scroll">
+        <div class="table-wrap table-scroll">
           <table class="table compact">
             <thead>
               <tr>
@@ -90,7 +90,7 @@
         <div class="grid grid-2">
           <div>
             <h4>สรุปซื้อ (BUY)</h4>
-            <div class="table-scroll">
+            <div class="table-wrap table-scroll">
               <table class="table compact">
                 <thead><tr><th>สินค้า</th><th class="right">ตัน</th></tr></thead>
                 <tbody>
@@ -106,7 +106,7 @@
           </div>
           <div>
             <h4>สรุปขาย (SELL)</h4>
-            <div class="table-scroll">
+            <div class="table-wrap table-scroll">
               <table class="table compact">
                 <thead><tr><th>สินค้า</th><th class="right">ตัน</th></tr></thead>
                 <tbody>

@@ -53,8 +53,8 @@
       <h2>ฐานความรู้สำหรับบอท</h2>
       <p class="muted">กำหนดคำถาม-คำตอบให้ LINE Bot ตอบอัตโนมัติ และนำเข้าชุดคำถามแนะนำ</p>
     </div>
-    <form action="/admin/bot-faq/import-defaults" method="post" onsubmit="return confirm('นำเข้าคำตอบแนะนำ?');">
-      <button type="submit" class="btn secondary">นำเข้าชุดคำถามแนะนำ</button>
+    <form action="/admin/bot-faq/import-defaults" method="post">
+      <button type="submit" class="btn secondary" data-confirm="นำเข้าคำตอบแนะนำ?">นำเข้าชุดคำถามแนะนำ</button>
     </form>
   </div>
 
@@ -66,7 +66,7 @@
   <% } %>
 
   <% if (intentSummaryList.length) { %>
-    <div class="panel-body intent-overview">
+    <div class="panel-body panel__body intent-overview">
       <div class="card glass">
         <div class="card-heading heading-with-toggle">
           <div>
@@ -125,7 +125,7 @@
     </div>
   <% } %>
 
-  <div class="panel-body grid-2">
+  <div class="panel-body panel__body grid-2">
     <div class="card glass">
       <div class="card-heading">
         <h3>เพิ่มคำถามใหม่</h3>
@@ -185,12 +185,12 @@
     </div>
   </div>
 
-  <div class="panel-body">
+  <div class="panel-body panel__body">
     <div class="card glass">
       <div class="card-heading">
         <h3>รายการคำถามทั้งหมด</h3>
       </div>
-      <div class="table-scroll">
+      <div class="table-wrap table-scroll">
         <table class="table compact ghost">
           <thead>
             <tr>
@@ -252,8 +252,8 @@
                     <form action="/admin/bot-faq/<%= item._id %>/toggle" method="post">
                       <button type="submit" class="btn small"><%= item.isActive ? 'ปิดการใช้' : 'เปิดใช้งาน' %></button>
                     </form>
-                    <form action="/admin/bot-faq/<%= item._id %>/delete" method="post" onsubmit="return confirm('ลบรายการนี้?');">
-                      <button type="submit" class="btn small danger">ลบ</button>
+                    <form action="/admin/bot-faq/<%= item._id %>/delete" method="post">
+                      <button type="submit" class="btn small danger" data-confirm="ลบรายการนี้?">ลบ</button>
                     </form>
                   </div>
                 </td>

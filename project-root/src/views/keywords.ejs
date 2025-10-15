@@ -1,7 +1,7 @@
 <!-- src/views/keywords.ejs -->
 <div class="grid grid-2">
   <div class="panel">
-    <div class="panel-header">
+    <div class="panel-header panel__header">
       <h2>New Keyword</h2>
       <p class="muted">เพิ่มคำสั่งตอบกลับอัตโนมัติ</p>
     </div>
@@ -11,27 +11,29 @@
     <% } %>
 
     <form class="form" action="/admin/keywords/new" method="post">
-      <div class="form-row">
+      <div class="form-grid">
+        <div class="field">
         <label>Keyword</label>
         <input type="text" name="keyword" value="<%= (form && form.keyword) || '' %>" placeholder="เช่น: สวัสดี" required />
-      </div>
+        </div>
 
-      <div class="form-row">
+        <div class="field">
         <label>Reply Type</label>
         <select name="replyType">
           <option value="text"     <%= (form && form.replyType==='text') ? 'selected' : '' %> >text</option>
           <option value="template" <%= (form && form.replyType==='template') ? 'selected' : '' %> >template</option>
         </select>
-      </div>
+        </div>
 
-      <div class="form-row">
+        <div class="field">
         <label>Reply Text (กรณี replyType=text)</label>
         <textarea name="replyText" rows="4" placeholder="ข้อความตอบกลับ"><%= (form && form.replyText) || '' %></textarea>
-      </div>
+        </div>
 
-      <div class="form-row">
+        <div class="field">
         <label>Template Code (กรณี replyType=template)</label>
         <input type="text" name="templateCode" value="<%= (form && form.templateCode) || '' %>" placeholder="เช่น: DAILY_SUMMARY" />
+        </div>
       </div>
 
       <div class="form-actions">
@@ -41,11 +43,11 @@
   </div>
 
   <div class="panel">
-    <div class="panel-header">
+    <div class="panel-header panel__header">
       <h2>Keywords</h2>
     </div>
 
-    <div class="table-scroll">
+    <div class="table-wrap table-scroll">
       <table class="table">
         <thead>
           <tr>
@@ -64,8 +66,8 @@
               <td class="wrap"><%= k.replyText || '-' %></td>
               <td><code><%= k.templateCode || '-' %></code></td>
               <td class="table-actions col-actions">
-                <form action="/admin/keywords/<%= k._id %>/delete" method="post" onsubmit="return confirm('ลบคีย์เวิร์ดนี้?');">
-                  <button class="btn small danger" type="submit">Delete</button>
+                <form action="/admin/keywords/<%= k._id %>/delete" method="post">
+                  <button class="btn small danger" type="submit" data-confirm="ลบคีย์เวิร์ดนี้?">Delete</button>
                 </form>
               </td>
             </tr>

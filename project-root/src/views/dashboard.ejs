@@ -378,7 +378,7 @@ const sampleNetwork = {
         </div>
         <div class="insight-meta">ข้อมูลย้อนหลัง 14 วันล่าสุด</div>
       </div>
-      <div class="panel-body insight-body" data-behavior-root>
+      <div class="panel-body panel__body insight-body" data-behavior-root>
         <div class="filter-block" data-filter-wrapper>
           <div class="filter-toolbar">
             <button type="button" class="btn ghost small" data-filter-toggle aria-expanded="true">ซ่อนฟิลเตอร์</button>
@@ -482,12 +482,12 @@ const sampleNetwork = {
           </ul>
         </details>
         <div class="insight-row row-timeseries">
-          <div class="card glass insight-chart full" data-chart-trend='<%- interactionSeriesJSON %>' data-drilldown="interaction-volume">
-            <div class="card-heading">
+          <div class="card glass insight-chart chart-card full" data-chart-trend='<%- interactionSeriesJSON %>' data-drilldown="interaction-volume">
+            <div class="card-heading chart-card__header">
               <h3>แนวโน้มข้อความเข้า/ออกตามวัน</h3>
               <span class="muted">สลับมุมมอง 7 / 14 / 30 / 90 วัน</span>
             </div>
-            <div class="chart-frame">
+            <div class="chart-frame chart-card__body">
               <canvas id="chat-trend-chart" height="240"></canvas>
               <div class="chart-fallback">
                 <strong>Top Activity</strong>
@@ -503,7 +503,7 @@ const sampleNetwork = {
               </div>
             </div>
             <p class="chart-note">จำนวนข้อความเข้า-ออกและผู้ใช้ไม่ซ้ำในแต่ละวัน</p>
-            <details class="card-foot query-toggle">
+            <details class="card-foot chart-card__footer query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT date::date AS d,
 SUM(CASE WHEN direction='in' THEN 1 ELSE 0 END) AS inbound,
@@ -513,12 +513,12 @@ WHERE timestamp BETWEEN $start AND $end
 GROUP BY 1 ORDER BY 1</code></pre>
             </details>
           </div>
-          <div class="card glass insight-chart" data-heatmap='<%- heatmapJSON %>' data-drilldown="keyword-intent-heatmap">
-            <div class="card-heading">
+          <div class="card glass insight-chart chart-card" data-heatmap='<%- heatmapJSON %>' data-drilldown="keyword-intent-heatmap">
+            <div class="card-heading chart-card__header">
               <h3>Heatmap ชั่วโมงที่ใช้งาน</h3>
               <span class="muted">จำนวนข้อความแบบ hour × weekday</span>
             </div>
-            <div class="chart-frame">
+            <div class="chart-frame chart-card__body">
               <canvas id="chat-heatmap-chart" height="240"></canvas>
               <div class="chart-fallback">
                 <strong>ช่วงเวลายอดนิยม</strong>
@@ -534,7 +534,7 @@ GROUP BY 1 ORDER BY 1</code></pre>
               </div>
             </div>
             <p class="chart-note">ช่วงวันและเวลาที่ปริมาณแชทมากที่สุด (เข้ม=ข้อความมาก)</p>
-            <details class="card-foot query-toggle">
+            <details class="card-foot chart-card__footer query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT EXTRACT(DOW FROM timestamp) AS dow,
 EXTRACT(HOUR FROM timestamp) AS hour,
@@ -544,8 +544,8 @@ WHERE timestamp BETWEEN $start AND $end
 GROUP BY 1,2</code></pre>
             </details>
           </div>
-          <div class="card glass insight-chart" data-sentiment='<%- sentimentTrendJSON %>' data-drilldown="sentiment-trend">
-            <div class="card-heading">
+          <div class="card glass insight-chart chart-card" data-sentiment='<%- sentimentTrendJSON %>' data-drilldown="sentiment-trend">
+            <div class="card-heading chart-card__header">
               <h3>Sentiment Distribution</h3>
               <span class="muted">สัดส่วนข้อความเชิงบวก/กลาง/ลบ ล่าสุด 14 วัน</span>
             </div>
@@ -561,7 +561,7 @@ GROUP BY 1,2</code></pre>
               </div>
             </div>
             <p class="chart-note">สัดส่วนข้อความเชิงบวก/กลาง/ลบ ในรอบ 14 วันล่าสุด</p>
-            <details class="card-foot query-toggle">
+            <details class="card-foot chart-card__footer query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT sentiment_label,
 COUNT(*) AS cnt,
@@ -574,12 +574,12 @@ GROUP BY 1</code></pre>
         </div>
 
         <div class="insight-row row-intents">
-          <div class="card glass insight-chart" data-intent-stack='<%- intentStackJSON %>' data-drilldown="intent-distribution">
-            <div class="card-heading">
+          <div class="card glass insight-chart chart-card" data-intent-stack='<%- intentStackJSON %>' data-drilldown="intent-distribution">
+            <div class="card-heading chart-card__header">
               <h3>Intent Distribution</h3>
               <span class="muted">สัดส่วน Inquiry / Order / Complaint / อื่น ๆ รายสัปดาห์</span>
             </div>
-            <div class="chart-frame">
+            <div class="chart-frame chart-card__body">
               <canvas id="intent-stack-chart" height="260"></canvas>
               <div class="chart-fallback">
                 <strong>Intent ล่าสุด</strong>
@@ -591,7 +591,7 @@ GROUP BY 1</code></pre>
               </div>
             </div>
             <p class="chart-note">เปรียบเทียบสัดส่วนข้อความแต่ละหมวด (Inquiry, Order, Complaint ฯลฯ) รายสัปดาห์</p>
-            <details class="card-foot query-toggle">
+            <details class="card-foot chart-card__footer query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT week_start, intent_category, COUNT(*)
 FROM fact_chat_message
@@ -599,7 +599,7 @@ GROUP BY 1,2</code></pre>
             </details>
           </div>
           <div class="card glass keyword-card" data-drilldown="top-keywords">
-            <div class="card-heading">
+            <div class="card-heading chart-card__header">
               <h3>Top Keywords Cloud</h3>
               <span class="muted">N-grams (stopwords removed)</span>
             </div>
@@ -607,7 +607,7 @@ GROUP BY 1,2</code></pre>
               <div id="keyword-cloud" class="keyword-cloud" data-keyword-cloud='<%- keywordCloudJSON %>'></div>
             </div>
             <p class="chart-note">คำสำคัญที่ถูกกล่าวถึงบ่อยในบทสนทนาล่าสุด ขนาดคำแสดงความถี่</p>
-            <details class="card-foot query-toggle">
+            <details class="card-foot chart-card__footer query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT keyword, SUM(weight) AS score
 FROM keyword_stats
@@ -616,16 +616,16 @@ GROUP BY 1
 ORDER BY score DESC LIMIT 200</code></pre>
             </details>
           </div>
-          <div class="card glass insight-chart" data-consent-status='<%- consentStatusJSON %>' data-drilldown="consent-status">
-            <div class="card-heading">
+          <div class="card glass insight-chart chart-card" data-consent-status='<%- consentStatusJSON %>' data-drilldown="consent-status">
+            <div class="card-heading chart-card__header">
               <h3>Consent Status</h3>
               <span class="muted">Granted / Pending / Revoked</span>
             </div>
-            <div class="chart-frame">
+            <div class="chart-frame chart-card__body">
               <canvas id="consent-status-chart" height="240"></canvas>
             </div>
             <p class="chart-note">สัดส่วนผู้ใช้ตามสถานะความยินยอมล่าสุดที่ระบบบันทึก</p>
-            <details class="card-foot query-toggle">
+            <details class="card-foot chart-card__footer query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT latest_status, COUNT(*)
 FROM consent_audit_latest
@@ -633,7 +633,7 @@ GROUP BY 1</code></pre>
             </details>
           </div>
           <div class="card glass sentiment-cloud" data-drilldown="sentiment-wordcloud">
-            <div class="card-heading">
+            <div class="card-heading chart-card__header">
               <h3>Word Clouds แยกตาม Sentiment</h3>
             </div>
             <div class="sentiment-cloud-wrap" data-sentiment-cloud='<%- sentimentCloudJSON %>'>
@@ -652,11 +652,11 @@ GROUP BY 1</code></pre>
 
         <div class="insight-row row-agent">
           <div class="card glass funnel-card" data-funnel='<%- funnelJSON %>' data-drilldown="conversion-funnel">
-            <div class="card-heading">
+            <div class="card-heading chart-card__header">
               <h3>Conversion Funnel</h3>
               <span class="muted">Inquiry → Quote → PO → Payment → Delivered</span>
             </div>
-            <div class="chart-frame">
+            <div class="chart-frame chart-card__body">
               <canvas id="conversion-funnel-chart" height="260"></canvas>
               <div class="chart-fallback">
                 <strong>จำนวนต่อขั้น</strong>
@@ -668,7 +668,7 @@ GROUP BY 1</code></pre>
               </div>
             </div>
             <p class="chart-note">ติดตามจำนวนเคสที่ไหลผ่านแต่ละขั้นจากคำถาม → ใบสั่งซื้อ → ส่งมอบ</p>
-            <details class="card-foot query-toggle">
+            <details class="card-foot chart-card__footer query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT stage, COUNT(*)
 FROM conversion_events
@@ -677,12 +677,12 @@ GROUP BY stage
 ORDER BY stage_order</code></pre>
             </details>
           </div>
-          <div class="card glass insight-chart" data-agent-response='<%- agentResponseJSON %>' data-drilldown="agent-response">
-            <div class="card-heading">
+          <div class="card glass insight-chart chart-card" data-agent-response='<%- agentResponseJSON %>' data-drilldown="agent-response">
+            <div class="card-heading chart-card__header">
               <h3>Agent Response Time</h3>
               <span class="muted">Avg / Median / P90 + SLA Target</span>
             </div>
-            <div class="chart-frame">
+            <div class="chart-frame chart-card__body">
               <canvas id="agent-response-chart" height="260"></canvas>
               <div class="chart-fallback">
                 <strong>ค่าเฉลี่ยตอบกลับ</strong>
@@ -697,7 +697,7 @@ ORDER BY stage_order</code></pre>
               </div>
             </div>
             <p class="chart-note">เวลาเฉลี่ย/มัธยฐานการตอบกลับของแต่ละเอเจนต์ พร้อมสัดส่วนที่ทำ SLA ได้ทัน</p>
-            <details class="card-foot query-toggle">
+            <details class="card-foot chart-card__footer query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT agent_id,
 AVG(first_reply_sec) AS avg,
@@ -710,11 +710,11 @@ GROUP BY agent_id</code></pre>
             </details>
           </div>
           <div class="card glass" data-drilldown="agent-performance-table">
-            <div class="card-heading">
+            <div class="card-heading chart-card__header">
               <h3>Agent Leaderboard</h3>
               <span class="muted">เรียงตาม SLA% และ Sentiment</span>
             </div>
-            <div class="table-scroll">
+            <div class="table-wrap table-scroll">
               <table class="table compact ghost">
                 <thead>
                   <tr>
@@ -749,11 +749,11 @@ GROUP BY agent_id</code></pre>
 
         <div class="insight-row row-engagement">
           <div class="card glass" data-drilldown="customer-engagement">
-            <div class="card-heading">
+            <div class="card-heading chart-card__header">
               <h3>Top Customers by Engagement</h3>
               <span class="muted">Ranking โดย Frequency · Sessions · Sentiment</span>
             </div>
-            <div class="table-scroll">
+            <div class="table-wrap table-scroll">
               <table class="table compact ghost">
                 <thead>
                   <tr>
@@ -782,7 +782,7 @@ GROUP BY agent_id</code></pre>
               </table>
             </div>
             <p class="chart-note">ลูกค้าที่มีการมีส่วนร่วมสูงสุดโดยดูจากข้อความ จำนวนเซสชัน และคะแนน sentiment</p>
-            <details class="card-foot query-toggle">
+            <details class="card-foot chart-card__footer query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT user_id,
 COUNT(*) AS messages,
@@ -798,12 +798,12 @@ LIMIT 20</code></pre>
         </div>
 
         <div class="insight-row row-retention">
-          <div class="card glass insight-chart" data-retention='<%- retentionJSON %>' data-drilldown="retention-cohort">
-            <div class="card-heading">
+          <div class="card glass insight-chart chart-card" data-retention='<%- retentionJSON %>' data-drilldown="retention-cohort">
+            <div class="card-heading chart-card__header">
               <h3>Retention Cohort</h3>
               <span class="muted">Cohort รายสัปดาห์</span>
             </div>
-            <div class="chart-frame">
+            <div class="chart-frame chart-card__body">
               <canvas id="retention-cohort-chart" height="260"></canvas>
               <div class="chart-fallback">
                 <strong>อัตรากลับมา</strong>
@@ -818,7 +818,7 @@ LIMIT 20</code></pre>
               </div>
             </div>
             <p class="chart-note">ติดตามสัดส่วนลูกค้าที่กลับมาคุยซ้ำหลัง onboarding ในแต่ละสัปดาห์</p>
-            <details class="card-foot query-toggle">
+            <details class="card-foot chart-card__footer query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT cohort_week,
 week_offset,
@@ -827,11 +827,11 @@ FROM retention_cohorts</code></pre>
             </details>
           </div>
           <div class="card glass" data-drilldown="churn-risk">
-            <div class="card-heading">
+            <div class="card-heading chart-card__header">
               <h3>Churn Risk (Top 10)</h3>
               <span class="muted">คนที่ไม่มีข้อความ &gt; 2× median หรือ sentiment ติดลบ</span>
             </div>
-            <div class="table-scroll">
+            <div class="table-wrap table-scroll">
               <table class="table compact ghost">
                 <thead>
                   <tr>
@@ -859,11 +859,11 @@ FROM retention_cohorts</code></pre>
             </div>
           </div>
           <div class="card glass" data-drilldown="anomaly-alerts">
-            <div class="card-heading">
+            <div class="card-heading chart-card__header">
               <h3>Escalation &amp; Complaint Alerts</h3>
               <span class="muted">ตรวจจับ negativity spike</span>
             </div>
-            <div class="table-scroll">
+            <div class="table-wrap table-scroll">
               <table class="table compact ghost">
                 <thead>
                   <tr>
@@ -890,7 +890,7 @@ FROM retention_cohorts</code></pre>
               </table>
             </div>
             <p class="chart-note">สัญญาณผิดปกติจากคำร้องเรียนหรือข้อความเชิงลบที่พุ่งสูงกว่าค่าเฉลี่ย</p>
-            <details class="card-foot query-toggle">
+            <details class="card-foot chart-card__footer query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>INSERT INTO anomalies(date, metric, delta_sigma)
 SELECT day, 'complaints', z_score
@@ -901,7 +901,7 @@ FROM complaint_spike_detector</code></pre>
 
         <div class="insight-row row-network">
           <div class="card glass network-card" data-drilldown="customer-agent-network">
-            <div class="card-heading">
+            <div class="card-heading chart-card__header">
               <h3>Customer ↔ Agent Network</h3>
               <span class="muted">น้ำหนักตามจำนวนบทสนทนา</span>
             </div>
@@ -924,7 +924,7 @@ FROM complaint_spike_detector</code></pre>
               </ul>
             </div>
             <p class="chart-note">จับคู่ลูกค้ากับเอเจนต์ที่สนทนาบ่อยที่สุด เพื่อวางแผนติดตามหรือหมุนเวียนทีม</p>
-            <details class="card-foot query-toggle">
+            <details class="card-foot chart-card__footer query-toggle">
               <summary>ดูสูตร / Query</summary>
               <pre><code>SELECT user_id,
 agent_id,
@@ -938,10 +938,10 @@ GROUP BY 1,2</code></pre>
 
         <div class="insight-table-grid row-legacy">
           <div class="card glass">
-            <div class="card-heading">
+            <div class="card-heading chart-card__header">
               <h3>ข้อความตามประเภท</h3>
             </div>
-            <div class="table-scroll">
+            <div class="table-wrap table-scroll">
               <table class="table compact ghost">
                 <thead>
                   <tr>
@@ -966,10 +966,10 @@ GROUP BY 1,2</code></pre>
           </div>
 
           <div class="card glass">
-            <div class="card-heading">
+            <div class="card-heading chart-card__header">
               <h3>หมวดข้อความตามคีย์เวิร์ด</h3>
             </div>
-            <div class="table-scroll">
+            <div class="table-wrap table-scroll">
               <table class="table compact ghost">
                 <thead>
                   <tr>
@@ -999,10 +999,10 @@ GROUP BY 1,2</code></pre>
           </div>
 
           <div class="card glass">
-            <div class="card-heading">
+            <div class="card-heading chart-card__header">
               <h3>ผู้ใช้ที่อัปเดตล่าสุด</h3>
             </div>
-            <div class="table-scroll">
+            <div class="table-wrap table-scroll">
               <table class="table compact ghost">
                 <thead>
                   <tr>
@@ -1039,7 +1039,7 @@ GROUP BY 1,2</code></pre>
         </div>
 
         <div class="card glass logic-card">
-          <div class="card-heading">
+          <div class="card-heading chart-card__header">
             <h3>Analytics Logic &amp; Pipelines</h3>
             <span class="muted">10 โมดูลหลักของระบบ</span>
           </div>
@@ -1056,7 +1056,7 @@ GROUP BY 1,2</code></pre>
         </div>
 
         <div class="card glass checklist-card">
-          <div class="card-heading">
+          <div class="card-heading chart-card__header">
             <h3>Coverage Checklist</h3>
             <span class="muted">10 Analysis · 10 Charts · 10 Logics</span>
           </div>
@@ -1200,9 +1200,9 @@ GROUP BY 1,2</code></pre>
           <p>สัดส่วนสินค้าและปริมาณเคลื่อนไหวล่าสุด</p>
         </div>
       </div>
-      <div class="panel-body grid-2 gap-xl">
+      <div class="panel-body panel__body grid-2 gap-xl">
         <div class="card glass donut-card">
-          <div class="card-heading">
+          <div class="card-heading chart-card__header">
             <h3>Top รายการสินค้า</h3>
             <span class="muted">จากไฟล์ล่าสุด (สูงสุด 8 รายการ)</span>
           </div>
@@ -1237,11 +1237,11 @@ GROUP BY 1,2</code></pre>
           </div>
         </div>
         <div class="card glass">
-          <div class="card-heading">
+          <div class="card-heading chart-card__header">
             <h3>แนวโน้ม 7 วันที่ผ่านมา</h3>
             <span class="muted">รวมตามวันที่นำเข้า</span>
           </div>
-          <div class="table-scroll">
+          <div class="table-wrap table-scroll">
             <table class="table compact ghost">
               <thead>
                 <tr>
@@ -1270,13 +1270,13 @@ GROUP BY 1,2</code></pre>
           </div>
         </div>
       </div>
-      <div class="panel-body">
+      <div class="panel-body panel__body">
         <div class="card glass">
-          <div class="card-heading">
+          <div class="card-heading chart-card__header">
             <h3>สรุป MIX ตามโครงการ</h3>
             <span class="muted">รวม netWeight <strong><%= fmtTons(mixSummaryTotalTons || 0, { max: 2 }) %></strong> ตัน</span>
           </div>
-          <div class="table-scroll">
+          <div class="table-wrap table-scroll">
             <table class="table compact ghost">
               <thead>
                 <tr>
@@ -1306,9 +1306,9 @@ GROUP BY 1,2</code></pre>
           </div>
         </div>
       </div>
-      <div class="panel-body">
+      <div class="panel-body panel__body">
         <div class="card glass line-card" data-chart="daily-lines" data-chart-payload='<%- dailySeriesPayload %>'>
-          <div class="card-heading">
+          <div class="card-heading chart-card__header">
             <h3>เส้นแนวโน้มรายวัน</h3>
             <span class="muted">ปริมาณขาเข้าและขาออก (ตัน)</span>
           </div>
@@ -1326,12 +1326,12 @@ GROUP BY 1,2</code></pre>
           <p>ลำดับบริษัทที่มีปริมาณสูงสุดและรายการล่าสุด</p>
         </div>
       </div>
-      <div class="panel-body grid-2 gap-xl">
+      <div class="panel-body panel__body grid-2 gap-xl">
         <div class="card glass">
-          <div class="card-heading">
+          <div class="card-heading chart-card__header">
             <h3>อันดับตามปริมาณ</h3>
           </div>
-          <div class="table-scroll">
+          <div class="table-wrap table-scroll">
             <table class="table compact ghost">
               <thead>
                 <tr>
@@ -1362,10 +1362,10 @@ GROUP BY 1,2</code></pre>
           </div>
         </div>
         <div class="card glass">
-          <div class="card-heading">
+          <div class="card-heading chart-card__header">
             <h3>รายการที่เพิ่งอัปโหลด</h3>
           </div>
-          <div class="table-scroll">
+          <div class="table-wrap table-scroll">
             <table class="table compact ghost">
               <thead>
                 <tr>
@@ -1408,7 +1408,7 @@ GROUP BY 1,2</code></pre>
           <p>เข้าถึงหน้าต่าง ๆ เพื่อจัดการระบบ</p>
         </div>
       </div>
-      <div class="panel-body quick-actions">
+      <div class="panel-body panel__body quick-actions">
         <a class="action-card" href="/admin/upload">
           <span class="icon">⤴️</span>
           <span>

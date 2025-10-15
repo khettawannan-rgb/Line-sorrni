@@ -1,14 +1,14 @@
 <!-- src/views/templates.ejs -->
 <div class="panel">
-  <div class="panel-header">
+  <div class="panel-header panel__header">
     <h2>Templates</h2>
   </div>
 
-  <div class="panel-actions">
+  <div class="panel-actions panel__actions">
     <a class="btn primary" href="/admin/templates/new">+ New Template</a>
   </div>
 
-  <div class="table-scroll">
+  <div class="table-wrap table-scroll">
     <table class="table">
       <thead>
         <tr>
@@ -26,8 +26,8 @@
             <td class="wrap"><pre class="mono"><%= (t.content || '').slice(0,300) %></pre></td>
             <td class="table-actions col-actions">
               <a class="btn small" href="/admin/templates/<%= t._id %>/edit">Edit</a>
-              <form action="/admin/templates/<%= t._id %>/delete" method="post" onsubmit="return confirm('ลบเทมเพลตนี้?');">
-                <button class="btn small danger" type="submit">Delete</button>
+              <form action="/admin/templates/<%= t._id %>/delete" method="post">
+                <button class="btn small danger" type="submit" data-confirm="ลบเทมเพลตนี้?">Delete</button>
               </form>
             </td>
           </tr>
