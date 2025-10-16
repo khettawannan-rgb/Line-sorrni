@@ -337,7 +337,7 @@ router.get('/logout', (req, res) =>
 /* Dashboard                                                           */
 /* ------------------------------------------------------------------ */
 
-router.get('/', requireAuth, async (req, res) => {
+async function buildDashboardContext() {
   const MAP_LOCATION_LIMIT = 400;
   const now = dayjs();
   const fourteenDaysAgo = now.subtract(13, 'day').startOf('day').toDate();
@@ -740,9 +740,7 @@ router.get('/', requireAuth, async (req, res) => {
     lastUpdatedAt: recentLocationEvents && recentLocationEvents.length ? recentLocationEvents[0].timestamp : null,
   };
 
-  res.render('dashboard', {
-    title: 'Dashboard',
-    active: 'dashboard',
+  return {
     companies,
     totals,
     recordTypeAgg,
@@ -769,7 +767,52 @@ router.get('/', requireAuth, async (req, res) => {
     provinceMapTop,
     provinceMapStats,
     mapboxToken: MAPBOX_TOKEN,
-  });
+  };
+}
+
+router.get('/', requireAuth, async (req, res) => {
+  try {
+    const context = await buildDashboardContext();
+    res.render('dashboard', {
+      ...context,
+      title: 'Dashboard',
+      active: 'dashboard',
+      subPage: 'overview',
+    });
+  } catch (err) {
+    console.error('[ADMIN] dashboard error', err);
+    res.status(500).render('error', { message: 'ไม่สามารถโหลดแดชบอร์ดได้ในขณะนี้', error: err });
+  }
+});
+
+router.get('/dashboard/engagement', requireAuth, async (req, res) => {
+  try {
+    const context = await buildDashboardContext();
+    res.render('dashboard', {
+      ...context,
+      title: 'Dashboard · พฤติกรรมผู้ใช้',
+      active: 'dashboard',
+      subPage: 'engagement',
+    });
+  } catch (err) {
+    console.error('[ADMIN] dashboard engagement error', err);
+    res.status(500).render('error', { message: 'ไม่สามารถโหลดหน้าพฤติกรรมผู้ใช้ได้', error: err });
+  }
+});
+
+router.get('/dashboard/control', requireAuth, async (req, res) => {
+  try {
+    const context = await buildDashboardContext();
+    res.render('dashboard', {
+      ...context,
+      title: 'Dashboard · ศูนย์ควบคุม',
+      active: 'dashboard',
+      subPage: 'control',
+    });
+  } catch (err) {
+    console.error('[ADMIN] dashboard control error', err);
+    res.status(500).render('error', { message: 'ไม่สามารถโหลดหน้าศูนย์ควบคุมได้', error: err });
+  }
 });
 
 router.get('/insights', requireAuth, async (req, res) => {

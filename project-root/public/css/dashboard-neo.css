@@ -22,27 +22,11 @@ body.app-shell.use-fullwidth .dashboard-shell {
 body.app-shell.use-fullwidth .dashboard-canvas {
   gap: var(--neo-gap-wide);
   align-items: start;
-  grid-template-columns: minmax(0, 2fr) minmax(260px, 0.9fr);
-}
-
-@media (max-width: 1440px) {
-  body.app-shell.use-fullwidth .dashboard-canvas {
-    grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
-  }
-}
-
-@media (max-width: 1220px) {
-  body.app-shell.use-fullwidth .dashboard-canvas {
-    grid-template-columns: minmax(0, 1fr);
-  }
+  grid-template-columns: minmax(0, 1fr);
 }
 
 body.app-shell.use-fullwidth .dashboard-main {
   gap: var(--neo-gap-wide);
-}
-
-body.app-shell.use-fullwidth .dashboard-side {
-  gap: var(--neo-gap);
 }
 
 body.app-shell.use-fullwidth .topbar__inner,
@@ -163,6 +147,42 @@ body.app-shell.use-fullwidth .ops-overview {
   align-items: stretch;
 }
 
+body.app-shell.use-fullwidth .control-grid {
+  display: grid;
+  gap: var(--neo-gap);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+body.app-shell.use-fullwidth .dashboard-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: var(--neo-gap);
+}
+
+body.app-shell.use-fullwidth .dashboard-subnav__item {
+  flex: 1 1 180px;
+  justify-content: center;
+}
+
+@media (max-width: 640px) {
+  body.app-shell.use-fullwidth .dashboard-subnav__item {
+    flex: 1 1 100%;
+  }
+}
+
+body.app-shell.use-fullwidth .dash-hero__actions--compact {
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  body.app-shell.use-fullwidth .dash-hero__actions--compact {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 body.app-shell.use-fullwidth #ops-intel .section-body,
 body.app-shell.use-fullwidth #cdp-intel .section-body {
   display: grid;
@@ -263,6 +283,12 @@ body.app-shell.use-fullwidth .highlight-card.gradient--lavender {
 body.app-shell.use-fullwidth .ops-grid {
   grid-template-columns: minmax(0, 1fr);
   gap: var(--neo-gap);
+}
+
+@media (min-width: 1320px) {
+  body.app-shell.use-fullwidth .ops-grid {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
 }
 
 body.app-shell.use-fullwidth .table-wrap {

@@ -64,6 +64,22 @@
   { label: 'Manage Members', description: 'ผูกบัญชีพนักงานกับบริษัท', href: '/admin/members', icon: '👥' },
   { label: 'Rich Menu Studio', description: 'อัปเดตเมนูและ CTA', href: '/admin/richmenu', icon: '🧭' },
 ]; %>
+<% const subPage = typeof locals.subPage === 'string' ? locals.subPage : 'overview'; %>
+<% const isOverview = subPage === 'overview'; %>
+<% const isEngagement = subPage === 'engagement'; %>
+<% const isControl = subPage === 'control'; %>
+<% const heroTitle = isOverview
+    ? `ยินดีต้อนรับกลับ, ${(locals.user && (locals.user.fullName || locals.user.displayName || locals.user.username)) || 'ทีม Sorrni'}`
+    : (isEngagement
+      ? 'ภาพรวมพฤติกรรมผู้ใช้'
+      : 'Command Center · ศูนย์ควบคุม'); %>
+<% const heroSubtitle = isEngagement
+    ? 'ติดตามกิจกรรม LINE, หัวข้อสนทนา และการตอบกลับของผู้ใช้'
+    : (isControl
+      ? 'ข้อมูลสำหรับทีมปฏิบัติการ การประชุม และการแจ้งเตือนวันนี้'
+      : null); %>
+<% const heroPrimaryHref = isControl ? '#control-center' : '/admin/upload'; %>
+<% const heroPrimaryLabel = isControl ? 'เปิดศูนย์ควบคุม' : 'นำเข้าข้อมูล'; %>
 
 <div class="dashboard-shell">
   <nav class="dashboard-quicknav" aria-label="เมนูลัดแดชบอร์ด">
@@ -77,10 +93,9 @@
       <strong><%= summaryTimestamp %></strong>
     </div>
     <ul class="dashboard-quicknav__list">
-      <li><a href="#ops-intel" class="is-active" data-scroll-group="dashboard-nav" aria-current="true">มุมมองหลัก</a></li>
-      <li><a href="#cdp-intel" data-scroll-group="dashboard-nav">พฤติกรรมผู้ใช้</a></li>
-      <li><a href="#control-center" data-scroll-group="dashboard-nav">ศูนย์ควบคุม</a></li>
-      <li><a href="#cdp-pulse" data-scroll-group="dashboard-nav">LINE Activity</a></li>
+      <li><a href="/admin" class="<%= isOverview ? 'is-active' : '' %>" <%= isOverview ? 'aria-current="true"' : '' %>>มุมมองหลัก</a></li>
+      <li><a href="/admin/dashboard/engagement" class="<%= isEngagement ? 'is-active' : '' %>" <%= isEngagement ? 'aria-current="true"' : '' %>>พฤติกรรมผู้ใช้</a></li>
+      <li><a href="/admin/dashboard/control" class="<%= isControl ? 'is-active' : '' %>" <%= isControl ? 'aria-current="true"' : '' %>>ศูนย์ควบคุม</a></li>
     </ul>
     <div class="dashboard-quicknav__cta">
       <a class="btn secondary btn-block" href="/admin/tools/send-daily">ส่งสรุปรายวัน</a>
@@ -92,24 +107,33 @@
     <header class="dash-hero">
       <div class="dash-hero__intro">
         <span class="dash-pill">Sorrni Workspace</span>
-        <h1>ยินดีต้อนรับกลับ, <%= (locals.user && (locals.user.fullName || locals.user.displayName || locals.user.username)) || 'ทีม Sorrni' %></h1>
-        <p>สรุปภาพรวมล่าสุดอัปเดตเมื่อ <strong><%= summaryTimestamp %></strong></p>
+        <h1><%= heroTitle %></h1>
+        <p>
+          <% if (isOverview) { %>
+            สรุปภาพรวมล่าสุดอัปเดตเมื่อ <strong><%= summaryTimestamp %></strong>
+          <% } else { %>
+            <%= heroSubtitle %>
+          <% } %>
+        </p>
       </div>
-      <div class="dash-hero__actions">
-        <div class="dash-search">
-          <span aria-hidden="true">🔍</span>
-          <input type="search" placeholder="ค้นหารายงาน บริษัท หรือผู้ใช้งาน" aria-label="ค้นหารายงาน" />
-        </div>
-        <a class="btn primary" href="/admin/upload">นำเข้าข้อมูล</a>
+      <div class="dash-hero__actions <%= isControl ? 'dash-hero__actions--compact' : '' %>">
+        <% if (!isControl) { %>
+          <div class="dash-search">
+            <span aria-hidden="true">🔍</span>
+            <input type="search" placeholder="ค้นหารายงาน บริษัท หรือผู้ใช้งาน" aria-label="ค้นหารายงาน" />
+          </div>
+        <% } %>
+        <a class="btn primary" href="<%= heroPrimaryHref %>"><%= heroPrimaryLabel %></a>
       </div>
     </header>
 
     <nav class="dashboard-subnav" aria-label="สลับมุมมองแดชบอร์ด">
-      <a href="#ops-intel" class="dashboard-subnav__item is-active" data-scroll-group="dashboard-subnav" aria-current="true">มุมมองหลัก</a>
-      <a href="#cdp-intel" class="dashboard-subnav__item" data-scroll-group="dashboard-subnav">พฤติกรรมผู้ใช้</a>
-      <a href="#control-center" class="dashboard-subnav__item" data-scroll-group="dashboard-subnav">ศูนย์ควบคุม</a>
+      <a href="/admin" class="dashboard-subnav__item <%= isOverview ? 'is-active' : '' %>" <%= isOverview ? 'aria-current="true"' : '' %>>มุมมองหลัก</a>
+      <a href="/admin/dashboard/engagement" class="dashboard-subnav__item <%= isEngagement ? 'is-active' : '' %>" <%= isEngagement ? 'aria-current="true"' : '' %>>พฤติกรรมผู้ใช้</a>
+      <a href="/admin/dashboard/control" class="dashboard-subnav__item <%= isControl ? 'is-active' : '' %>" <%= isControl ? 'aria-current="true"' : '' %>>ศูนย์ควบคุม</a>
     </nav>
 
+    <% if (isOverview) { %>
     <section class="section-block" id="ops-intel">
       <header class="section-header">
         <div class="section-header__titles">
@@ -289,7 +313,9 @@
         </div>
       </div>
     </section>
+    <% } %>
 
+    <% if (isEngagement) { %>
     <section class="section-block" id="cdp-intel">
       <header class="section-header">
         <div class="section-header__titles">
@@ -415,10 +441,10 @@
         </div>
       </div>
     </section>
-  </main>
+    <% } %>
 
-  <aside class="dashboard-side">
-    <section class="section-block section-block--side" id="control-center">
+    <% if (isControl) { %>
+    <section class="section-block" id="control-center">
       <header class="section-header">
         <div class="section-header__titles">
           <span class="section-pill">Control</span>
@@ -491,7 +517,7 @@
       </div>
     </section>
 
-    <section class="section-block section-block--side" id="cdp-pulse">
+    <section class="section-block" id="cdp-pulse">
       <header class="section-header">
         <div class="section-header__titles">
           <span class="section-pill section-pill--cdp">CDP</span>
@@ -558,6 +584,7 @@
         </article>
       </div>
     </section>
-  </aside>
+    <% } %>
+  </main>
 </div>
 </div>
