@@ -80,8 +80,8 @@ body.app-shell.use-fullwidth.auth.login-hero::after {
 body.app-shell.use-fullwidth.auth.login-hero .auth-shell.login-hero-shell {
   width: min(100%, clamp(920px, 84vw, 1120px));
   grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
-  gap: clamp(28px, 3.5vw, 52px);
-  padding: clamp(26px, 4vw, 44px);
+  gap: clamp(24px, 3.2vw, 48px);
+  padding: clamp(18px, 3vh, 26px) clamp(28px, 3.4vw, 42px);
   border-radius: clamp(28px, 3.6vw, 44px);
   background: rgba(13, 35, 48, 0.38);
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -150,8 +150,8 @@ body.app-shell.use-fullwidth.auth.login-hero .auth-panel.login-hero__panel {
   max-width: none;
   width: 100%;
   margin: 0;
-  gap: clamp(16px, 2.8vw, 28px);
-  padding: clamp(30px, 4vw, 40px);
+  gap: clamp(14px, 2.4vw, 24px);
+  padding: clamp(24px, 3.4vw, 34px);
   background: rgba(255, 255, 255, 0.92);
   border-radius: clamp(26px, 3vw, 36px);
   box-shadow: 0 40px 80px -48px rgba(6, 32, 47, 0.55);

@@ -163,6 +163,78 @@ body.app-shell.use-fullwidth .ops-overview {
   align-items: stretch;
 }
 
+body.app-shell.use-fullwidth #ops-intel .section-body,
+body.app-shell.use-fullwidth #cdp-intel .section-body {
+  display: grid;
+  gap: var(--neo-gap-wide);
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+body.app-shell.use-fullwidth #ops-intel .ops-overview {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--neo-gap);
+}
+
+body.app-shell.use-fullwidth #ops-intel .ops-grid {
+  grid-column: 1 / span 7;
+  display: grid;
+  gap: var(--neo-gap);
+}
+
+body.app-shell.use-fullwidth #ops-intel .dash-panel-grid {
+  grid-column: span 5;
+  display: grid;
+  gap: var(--neo-gap);
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+body.app-shell.use-fullwidth #cdp-intel .section-body > .dash-panel-grid:first-of-type {
+  grid-column: 1 / span 7;
+}
+
+body.app-shell.use-fullwidth #cdp-intel .section-body > .dash-panel-grid:last-of-type {
+  grid-column: span 5;
+}
+
+body.app-shell.use-fullwidth #cdp-intel .dash-panel-grid {
+  display: grid;
+  gap: var(--neo-gap);
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+@media (max-width: 1400px) {
+  body.app-shell.use-fullwidth #ops-intel .section-body,
+  body.app-shell.use-fullwidth #cdp-intel .section-body {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+
+  body.app-shell.use-fullwidth #ops-intel .ops-grid,
+  body.app-shell.use-fullwidth #cdp-intel .section-body > .dash-panel-grid:first-of-type {
+    grid-column: 1 / span 5;
+  }
+
+  body.app-shell.use-fullwidth #ops-intel .dash-panel-grid,
+  body.app-shell.use-fullwidth #cdp-intel .section-body > .dash-panel-grid:last-of-type {
+    grid-column: span 3;
+  }
+}
+
+@media (max-width: 1180px) {
+  body.app-shell.use-fullwidth #ops-intel .section-body,
+  body.app-shell.use-fullwidth #cdp-intel .section-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.app-shell.use-fullwidth #ops-intel .ops-grid,
+  body.app-shell.use-fullwidth #ops-intel .dash-panel-grid,
+  body.app-shell.use-fullwidth #cdp-intel .section-body > .dash-panel-grid:first-of-type,
+  body.app-shell.use-fullwidth #cdp-intel .section-body > .dash-panel-grid:last-of-type {
+    grid-column: 1 / -1;
+  }
+}
+
 body.app-shell.use-fullwidth .highlight-card {
   background: var(--neo-gradient-soft);
   color: #0f1f2a;
@@ -189,14 +261,8 @@ body.app-shell.use-fullwidth .highlight-card.gradient--lavender {
 
 /* ----- Operations grid ----- */
 body.app-shell.use-fullwidth .ops-grid {
-  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--neo-gap);
-}
-
-@media (max-width: 1200px) {
-  body.app-shell.use-fullwidth .ops-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 body.app-shell.use-fullwidth .table-wrap {

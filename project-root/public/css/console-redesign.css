@@ -3,7 +3,7 @@
 body.app-shell.use-fullwidth {
   --console-shell-max: 100%;
   --console-shell-wide: 100%;
-  --console-shell-pad: clamp(24px, 4vw, 72px);
+  --console-shell-pad: clamp(16px, 2.6vw, 44px);
   --console-shell-gap: clamp(24px, 3vw, 40px);
   --console-rail-width: clamp(240px, 18vw, 320px);
   --console-side-width: clamp(320px, 24vw, 420px);
@@ -153,14 +153,7 @@ body.app-shell.use-fullwidth .dashboard-main {
 body.app-shell.use-fullwidth .dashboard-side {
   display: grid;
   gap: var(--console-section-gap);
-}
-
-@media (min-width: 1280px) {
-  body.app-shell.use-fullwidth .dashboard-side {
-    position: sticky;
-    top: calc(var(--topbar-h, 72px) + 32px);
-    align-self: start;
-  }
+  position: static;
 }
 
 @media (max-width: 1199.98px) {

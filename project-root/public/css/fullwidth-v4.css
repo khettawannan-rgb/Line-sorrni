@@ -5,7 +5,7 @@ body { margin: 0; overflow-x: hidden; }
 
 /* Fluid tokens (no color changes) */
 :root{
-  --fw-gutter: clamp(16px, 2.4vw, 36px); /* ระยะขอบซ้าย/ขวา */
+  --fw-gutter: clamp(12px, 2vw, 32px); /* ระยะขอบซ้าย/ขวา */
   --fw-gap: clamp(12px, 1.8vw, 28px);    /* ช่องไฟกริด */
   --fw-card-min: 360px;                  /* การ์ดขั้นต่ำสำหรับวิดเจ็ต/กราฟ */
   --fw-hero-min: 420px;                  /* กล่องฮีโร่ขั้นต่ำ */
