@@ -193,11 +193,15 @@
         <div class="table-wrap">
           <table class="table small">
             <colgroup>
-              <col style="width: 12ch" />
-              <col style="min-width: 12ch" />
-              <col style="min-width: 12ch" />
-              <col style="min-width: 12ch" />
-              <col style="min-width: 10ch" />
+              <col style="width: 12ch" /> <!-- วันที่ -->
+              <col style="min-width: 12ch" /> <!-- เข้า -->
+              <col style="min-width: 12ch" /> <!-- ออก -->
+              <col style="min-width: 12ch" /> <!-- สุทธิ -->
+              <col style="min-width: 10ch" /> <!-- จำนวน -->
+              <col style="min-width: 12ch" /> <!-- เคลื่อนไหว -->
+              <col style="min-width: 12ch" /> <!-- เฉลี่ย/รายการ -->
+              <col style="min-width: 10ch" /> <!-- % เปลี่ยน -->
+              <col style="min-width: 10ch" /> <!-- ซื้อ% -->
             </colgroup>
             <thead>
               <tr>
@@ -206,22 +210,39 @@
                 <th class="text-right">ออก (ตัน)</th>
                 <th class="text-right">สุทธิ</th>
                 <th class="text-right">จำนวน</th>
+                <th class="text-right">เคลื่อนไหว</th>
+                <th class="text-right">เฉลี่ย/รายการ</th>
+                <th class="text-right">% เปลี่ยน</th>
+                <th class="text-right">ซื้อ%</th>
               </tr>
             </thead>
             <tbody>
               <% if (dailyWindow.length) { %>
-                <% dailyWindow.forEach((row) => { %>
-                  <% const net = Number(row.buyTons || 0) - Number(row.sellTons || 0); %>
+                <% dailyWindow.forEach((row, idx) => { %>
+                  <% const buy = Number(row.buyTons || 0); %>
+                  <% const sell = Number(row.sellTons || 0); %>
+                  <% const count = Number(row.entryCount || 0); %>
+                  <% const net = buy - sell; %>
+                  <% const movement = buy + sell; %>
+                  <% const avgPer = count ? movement / Math.max(count, 1) : 0; %>
+                  <% const prev = dailyWindow[idx + 1]; %>
+                  <% const prevMove = prev ? Number(prev.buyTons || 0) + Number(prev.sellTons || 0) : null; %>
+                  <% const changeRatio = prevMove && prevMove > 0 ? (movement - prevMove) / prevMove : null; %>
+                  <% const buyShare = movement > 0 ? buy / movement : null; %>
                   <tr>
                     <td><%= fmtDate(row.date) %></td>
-                    <td class="text-right"><%= fmtTons(row.buyTons) %></td>
-                    <td class="text-right"><%= fmtTons(row.sellTons) %></td>
+                    <td class="text-right"><%= fmtTons(buy) %></td>
+                    <td class="text-right"><%= fmtTons(sell) %></td>
                     <td class="text-right <%= net >= 0 ? 'text-success' : 'text-danger' %>"><%= fmtTons(net) %></td>
-                    <td class="text-right"><%= fmtCount(row.entryCount) %></td>
+                    <td class="text-right"><%= fmtCount(count) %></td>
+                    <td class="text-right"><%= fmtTons(movement) %></td>
+                    <td class="text-right"><%= count ? fmtTons(avgPer) : '-' %></td>
+                    <td class="text-right <%= (changeRatio ?? 0) >= 0 ? 'text-success' : 'text-danger' %>"><%= changeRatio === null ? '-' : fmtPercent(changeRatio) %></td>
+                    <td class="text-right"><%= buyShare === null ? '-' : fmtPercent(buyShare) %></td>
                   </tr>
                 <% }) %>
               <% } else { %>
-                <tr><td colspan="5" class="text-center muted">ยังไม่มีข้อมูลรายวัน</td></tr>
+                <tr><td colspan="9" class="text-center muted">ยังไม่มีข้อมูลรายวัน</td></tr>
               <% } %>
             </tbody>
           </table>
