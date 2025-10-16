@@ -1670,30 +1670,25 @@ textarea:focus {
 
 .ops-table .table {
   font-size: 0.9rem;
-  /* Distribute columns across full width for better readability */
-  table-layout: fixed;
+  /* Let content drive flexible column widths while filling container */
+  table-layout: auto;
+  width: 100%;
 }
 
 /* Evenly distribute five columns and prevent awkward clipping */
 .ops-table .table th,
 .ops-table .table td {
+  /* Keep cells on one line for number readability */
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.ops-table .table th:nth-child(1),
-.ops-table .table td:nth-child(1),
-.ops-table .table th:nth-child(2),
-.ops-table .table td:nth-child(2),
-.ops-table .table th:nth-child(3),
-.ops-table .table td:nth-child(3),
-.ops-table .table th:nth-child(4),
-.ops-table .table td:nth-child(4),
-.ops-table .table th:nth-child(5),
-.ops-table .table td:nth-child(5) {
-  width: 20%;
+/* Add comfortable space between columns */
+.ops-table .table th + th,
+.ops-table .table td + td {
+  padding-left: clamp(18px, 2.2vw, 28px);
 }
+
+/* Column widths managed with <colgroup> in markup for flexibility */
 
 .text-success { color: #15803d; }
 .text-danger { color: #b91c1c; }
@@ -2553,4 +2548,3 @@ textarea:focus {
   transform: rotate(180deg);
 }
 
-.topnav-menu__list {}
