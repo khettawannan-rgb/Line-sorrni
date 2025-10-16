@@ -328,121 +328,116 @@
           <span class="section-chip">ข้อความ 7 วัน <%= fmtCount(chatStats.messages7d) %></span>
         </div>
       </header>
-      <div class="section-body">
-        <div class="dash-panel-grid">
-          <article class="panel card chart-card insight-chart" data-chart-trend='<%- JSON.stringify(safeTrendSeries.slice(-14)) %>'>
-            <header class="panel__header">
-              <div>
-                <h2>LINE Interaction Trend</h2>
-                <p class="muted">ข้อความเข้า-ออกและผู้ใช้ไม่ซ้ำในแต่ละวัน</p>
-              </div>
-            </header>
-            <div class="chart-frame chart-card__body">
-              <canvas id="chat-trend-chart" height="240"></canvas>
+      <div class="section-body engagement-grid">
+        <article class="panel card chart-card insight-chart engagement-primary" data-chart-trend='<%- JSON.stringify(safeTrendSeries.slice(-14)) %>'>
+          <header class="panel__header">
+            <div>
+              <h2>LINE Interaction Trend</h2>
+              <p class="muted">ข้อความเข้า-ออกและผู้ใช้ไม่ซ้ำในแต่ละวัน</p>
             </div>
-          </article>
-
-          <article class="panel card mix-card">
-            <header class="panel__header">
-              <div>
-                <h2>Mix Projects</h2>
-                <p class="muted">งานผสมที่มีน้ำหนักสูงสุด</p>
-              </div>
-            </header>
-            <ul class="mix-list">
-              <% if (topMix.length) { %>
-                <% topMix.forEach((mix) => { %>
-                  <li>
-                    <div>
-                      <strong><%= mix.projectName || '(ไม่ระบุโครงการ)' %></strong>
-                      <span class="muted"><%= mix.projectCode || '-' %> • <%= mix.mixName || '-' %></span>
-                    </div>
-                    <div class="mix-meta">
-                      <strong><%= fmtTons(mix.totalNetWeightTons) %> ตัน</strong>
-                      <span class="muted"><%= fmtCount(mix.entryCount) %> รายการ • <%= fmtCount(mix.dayCount || 0) %> วัน</span>
-                    </div>
-                  </li>
-                <% }) %>
-              <% } else { %>
-                <li class="empty">ยังไม่มีข้อมูล Mix</li>
-              <% } %>
-            </ul>
-          </article>
-        </div>
-
-        <div class="dash-panel-grid">
-      <article class="panel card province-card">
-        <header class="panel__header">
-          <div>
-            <h2>พื้นที่จัดส่งยอดนิยม</h2>
-            <p class="muted">สรุปจังหวัดที่มีการส่งงานมากสุด</p>
+          </header>
+          <div class="chart-frame chart-card__body">
+            <canvas id="chat-trend-chart" height="240"></canvas>
           </div>
-        </header>
-        <ul class="province-list">
-          <% if (provinceLeaders.length) { %>
-            <% const leader = provinceLeaders[0]?.count || 1; %>
-            <% provinceLeaders.forEach((province, idx) => { %>
+        </article>
+
+        <article class="panel card mix-card engagement-grid__item">
+          <header class="panel__header">
+            <div>
+              <h2>Mix Projects</h2>
+              <p class="muted">งานผสมที่มีน้ำหนักสูงสุด</p>
+            </div>
+          </header>
+          <ul class="mix-list">
+            <% if (topMix.length) { %>
+              <% topMix.forEach((mix) => { %>
+                <li>
+                  <div>
+                    <strong><%= mix.projectName || '(ไม่ระบุโครงการ)' %></strong>
+                    <span class="muted"><%= mix.projectCode || '-' %> • <%= mix.mixName || '-' %></span>
+                  </div>
+                  <div class="mix-meta">
+                    <strong><%= fmtTons(mix.totalNetWeightTons) %> ตัน</strong>
+                    <span class="muted"><%= fmtCount(mix.entryCount) %> รายการ • <%= fmtCount(mix.dayCount || 0) %> วัน</span>
+                  </div>
+                </li>
+              <% }) %>
+            <% } else { %>
+              <li class="empty">ยังไม่มีข้อมูล Mix</li>
+            <% } %>
+          </ul>
+        </article>
+
+        <article class="panel card province-card engagement-grid__item">
+          <header class="panel__header">
+            <div>
+              <h2>พื้นที่จัดส่งยอดนิยม</h2>
+              <p class="muted">สรุปจังหวัดที่มีการส่งงานมากสุด</p>
+            </div>
+          </header>
+          <ul class="province-list">
+            <% if (provinceLeaders.length) { %>
+              <% const leader = provinceLeaders[0]?.count || 1; %>
+              <% provinceLeaders.forEach((province, idx) => { %>
+                <li>
+                  <span class="province-rank"><%= idx + 1 %></span>
+                  <div class="province-meta">
+                    <strong><%= province.province %></strong>
+                    <span><%= fmtCount(province.count) %> รายการ</span>
+                  </div>
+                  <div class="province-bar">
+                    <span style="width: <%= Math.min(100, (province.count || 0) / leader * 100) %>%"></span>
+                  </div>
+                </li>
+              <% }) %>
+            <% } else { %>
+              <li class="empty">ยังไม่มีข้อมูลจังหวัด</li>
+            <% } %>
+          </ul>
+        </article>
+
+        <article class="panel card performance-card engagement-grid__item">
+          <header class="panel__header">
+            <div>
+              <h2>Performance Pulse</h2>
+              <p class="muted">ตัวชี้วัดสำคัญที่ต้องเฝ้าระวัง</p>
+            </div>
+          </header>
+          <ul class="progress-list">
+            <li>
+              <div>
+                <strong>พิกัดที่ปักตำแหน่งได้</strong>
+                <span><%= fmtCount(provinceStats.provincesWithCoords || 0) %> จังหวัด</span>
+              </div>
+              <div class="progress-track">
+                <span style="width: <%= provinceStats.totalProvinces ? (provinceStats.provincesWithCoords || 0) / provinceStats.totalProvinces * 100 : 0 %>%"></span>
+              </div>
+            </li>
+            <li>
+              <div>
+                <strong>รายการ Location ล่าสุด</strong>
+                <span><%= fmtCount(provinceStats.totalLocations || 0) %> รายการ</span>
+              </div>
+              <div class="progress-track">
+                <span style="width: <%= Math.min(100, (provinceStats.totalLocations || 0) / 50 * 100) %>%"></span>
+              </div>
+            </li>
+            <% focusAreas.forEach((item) => { %>
               <li>
-                <span class="province-rank"><%= idx + 1 %></span>
-                <div class="province-meta">
-                  <strong><%= province.province %></strong>
-                  <span><%= fmtCount(province.count) %> รายการ</span>
+                <div>
+                  <strong><%= item.label %></strong>
+                  <span><%= fmtPercent(item.ratio) %></span>
                 </div>
-                <div class="province-bar">
-                  <span style="width: <%= Math.min(100, (province.count || 0) / leader * 100) %>%"></span>
+                <div class="progress-track">
+                  <span style="width: <%= Math.min(100, Number(item.ratio || 0) * 100) %>%"></span>
                 </div>
               </li>
             <% }) %>
-          <% } else { %>
-            <li class="empty">ยังไม่มีข้อมูลจังหวัด</li>
-          <% } %>
-        </ul>
-      </article>
-
-      <article class="panel card performance-card">
-        <header class="panel__header">
-          <div>
-            <h2>Performance Pulse</h2>
-            <p class="muted">ตัวชี้วัดสำคัญที่ต้องเฝ้าระวัง</p>
-          </div>
-        </header>
-        <ul class="progress-list">
-          <li>
-            <div>
-              <strong>พิกัดที่ปักตำแหน่งได้</strong>
-              <span><%= fmtCount(provinceStats.provincesWithCoords || 0) %> จังหวัด</span>
-            </div>
-            <div class="progress-track">
-              <span style="width: <%= provinceStats.totalProvinces ? (provinceStats.provincesWithCoords || 0) / provinceStats.totalProvinces * 100 : 0 %>%"></span>
-            </div>
-          </li>
-          <li>
-            <div>
-              <strong>รายการ Location ล่าสุด</strong>
-              <span><%= fmtCount(provinceStats.totalLocations || 0) %> รายการ</span>
-            </div>
-            <div class="progress-track">
-              <span style="width: <%= Math.min(100, (provinceStats.totalLocations || 0) / 50 * 100) %>%"></span>
-            </div>
-          </li>
-          <% focusAreas.forEach((item) => { %>
-            <li>
-              <div>
-                <strong><%= item.label %></strong>
-                <span><%= fmtPercent(item.ratio) %></span>
-              </div>
-              <div class="progress-track">
-                <span style="width: <%= Math.min(100, Number(item.ratio || 0) * 100) %>%"></span>
-              </div>
-            </li>
-          <% }) %>
-        </ul>
-      </article>
-        </div>
+          </ul>
+        </article>
       </div>
     </section>
     <% } %>
-
     <% if (isControl) { %>
     <section class="section-block" id="control-center">
       <header class="section-header">

@@ -203,22 +203,37 @@ body.app-shell.use-fullwidth .dash-hero__actions--compact {
   }
 }
 
-body.app-shell.use-fullwidth #ops-intel .section-body {
+.engagement-grid {
   display: grid;
-  gap: var(--neo-gap-wide);
-  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+  gap: var(--neo-gap);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   width: min(100%, var(--console-shell-max));
   margin-inline: auto;
 }
 
-body.app-shell.use-fullwidth .ops-table .table {
-  table-layout: fixed;
-  min-width: 520px;
+.engagement-primary {
+  grid-column: 1 / -1;
 }
 
-body.app-shell.use-fullwidth .ops-table .table th,
-body.app-shell.use-fullwidth .ops-table .table td {
-  white-space: nowrap;
+@media (min-width: 1200px) {
+  .engagement-grid {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+
+  .engagement-primary {
+    grid-column: 1 / span 2;
+  }
+}
+
+.engagement-grid__item {
+  display: block;
+}
+body.app-shell.use-fullwidth #ops-intel .section-body {
+  display: grid;
+  gap: var(--neo-gap-wide);
+  grid-template-columns: minmax(0, 1fr);
+  width: min(100%, var(--console-shell-max));
+  margin-inline: auto;
 }
 
 body.app-shell.use-fullwidth #cdp-intel .section-body {
@@ -238,18 +253,20 @@ body.app-shell.use-fullwidth #ops-intel .ops-overview {
 }
 
 body.app-shell.use-fullwidth #ops-intel .ops-grid {
-  grid-column: 1 / span 1;
+  grid-column: 1 / -1;
   display: grid;
   gap: var(--neo-gap);
-  width: 100%;
+  width: min(100%, var(--console-shell-max));
+  margin-inline: auto;
 }
 
 body.app-shell.use-fullwidth #ops-intel .dash-panel-grid {
-  grid-column: 2 / span 1;
+  grid-column: 1 / -1;
   display: grid;
   gap: var(--neo-gap);
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  width: 100%;
+  width: min(100%, var(--console-shell-max));
+  margin-inline: auto;
 }
 
 body.app-shell.use-fullwidth #cdp-intel .section-body > .dash-panel-grid:first-of-type {
@@ -267,20 +284,14 @@ body.app-shell.use-fullwidth #cdp-intel .dash-panel-grid {
 }
 
 @media (max-width: 1400px) {
-  body.app-shell.use-fullwidth #ops-intel .section-body {
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  }
-
   body.app-shell.use-fullwidth #cdp-intel .section-body {
     grid-template-columns: repeat(8, minmax(0, 1fr));
   }
 
-  body.app-shell.use-fullwidth #ops-intel .ops-grid,
   body.app-shell.use-fullwidth #cdp-intel .section-body > .dash-panel-grid:first-of-type {
     grid-column: 1 / span 5;
   }
 
-  body.app-shell.use-fullwidth #ops-intel .dash-panel-grid,
   body.app-shell.use-fullwidth #cdp-intel .section-body > .dash-panel-grid:last-of-type {
     grid-column: span 3;
   }
