@@ -791,7 +791,7 @@ router.get('/dashboard/control', requireAuth, async (req, res) => {
   }
 });
 
-router.get('/insights'router.get('/insights', requireAuth, async (req, res) => {
+router.get('/insights', requireAuth, async (req, res) => {
   const [messageCount, uniqueUsers, latestMessage, consents, dailyStats] = await Promise.all([
     LineChatLog.countDocuments({}),
     LineChatLog.distinct('userId'),
