@@ -1,9 +1,9 @@
 /* ===== Console Redesign Overrides v1.2 ===== */
 
 body.app-shell.use-fullwidth {
-  --console-shell-max: 100%;
-  --console-shell-wide: 100%;
-  --console-shell-pad: clamp(16px, 2.6vw, 44px);
+  --console-shell-max: clamp(1120px, 90vw, 1520px);
+  --console-shell-wide: clamp(1180px, 92vw, 1660px);
+  --console-shell-pad: clamp(20px, 3vw, 48px);
   --console-shell-gap: clamp(24px, 3vw, 40px);
   --console-rail-width: clamp(240px, 18vw, 320px);
   --console-side-width: clamp(320px, 24vw, 420px);
@@ -13,9 +13,9 @@ body.app-shell.use-fullwidth {
 
 body.app-shell.use-fullwidth .topbar__inner,
 body.app-shell.use-fullwidth .app-footer {
-  width: 100%;
-  max-width: none;
-  margin-inline: 0;
+  width: min(100%, var(--console-shell-wide));
+  max-width: var(--console-shell-wide);
+  margin-inline: auto;
   padding-inline: var(--console-shell-pad);
 }
 
@@ -37,16 +37,16 @@ body.app-shell.use-fullwidth .app-main {
 }
 
 body.app-shell.use-fullwidth .app-main > .container {
-  width: 100%;
-  max-width: none;
-  margin: 0;
+  width: min(100%, var(--console-shell-wide));
+  max-width: var(--console-shell-wide);
+  margin-inline: auto;
   padding-inline: var(--console-shell-pad);
 }
 
 body.app-shell.use-fullwidth .app-main > .full-container {
-  width: 100%;
-  max-width: none;
-  margin: 0;
+  width: min(100%, var(--console-shell-wide));
+  max-width: var(--console-shell-wide);
+  margin-inline: auto;
   padding-inline: var(--console-shell-pad);
 }
 
@@ -102,7 +102,7 @@ body.app-shell.use-fullwidth.auth .auth-visual__glass {
 /* ----- Dashboard frame ----- */
 body.app-shell.use-fullwidth .dashboard-shell {
   max-width: var(--console-shell-wide);
-  width: 100%;
+  width: min(100%, var(--console-shell-wide));
   margin-inline: auto;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--console-shell-gap);
@@ -130,6 +130,8 @@ body.app-shell.use-fullwidth .dashboard-canvas {
   display: grid;
   gap: var(--console-shell-gap);
   grid-template-columns: minmax(0, 1fr);
+  max-width: var(--console-shell-max);
+  margin-inline: auto;
 }
 
 @media (min-width: 1280px) {

@@ -48,6 +48,25 @@ body.app-shell.use-fullwidth .dashboard-quicknav__brand img {
   box-shadow: 0 26px 55px -34px rgba(8, 184, 111, 0.45);
 }
 
+body.app-shell.use-fullwidth .dashboard-quicknav__logo {
+  width: clamp(52px, 6vw, 64px);
+  height: clamp(52px, 6vw, 64px);
+  border-radius: 18px;
+  padding: clamp(10px, 1.6vw, 14px);
+  background: linear-gradient(135deg, rgba(8, 184, 111, 0.22) 0%, rgba(14, 165, 233, 0.18) 100%);
+}
+
+body.app-shell.use-fullwidth .dashboard-quicknav__title {
+  font-size: clamp(1.1rem, 1.6vw, 1.4rem);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background-image: linear-gradient(120deg, #0bd37a 0%, #00c389 50%, #0ea5e9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 body.app-shell.use-fullwidth .dashboard-quicknav__list a {
   background: rgba(246, 250, 255, 0.8);
   border-radius: clamp(16px, 2vw, 22px);
@@ -138,6 +157,12 @@ body.app-shell.use-fullwidth .dashboard-subnav {
   border-radius: 999px;
   box-shadow: 0 22px 50px -38px rgba(6, 62, 74, 0.45);
   padding: clamp(6px, 1vw, 10px);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--neo-gap);
+  width: min(100%, var(--console-shell-max));
+  margin: clamp(18px, 3vh, 28px) auto;
 }
 
 /* ----- Highlights ----- */
@@ -151,17 +176,12 @@ body.app-shell.use-fullwidth .control-grid {
   display: grid;
   gap: var(--neo-gap);
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-}
-
-body.app-shell.use-fullwidth .dashboard-subnav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: var(--neo-gap);
+  width: min(100%, var(--console-shell-max));
+  margin-inline: auto;
 }
 
 body.app-shell.use-fullwidth .dashboard-subnav__item {
-  flex: 1 1 180px;
+  flex: 0 1 200px;
   justify-content: center;
 }
 
@@ -188,6 +208,8 @@ body.app-shell.use-fullwidth #cdp-intel .section-body {
   display: grid;
   gap: var(--neo-gap-wide);
   grid-template-columns: repeat(12, minmax(0, 1fr));
+  width: min(100%, var(--console-shell-max));
+  margin-inline: auto;
 }
 
 body.app-shell.use-fullwidth #ops-intel .ops-overview {
@@ -195,12 +217,14 @@ body.app-shell.use-fullwidth #ops-intel .ops-overview {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: var(--neo-gap);
+  width: 100%;
 }
 
 body.app-shell.use-fullwidth #ops-intel .ops-grid {
   grid-column: 1 / span 7;
   display: grid;
   gap: var(--neo-gap);
+  width: 100%;
 }
 
 body.app-shell.use-fullwidth #ops-intel .dash-panel-grid {
@@ -208,6 +232,7 @@ body.app-shell.use-fullwidth #ops-intel .dash-panel-grid {
   display: grid;
   gap: var(--neo-gap);
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  width: 100%;
 }
 
 body.app-shell.use-fullwidth #cdp-intel .section-body > .dash-panel-grid:first-of-type {
@@ -253,6 +278,11 @@ body.app-shell.use-fullwidth #cdp-intel .dash-panel-grid {
   body.app-shell.use-fullwidth #cdp-intel .section-body > .dash-panel-grid:last-of-type {
     grid-column: 1 / -1;
   }
+}
+
+body.app-shell.use-fullwidth .dashboard-main .section-block {
+  width: min(100%, var(--console-shell-max));
+  margin-inline: auto;
 }
 
 body.app-shell.use-fullwidth .highlight-card {

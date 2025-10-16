@@ -515,12 +515,7 @@ async function buildDashboardContext() {
               $filter: {
                 input: '$users',
                 as: 'u',
-                cond: {
-                  $and: [
-                    { $ne: ['$$u', null] },
-                    { $ne: ['$$u', ''] },
-                  ],
-                },
+                cond: { $and: [{ $ne: ['$$u', null] }, { $ne: ['$$u', ''] }] },
               },
             },
           },
@@ -537,9 +532,7 @@ async function buildDashboardContext() {
           lastActive: { $max: '$createdAt' },
           messageCount: { $sum: 1 },
           messages7d: {
-            $sum: {
-              $cond: [{ $gte: ['$createdAt', sevenDaysAgo] }, 1, 0],
-            },
+            $sum: { $cond: [{ $gte: ['$createdAt', sevenDaysAgo] }, 1, 0] },
           },
         },
       },
@@ -547,21 +540,9 @@ async function buildDashboardContext() {
         $group: {
           _id: null,
           totalUsers: { $sum: 1 },
-          active7d: {
-            $sum: {
-              $cond: [{ $gte: ['$lastActive', sevenDaysAgo] }, 1, 0],
-            },
-          },
-          active30d: {
-            $sum: {
-              $cond: [{ $gte: ['$lastActive', thirtyDaysAgo] }, 1, 0],
-            },
-          },
-          new7d: {
-            $sum: {
-              $cond: [{ $gte: ['$firstActive', sevenDaysAgo] }, 1, 0],
-            },
-          },
+          active7d: { $sum: { $cond: [{ $gte: ['$lastActive', sevenDaysAgo] }, 1, 0] } },
+          active30d: { $sum: { $cond: [{ $gte: ['$lastActive', thirtyDaysAgo] }, 1, 0] } },
+          new7d: { $sum: { $cond: [{ $gte: ['$firstActive', sevenDaysAgo] }, 1, 0] } },
           totalMessages: { $sum: '$messageCount' },
           totalMessages7d: { $sum: '$messages7d' },
         },
@@ -676,12 +657,7 @@ async function buildDashboardContext() {
     } else if (log.messageType) {
       const key = `media:${log.messageType}`;
       if (!topicBuckets[key]) {
-        topicBuckets[key] = {
-          key,
-          label: `สื่อประเภท ${log.messageType}`,
-          count: 0,
-          samples: [],
-        };
+        topicBuckets[key] = { key, label: `สื่อประเภท ${log.messageType}`, count: 0, samples: [] };
       }
       topicBuckets[key].count += 1;
     } else {
@@ -790,7 +766,7 @@ router.get('/dashboard/engagement', requireAuth, async (req, res) => {
     const context = await buildDashboardContext();
     res.render('dashboard', {
       ...context,
-      title: 'Dashboard · พฤติกรรมผู้ใช้',
+      title: 'Dashboard · Engagement',
       active: 'dashboard',
       subPage: 'engagement',
     });
@@ -805,7 +781,7 @@ router.get('/dashboard/control', requireAuth, async (req, res) => {
     const context = await buildDashboardContext();
     res.render('dashboard', {
       ...context,
-      title: 'Dashboard · ศูนย์ควบคุม',
+      title: 'Dashboard · Control Center',
       active: 'dashboard',
       subPage: 'control',
     });
@@ -815,7 +791,7 @@ router.get('/dashboard/control', requireAuth, async (req, res) => {
   }
 });
 
-router.get('/insights', requireAuth, async (req, res) => {
+router.get('/insights'router.get('/insights', requireAuth, async (req, res) => {
   const [messageCount, uniqueUsers, latestMessage, consents, dailyStats] = await Promise.all([
     LineChatLog.countDocuments({}),
     LineChatLog.distinct('userId'),
