@@ -721,11 +721,15 @@ code, pre {
 .table-wrap {
   border: 1px solid rgba(8, 184, 111, 0.1);
   border-radius: var(--r-xl);
-  overflow: hidden;
+  /* Allow scrolling if content exceeds available space */
+  overflow: auto;
   box-shadow: var(--shadow-soft);
   max-height: min(62vh, 720px);
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(14px);
+  /* Ensure wrapper takes the full available width */
+  width: 100%;
+  display: block;
 }
 
 .table {
@@ -1662,8 +1666,33 @@ textarea:focus {
   width: 100%;
 }
 
+.ops-table .table-wrap { width: 100%; }
+
 .ops-table .table {
   font-size: 0.9rem;
+  /* Distribute columns across full width for better readability */
+  table-layout: fixed;
+}
+
+/* Evenly distribute five columns and prevent awkward clipping */
+.ops-table .table th,
+.ops-table .table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ops-table .table th:nth-child(1),
+.ops-table .table td:nth-child(1),
+.ops-table .table th:nth-child(2),
+.ops-table .table td:nth-child(2),
+.ops-table .table th:nth-child(3),
+.ops-table .table td:nth-child(3),
+.ops-table .table th:nth-child(4),
+.ops-table .table td:nth-child(4),
+.ops-table .table th:nth-child(5),
+.ops-table .table td:nth-child(5) {
+  width: 20%;
 }
 
 .text-success { color: #15803d; }
@@ -2524,8 +2553,4 @@ textarea:focus {
   transform: rotate(180deg);
 }
 
-.topnav-menu__list {
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 0;
-  min-width: 210px;
+.topnav-menu__list {}
