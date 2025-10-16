@@ -1,9 +1,9 @@
 /* ===== Console Redesign Overrides v1.2 ===== */
 
 body.app-shell.use-fullwidth {
-  --console-shell-max: clamp(1120px, 90vw, 1520px);
-  --console-shell-wide: clamp(1180px, 92vw, 1660px);
-  --console-shell-pad: clamp(20px, 3vw, 48px);
+  --console-shell-max: clamp(1180px, 94vw, 1840px);
+  --console-shell-wide: clamp(1240px, 96vw, 1980px);
+  --console-shell-pad: clamp(24px, 2.5vw, 56px);
   --console-shell-gap: clamp(24px, 3vw, 40px);
   --console-rail-width: clamp(240px, 18vw, 320px);
   --console-side-width: clamp(320px, 24vw, 420px);

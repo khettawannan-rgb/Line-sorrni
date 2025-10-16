@@ -228,19 +228,12 @@ body.app-shell.use-fullwidth .dash-hero__actions--compact {
 .engagement-grid__item {
   display: block;
 }
-body.app-shell.use-fullwidth #ops-intel .section-body {
-  display: grid;
-  gap: var(--neo-gap-wide);
-  grid-template-columns: minmax(0, 1fr);
-  width: min(100%, var(--console-shell-max));
-  margin-inline: auto;
-}
-
+body.app-shell.use-fullwidth #ops-intel .section-body,
 body.app-shell.use-fullwidth #cdp-intel .section-body {
   display: grid;
   gap: var(--neo-gap-wide);
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  width: min(100%, var(--console-shell-max));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  width: min(100%, clamp(1280px, 90vw, 1760px));
   margin-inline: auto;
 }
 

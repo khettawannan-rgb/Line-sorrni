@@ -146,7 +146,7 @@
                       <path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
-                  <ul class="topnav-menu__list" data-menu-list role="menu" <%= groupActive ? '' : 'hidden' %>>
+                  <ul class="topnav-menu__list" data-menu-list role="menu" hidden>
                     <% group.items.forEach((item) => { %>
                       <li role="none">
                         <a role="menuitem" href="<%= item.href %>" class="<%= isNavItemActive(item) ? 'active' : '' %>"><%= item.title %></a>
