@@ -551,6 +551,24 @@ async function handlePostbackEvent(ev) {
     }
   }
 
+  if (action === 'CONTACT_US') {
+    const phone = process.env.CONTACT_PHONE || '+66-2-000-0000';
+    const email = process.env.CONTACT_EMAIL || 'support@example.com';
+    const url = process.env.CONTACT_URL || (process.env.BASE_URL ? `${(process.env.BASE_URL || '').replace(/\/$/, '')}/admin` : 'https://example.com');
+    return replyActionCard(ev.replyToken, {
+      title: 'ติดต่อเรา',
+      body: `โทร: ${phone}\nอีเมล: ${email}`,
+      actions: [
+        { label: 'โทร', uri: `tel:${phone.replace(/[^+0-9]/g,'')}` },
+        { label: 'อีเมล', uri: `mailto:${email}` },
+        { label: 'เปิดเว็บไซต์', uri: url },
+        { label: 'เมนู', text: 'เมนู' },
+      ],
+      color: '#0ea5e9',
+      altText: 'ข้อมูลติดต่อ',
+    });
+  }
+
   return replyActionCard(ev.replyToken, {
     title: 'เมนูหลัก',
     body: 'แตะปุ่มเพื่อกลับไปยังเมนูหลัก',

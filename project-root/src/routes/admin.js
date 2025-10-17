@@ -1382,23 +1382,23 @@ router.post('/richmenu/create', requireAuth, async (req, res) => {
       const rowH = [843, 843];
       const x = [0, colW[0], colW[0] + colW[1]];
       const y = [0, rowH[0]];
+      const BASE_URL = ((process.env.BASE_URL || 'https://example.com')).replace(/\/$/, '');
       const areas = [
-        { bounds:{ x:x[0], y:y[0], width:colW[0], height:rowH[0] }, data:'SUMMARY_TODAY',  label:'รายงานวันนี้' },
-        { bounds:{ x:x[1], y:y[0], width:colW[1], height:rowH[0] }, data:'SUMMARY_PICK',   label:'เลือกรายงาน' },
-        { bounds:{ x:x[2], y:y[0], width:colW[2], height:rowH[0] }, data:'LATEST_RECORDS', label:'ล่าสุด' },
-        { bounds:{ x:x[0], y:y[1], width:colW[0], height:rowH[1] }, data:'HELP',           label:'ช่วยเหลือ' },
-        { bounds:{ x:x[1], y:y[1], width:colW[1], height:rowH[1] }, data:'LINK_COMPANY',   label:'ผูกบริษัท' },
-        { bounds:{ x:x[2], y:y[1], width:colW[2], height:rowH[1] }, data:'PREFS',          label:'ตั้งค่า' },
+        // Top row
+        { bounds:{ x:x[0], y:y[0], width:colW[0], height:rowH[0] }, action: { type:'message', text:'สรุป วันนี้' }, label:'รายงานวันนี้' },
+        { bounds:{ x:x[1], y:y[0], width:colW[1], height:rowH[0] }, action: { type:'message', text:'สรุป' },        label:'เลือกรายงาน' },
+        { bounds:{ x:x[2], y:y[0], width:colW[2], height:rowH[0] }, action: { type:'message', text:'สถานะ' },       label:'ล่าสุด' },
+        // Bottom row
+        { bounds:{ x:x[0], y:y[1], width:colW[0], height:rowH[1] }, action: { type:'uri', uri: `${BASE_URL}/liff-open-admin?to=/admin` }, label:'ตั้งค่า' },
+        { bounds:{ x:x[1], y:y[1], width:colW[1], height:rowH[1] }, action: { type:'uri', uri: `${BASE_URL}/auth/line/start?redirect=/admin` }, label:'เชื่อมต่อบริษัท' },
+        { bounds:{ x:x[2], y:y[1], width:colW[2], height:rowH[1] }, action: { type:'postback', data:'CONTACT_US', displayText:'ติดต่อเรา' }, label:'ติดต่อเรา' },
       ];
       return {
         size: { width: 2500, height: 1686 },
         selected: true,
         name: 'NILA_FULL_3x2',
         chatBarText: 'เมนู',
-        areas: areas.map(a => ({
-          bounds: a.bounds,
-          action: { type: 'postback', data: a.data, displayText: a.label },
-        })),
+        areas: areas.map(a => ({ bounds: a.bounds, action: a.action })),
       };
     })();
 
