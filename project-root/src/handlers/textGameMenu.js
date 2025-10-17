@@ -33,8 +33,10 @@ export async function onTextGameMenu(ev) {
       return `https://${cand.replace(/\/$/, '')}`;
     };
     const baseUrl = pickBase();
+    const forceDirect = String(process.env.FORCE_DIRECT_GAME_LINKS || process.env.LIFF_GAMES_MODE || '').toLowerCase();
+    const preferDirect = forceDirect === 'true' || forceDirect === 'direct';
     const makeUrl = (game) => {
-      if (liffId) return `https://liff.line.me/${liffId}?game=${encodeURIComponent(game)}`;
+      if (!preferDirect && liffId) return `https://liff.line.me/${liffId}?game=${encodeURIComponent(game)}`;
       if (baseUrl) return `${baseUrl}/liff/index.html?game=${encodeURIComponent(game)}`;
       // As a safety, prefer absolute URL. If still missing, guide user via text.
       return '';
@@ -49,7 +51,7 @@ export async function onTextGameMenu(ev) {
       await replyText(ev.replyToken, 'ยังไม่ได้ตั้งค่า BASE_URL/LIFF_ID สำหรับเกม ชั่วคราวให้เปิด: ' + (baseUrl ? `${baseUrl}/liff/index.html?game=quiz` : 'กรุณาตั้งค่า BASE_URL'));
       return true;
     }
-    const flex = buildGameMenuFlex(urls, { externalFallback });
+    const flex = buildGameMenuFlex(urls, { externalFallback: preferDirect || !liffId });
     await replyFlex(ev.replyToken, 'เมนูมินิเกม', flex.contents);
     track('open_menu', { userId, ts: Date.now() });
     return true;
