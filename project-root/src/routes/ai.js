@@ -22,31 +22,53 @@ function asNumber(val, d = 0) {
 router.get('/admin/ai', (req, res) => {
   const mock = loadMock();
   const chatLog = loadChatLog(20);
-  const lastWeather = mock.weather?.[0] || null;
-  const { worst, advice } = analyzeWeatherSlots(mock.weather);
+  // Augment mock for view when flag is off (display-only; store ไม่เปลี่ยน)
+  let viewMock = mock;
+  let extendedView = EXTENDED_TABLES;
+  if (!EXTENDED_TABLES) {
+    const hours = Array.isArray(mock.weather)
+      ? mock.weather.map((w) => {
+          const hh = String(w.time || '0').slice(0, 2);
+          const n = Number(hh);
+          return Number.isFinite(n) ? n : 0;
+        })
+      : [6, 9, 12, 15, 18, 21];
+    const enrichedWeather = seedMockWeather({ seed: Date.now() % 1000000, hours }).map((row, idx) => ({
+      ...mock.weather?.[idx],
+      ...row,
+    }));
+    const count = Array.isArray(mock.materials) ? mock.materials.length : 6;
+    const enrichedMaterialsSeed = seedMockMaterials({ seed: (Date.now() + 12345) % 1000000, count });
+    const enrichedMaterials = (mock.materials || []).map((m, idx) => ({ ...m, ...enrichedMaterialsSeed[idx % enrichedMaterialsSeed.length] }));
+    viewMock = { ...mock, weather: enrichedWeather, materials: enrichedMaterials };
+    extendedView = true;
+  }
+
+  const lastWeather = viewMock.weather?.[0] || null;
+  const { worst, advice } = analyzeWeatherSlots(viewMock.weather);
 
   res.render('ai/index', {
     title: 'AI Assistant (Mock)',
     active: 'ai',
-    extendedTables: EXTENDED_TABLES,
-    mock,
+    extendedTables: extendedView,
+    mock: viewMock,
     chatLog,
     preview: {
       worst,
       advice,
       weatherFlex: buildWeatherFlex({
         dateLabel: new Date().toLocaleDateString('th-TH', { dateStyle: 'medium' }),
-        locationName: mock.location?.name,
+        locationName: viewMock.location?.name,
         status: lastWeather?.condition || 'ไม่ทราบ',
         temp: lastWeather ? `${lastWeather.tempC}°C` : null,
         advice,
         detailsUrl: '#',
       }),
-      summaryText: generateDailySummary(mock),
-      summaryFlex: buildDailySummaryFlex(mock),
-      tasksFlex: buildTasksFlex(mock.tasks || []),
-      chatText: buildChatText(mock.chatSamples || []),
-      cdpText: buildCdpText(mock.cdp || {}),
+      summaryText: generateDailySummary(viewMock),
+      summaryFlex: buildDailySummaryFlex(viewMock),
+      tasksFlex: buildTasksFlex(viewMock.tasks || []),
+      chatText: buildChatText(viewMock.chatSamples || []),
+      cdpText: buildCdpText(viewMock.cdp || {}),
     },
   });
 });
