@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mini Games · LIFF</title>
+  <link rel="stylesheet" href="/static/css/main.css" />
+  <style>
+    :root { --ci-primary: var(--brand-primary, #0ea5e9); --ci-text: #0f172a; --ci-soft: #eef2ff; }
+    body { background: var(--ci-soft); color: var(--ci-text); }
+    .hub { max-width: 680px; margin: 18px auto; }
+    .card { background: #fff; border: 1px solid rgba(0,0,0,0.06); border-radius: 16px; padding: 16px; }
+    .actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 12px; margin-top: 12px; }
+    .btn-ci { background: var(--ci-primary); color: #fff; border: none; border-radius: 10px; padding: 12px 14px; cursor: pointer; }
+    .muted { color: #64748b }
+    .q { font-weight: 600; }
+  </style>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="/liff/config.js"></script>
+</head>
+<body>
+  <main class="hub container" id="app">
+    <div class="card">
+      <h2 id="title">Mini Game</h2>
+      <p class="muted" id="subtitle">กำลังเตรียมเกม...</p>
+      <div id="view"></div>
+    </div>
+  </main>
+
+  <script>
+    const $ = (sel) => document.querySelector(sel);
+    const qp = new URL(location.href).searchParams;
+    const game = (qp.get('game') || 'quiz').toLowerCase();
+    const state = { userId: '', sessionId: Math.random().toString(36).slice(2), score: 0, step: 0 };
+
+    async function track(name, payload){
+      try { await fetch('/cdp/track', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, payload })}); } catch {}
+    }
+
+    async function initLIFF(){
+      const liffId = (window.__LIFF__ && window.__LIFF__.GAMES) || '';
+      try { if (liffId) await liff.init({ liffId }); } catch(e) {}
+      try { const profile = await liff.getProfile(); state.userId = profile.userId || ''; } catch {}
+    }
+
+    function renderQuiz(){
+      const data = [
+        { q:'ส่วนผสมหลักของแอสฟัลต์คืออะไร?', c:['บิทูเมน','ปูนซีเมนต์','ทราย','ดิน'], a:0 },
+        { q:'ฝนตกควรทำอย่างไรกับการปูยาง?', c:['ทำต่อ','หยุด','เพิ่มน้ำ','เพิ่มอุณหภูมิ'], a:1 },
+        { q:'อุณหภูมิผสมยางควร...', c:['ต่ำ','พอเหมาะ','สูงมาก','สุ่ม'], a:1 },
+        { q:'ความชื้นสูงมีผล?', c:['ไม่มีผล','ทำให้คุณภาพลด','ดีขึ้น','ไม่แน่'], a:1 },
+        { q:'ก่อนปูยางควร...', c:['ไม่ต้องตรวจ','ตรวจพื้นผิว','เพิ่มน้ำ','พักผ่อน'], a:1 },
+      ];
+      state.step = 0; state.score = 0;
+      $('#title').textContent = 'Road Builder Quiz';
+      $('#subtitle').textContent = 'ตอบให้ได้ 5 ข้อ';
+      const root = $('#view');
+      root.innerHTML = '';
+      const qEl = document.createElement('div');
+      const btns = document.createElement('div'); btns.className='actions';
+      root.appendChild(qEl); root.appendChild(btns);
+      function next(){
+        if(state.step>=5){
+          const win = state.score>=4;
+          root.innerHTML = `<p class="q">สรุปคะแนน: ${state.score}/5</p><p>${win? 'ยินดีด้วย! โค้ดรางวัล: <strong>WIN-'+state.sessionId.slice(0,4).toUpperCase()+'</strong>' : 'ลองอีกครั้งได้'}</p>`;
+          track('finish', { userId: state.userId, game:'quiz', score: state.score });
+          if(win) track('win_reward', { userId: state.userId, game:'quiz', code: 'WIN-'+state.sessionId.slice(0,4).toUpperCase() });
+          return;
+        }
+        const cur = data[state.step];
+        qEl.innerHTML = `<p class="q">${state.step+1}) ${cur.q}</p>`;
+        btns.innerHTML = '';
+        cur.c.forEach((choice,idx)=>{
+          const b=document.createElement('button'); b.className='btn-ci'; b.textContent=choice;
+          b.onclick=()=>{ if(idx===cur.a) state.score++; state.step++; track('answer',{ userId:state.userId, game:'quiz', step: state.step, correct: idx===cur.a }); next(); };
+          btns.appendChild(b);
+        });
+      }
+      next();
+    }
+
+    function renderRunner(){
+      $('#title').textContent = 'Asphalt Runner';
+      $('#subtitle').textContent = 'เลือกทำงานต่อ/หยุดงาน (5 รอบ)';
+      const scenarios = ['แดดจัด','เมฆมาก','ฝนปรอย','ฝนหนัก','ลมแรง'];
+      const root=$('#view'); root.innerHTML=''; const box=document.createElement('div'); const btns=document.createElement('div'); btns.className='actions'; root.appendChild(box); root.appendChild(btns);
+      state.step=0; state.score=0;
+      function next(){
+        if(state.step>=5){
+          const win=state.score>=4; root.innerHTML=`<p class="q">คะแนน: ${state.score}/5</p><p>${win?'ผ่าน! โค้ด: <strong>WIN-'+state.sessionId.slice(0,4).toUpperCase()+'</strong>':'ไม่ผ่าน ลองใหม่'}</p>`;
+          track('finish',{ userId:state.userId, game:'runner', score:state.score }); if(win) track('win_reward',{ userId:state.userId, game:'runner' }); return;
+        }
+        const w = scenarios[Math.floor(Math.random()*scenarios.length)];
+        const shouldStop = /ฝน|ลมแรง/.test(w);
+        box.innerHTML = `<p class="q">รอบ ${state.step+1} • สภาพอากาศ: ${w}</p>`;
+        btns.innerHTML='';
+        [['ทำงานต่อ',false],['หยุดงาน',true]].forEach(([label,stop])=>{
+          const b=document.createElement('button'); b.className='btn-ci'; b.textContent=label;
+          b.onclick=()=>{ const correct = (stop===shouldStop); if(correct) state.score++; state.step++; track('answer',{ userId:state.userId, game:'runner', step: state.step, correct }); next(); };
+          btns.appendChild(b);
+        });
+      }
+      next();
+    }
+
+    function renderSign(){
+      $('#title').textContent = 'Guess the Road Sign';
+      $('#subtitle').textContent = 'ทายป้ายจราจร (5 รอบ)';
+      const data=[['🚫','ห้ามผ่าน'],['⚠️','ระวังอันตราย'],['⬅️','เลี้ยวซ้าย'],['🅿️','ที่จอดรถ'],['🚸','ทางข้าม']];
+      const root=$('#view'); root.innerHTML=''; const q=document.createElement('div'); const btns=document.createElement('div'); btns.className='actions'; root.appendChild(q); root.appendChild(btns);
+      state.step=0; state.score=0; function next(){ if(state.step>=5){ const win=state.score>=4; root.innerHTML=`<p class="q">คะแนน: ${state.score}/5</p><p>${win?'ผ่าน! โค้ด: <strong>WIN-'+state.sessionId.slice(0,4).toUpperCase()+'</strong>':'ไม่ผ่าน ลองใหม่'}</p>`; track('finish',{ userId:state.userId, game:'sign', score: state.score }); if(win) track('win_reward',{ userId:state.userId, game:'sign' }); return; } const cur=data[state.step]; q.innerHTML=`<div style="font-size:52px">${cur[0]}</div><p class="muted">นี่คือป้ายอะไร?</p>`; btns.innerHTML=''; const choices=['ห้ามผ่าน','ระวังอันตราย','เลี้ยวซ้าย','ที่จอดรถ','ทางข้าม'].sort(()=>Math.random()-0.5).slice(0,4); choices.forEach((c)=>{ const b=document.createElement('button'); b.className='btn-ci'; b.textContent=c; b.onclick=()=>{ const correct=c===cur[1]; if(correct) state.score++; state.step++; track('answer',{ userId:state.userId, game:'sign', step: state.step, correct }); next(); }; btns.appendChild(b);});}
+      next();
+    }
+
+    function allowPlay(){
+      const key = `game-count-${state.userId || 'guest'}-${game}-${new Date().toISOString().slice(0,10)}`;
+      const n = Number(localStorage.getItem(key) || '0');
+      if (n >= 3) { $('#view').innerHTML = '<p class="q">วันนี้เล่นเกมนี้ครบโควต้าแล้ว (3/วัน)</p>'; return false; }
+      localStorage.setItem(key, String(n+1));
+      return true;
+    }
+
+    (async () => {
+      await initLIFF();
+      track('open_game', { userId: state.userId, game });
+      if (!allowPlay()) return;
+      if (game==='runner') renderRunner();
+      else if (game==='sign') renderSign();
+      else renderQuiz();
+    })();
+  </script>
+</body>
+</html>

@@ -82,6 +82,56 @@ export function generateDailySummary({ weather = [], materials = [], location = 
   ].filter(Boolean).join('\n');
 }
 
+export function buildDailySummaryFlex({ weather = [], materials = [], location = {} } = {}) {
+  const dateText = new Date().toLocaleDateString('th-TH', { dateStyle: 'medium' });
+  const site = location?.name || 'ไซต์งาน';
+  const { worst } = analyzeWeatherSlots(weather);
+  const wxText = worst
+    ? `${worst.time} · ${worst.condition} · ฝน ${worst.rainProb || 0}%`
+    : '—';
+  const topMats = (materials || [])
+    .slice(0, 4)
+    .map((m) => `${m.name || '-'} ${Number(m.stockTons || 0).toLocaleString('th-TH')} ตัน${m.moisture != null ? ` • ชื้น ${m.moisture}%` : ''}`);
+
+  return {
+    type: 'flex',
+    altText: 'สรุปประจำวัน',
+    contents: {
+      type: 'bubble',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          { type: 'text', text: '📣 Daily Summary', weight: 'bold', size: 'lg' },
+          { type: 'text', text: dateText, size: 'sm', color: '#888888' },
+          { type: 'text', text: site, size: 'sm', color: '#888888' },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        contents: [
+          { type: 'text', text: 'สภาพอากาศ', weight: 'bold', size: 'sm' },
+          { type: 'text', text: wxText, size: 'sm', color: '#475569' },
+          { type: 'separator', margin: 'md' },
+          { type: 'text', text: 'วัสดุ/คงเหลือ', weight: 'bold', size: 'sm', margin: 'md' },
+          ...(
+            topMats.length
+              ? topMats.map((t) => ({ type: 'text', text: `• ${t}`, size: 'sm', color: '#475569', wrap: true }))
+              : [{ type: 'text', text: '—', size: 'sm', color: '#9ca3af' }]
+          ),
+        ],
+      },
+      footer: {
+        type: 'box', layout: 'horizontal', spacing: 'sm', contents: [
+          { type: 'button', style: 'primary', action: { type: 'message', label: 'ส่งสรุปอีกครั้ง', text: 'ขอสรุปประจำวัน' } },
+          { type: 'spacer', size: 'sm' },
+        ] },
+    },
+  };
+}
+
 export function buildAdviceForConditions({ tempC, humidity, condition } = {}) {
   const tips = [];
   if (/ฝน/.test(String(condition || ''))) tips.push('หลีกเลี่ยงการปูยาง/มิกยางในช่วงฝนตก');
@@ -95,6 +145,7 @@ export default {
   buildWeatherFlex,
   analyzeWeatherSlots,
   generateDailySummary,
+  buildDailySummaryFlex,
   buildAdviceForConditions,
   percent,
 };

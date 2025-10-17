@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { loadMock, saveMock, appendChatLog, loadChatLog, getDefaultMock } from '../services/ai/mockStore.js';
 import { seedMockWeather, seedMockMaterials } from '../services/ai/mockSeeders.js';
-import { buildWeatherFlex, analyzeWeatherSlots, generateDailySummary, buildTasksFlex, buildChatText, buildCdpText } from '../services/ai/advisor.js';
+import { buildWeatherFlex, analyzeWeatherSlots, generateDailySummary, buildDailySummaryFlex, buildTasksFlex, buildChatText, buildCdpText } from '../services/ai/advisor.js';
 import { pushLineMessage } from '../services/line.js';
 
 const router = express.Router();
@@ -43,6 +43,7 @@ router.get('/admin/ai', (req, res) => {
         detailsUrl: '#',
       }),
       summaryText: generateDailySummary(mock),
+      summaryFlex: buildDailySummaryFlex(mock),
       tasksFlex: buildTasksFlex(mock.tasks || []),
       chatText: buildChatText(mock.chatSamples || []),
       cdpText: buildCdpText(mock.cdp || {}),
@@ -160,12 +161,13 @@ router.post('/admin/ai/mock/load-demo', (req, res) => {
 router.post('/admin/ai/send/summary', async (req, res) => {
   const mock = loadMock();
   const summary = generateDailySummary(mock);
+  const flex = buildDailySummaryFlex(mock);
   const to = (req.body.to || DEFAULT_RECIPIENT || '').trim();
   // If a destination is provided, allow actual send; otherwise stay in dry-run
   const dryRun = !to;
-  appendChatLog({ type: 'send-summary', to: to || '(none)', dryRun, text: summary });
+  appendChatLog({ type: 'send-summary', to: to || '(none)', dryRun, text: summary, flex });
   try {
-    if (!dryRun) await pushLineMessage(to, [{ type: 'text', text: summary }]);
+    if (!dryRun) await pushLineMessage(to, [flex]);
     return res.redirect('/admin/ai');
   } catch (err) {
     appendChatLog({ type: 'send-summary-error', error: err?.message || 'unknown' });

@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime.js';
 import customParseFormat from 'dayjs/plugin/customParseFormat.js';
 import { replyText, replyFlex, pushLineMessage, getUserProfile } from '../services/line.js';
+import { onTextGameMenu } from '../handlers/textGameMenu.js';
 import LineChatLog from '../models/lineChatLog.model.js';
 import LineMedia from '../models/lineMedia.model.js';
 import Company from '../models/Company.js';
@@ -582,6 +583,14 @@ async function handleText(ev) {
   const text = (ev.message?.text || '').trim();
   const userId = getUserId(ev);
   const superAdmin = await isSuperAdminUser(userId);
+
+  // Game menu trigger (early)
+  try {
+    const handled = await onTextGameMenu(ev);
+    if (handled) return handled;
+  } catch (err) {
+    console.warn('[WEBHOOK] game menu handler error', err?.message || err);
+  }
 
   if (/^ping$/i.test(text) || text === 'เทส') {
     return replyText(ev.replyToken, 'pong');
