@@ -7,6 +7,8 @@ import { buildWeatherFlex, analyzeWeatherSlots, generateDailySummary, buildTasks
 import { pushLineMessage } from '../services/line.js';
 
 const router = express.Router();
+// Allow sending when a recipient is explicitly provided, regardless of AI_MOCK_ONLY
+// This keeps the lab "mock" by default, but enables manual test sends when 'to' is filled.
 const AI_MOCK_ONLY = String(process.env.AI_MOCK_ONLY || 'true').toLowerCase() === 'true';
 const DEFAULT_RECIPIENT = process.env.AI_TEST_RECIPIENT || process.env.SUPER_ADMIN_LINE_USER_ID || '';
 
@@ -128,7 +130,8 @@ router.post('/admin/ai/send/summary', async (req, res) => {
   const mock = loadMock();
   const summary = generateDailySummary(mock);
   const to = (req.body.to || DEFAULT_RECIPIENT || '').trim();
-  const dryRun = AI_MOCK_ONLY || !to;
+  // If a destination is provided, allow actual send; otherwise stay in dry-run
+  const dryRun = !to;
   appendChatLog({ type: 'send-summary', to: to || '(none)', dryRun, text: summary });
   try {
     if (!dryRun) await pushLineMessage(to, { type: 'text', text: summary });
@@ -149,7 +152,7 @@ router.post('/admin/ai/send/weather', async (req, res) => {
     advice,
   });
   const to = (req.body.to || DEFAULT_RECIPIENT || '').trim();
-  const dryRun = AI_MOCK_ONLY || !to;
+  const dryRun = !to;
   appendChatLog({ type: 'send-weather', to: to || '(none)', dryRun, flex });
   try {
     if (!dryRun) await pushLineMessage(to, flex);
@@ -164,7 +167,7 @@ router.post('/admin/ai/send/tasks', async (req, res) => {
   const mock = loadMock();
   const flex = buildTasksFlex(mock.tasks || []);
   const to = (req.body.to || DEFAULT_RECIPIENT || '').trim();
-  const dryRun = AI_MOCK_ONLY || !to;
+  const dryRun = !to;
   appendChatLog({ type: 'send-tasks', to: to || '(none)', dryRun, flex });
   try {
     if (!dryRun) await pushLineMessage(to, flex);
@@ -179,7 +182,7 @@ router.post('/admin/ai/send/chat', async (req, res) => {
   const mock = loadMock();
   const text = buildChatText(mock.chatSamples || []);
   const to = (req.body.to || DEFAULT_RECIPIENT || '').trim();
-  const dryRun = AI_MOCK_ONLY || !to;
+  const dryRun = !to;
   appendChatLog({ type: 'send-chat-transcript', to: to || '(none)', dryRun, text });
   try {
     if (!dryRun) await pushLineMessage(to, { type: 'text', text });
@@ -194,7 +197,7 @@ router.post('/admin/ai/send/cdp', async (req, res) => {
   const mock = loadMock();
   const text = buildCdpText(mock.cdp || {});
   const to = (req.body.to || DEFAULT_RECIPIENT || '').trim();
-  const dryRun = AI_MOCK_ONLY || !to;
+  const dryRun = !to;
   appendChatLog({ type: 'send-cdp-digest', to: to || '(none)', dryRun, text });
   try {
     if (!dryRun) await pushLineMessage(to, { type: 'text', text });

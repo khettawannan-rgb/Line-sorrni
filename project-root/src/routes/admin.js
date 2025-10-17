@@ -828,6 +828,7 @@ router.get('/dashboard/engagement', requireAuth, async (req, res) => {
     res.render('dashboard', {
       ...context,
       ...(mock ? mockPayload : {}),
+      useMockAnalytics: !!mock,
       title: 'Dashboard · Engagement',
       active: 'dashboard',
       subPage: 'engagement',
