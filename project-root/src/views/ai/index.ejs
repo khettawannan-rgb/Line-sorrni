@@ -1,6 +1,9 @@
 <!-- project-root/src/views/ai/index.ejs -->
 <% const fmt = (n) => Number(n||0).toLocaleString('th-TH'); %>
 <% const today = new Date().toLocaleDateString('th-TH', { dateStyle: 'medium' }); %>
+<% const showExt = (typeof extendedTables !== 'undefined' ? extendedTables : false)
+   || ((mock && Array.isArray(mock.weather)) && mock.weather.some(w => (w && (w.wind_speed!=null || w.uv_index!=null || w.feels_like!=null))))
+   || ((mock && Array.isArray(mock.materials)) && mock.materials.some(m => (m && (m.batch_no || m.last_updated || m.quality_grade || m.supplier)))); %>
 
 <section class="section-block">
   <header class="section-header">
@@ -49,7 +52,7 @@
                 <th class="text-right">Temp</th>
                 <th class="text-right">Humidity</th>
                 <th class="text-right">ฝน</th>
-                <% if (extendedTables) { %>
+                <% if (showExt) { %>
                   <th class="text-right">ลม (km/h)</th>
                   <th class="text-right">UV</th>
                   <th class="text-right">Feels Like</th>
@@ -64,7 +67,7 @@
                   <td class="text-right"><%= w.tempC %>°C</td>
                   <td class="text-right"><%= w.humidity %>%</td>
                   <td class="text-right"><%= w.rainProb %>%</td>
-                  <% if (extendedTables) { %>
+                  <% if (showExt) { %>
                     <td class="text-right"><%= w.wind_speed != null ? w.wind_speed : '-' %></td>
                     <td class="text-right"><%= w.uv_index != null ? w.uv_index : '-' %></td>
                     <td class="text-right"><%= w.feels_like != null ? w.feels_like + '°C' : '-' %></td>
@@ -104,7 +107,7 @@
                 <th>รหัส</th>
                 <th class="text-right">คงเหลือ</th>
                 <th class="text-right">ความชื้น</th>
-                <% if (extendedTables) { %>
+                <% if (showExt) { %>
                   <th>Batch</th>
                   <th>อัปเดตล่าสุด</th>
                   <th>เกรด</th>
@@ -119,7 +122,7 @@
                   <td><%= m.code %></td>
                   <td class="text-right"><%= fmt(m.stockTons) %> ตัน</td>
                   <td class="text-right"><%= m.moisture != null ? m.moisture + '%' : '-' %></td>
-                  <% if (extendedTables) { %>
+                  <% if (showExt) { %>
                     <td><%= m.batch_no || '-' %></td>
                     <td><%= m.last_updated ? new Date(m.last_updated).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : '-' %></td>
                     <td><%= m.quality_grade || '-' %></td>
