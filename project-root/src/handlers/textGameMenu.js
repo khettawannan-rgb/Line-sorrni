@@ -17,13 +17,19 @@ export async function onTextGameMenu(ev) {
     }
 
     touchCooldown(userId, 'game_menu', 30_000);
-    const liffId = process.env.LIFF_ID || '';
-    const makeUrl = (game) => `https://liff.line.me/${liffId}?game=${encodeURIComponent(game)}`;
+    const liffId = process.env.LIFF_ID_GAMES || process.env.LIFF_ID || '';
+    const baseUrl = (process.env.BASE_URL || '').replace(/\/$/, '');
+    const makeUrl = (game) => {
+      if (liffId) return `https://liff.line.me/${liffId}?game=${encodeURIComponent(game)}`;
+      if (baseUrl) return `${baseUrl}/liff/index.html?game=${encodeURIComponent(game)}`;
+      return `/liff/index.html?game=${encodeURIComponent(game)}`; // last-resort relative
+    };
+    const externalFallback = !liffId;
     const flex = buildGameMenuFlex({
       quizUrl: makeUrl('quiz'),
       runnerUrl: makeUrl('runner'),
       signUrl: makeUrl('sign'),
-    });
+    }, { externalFallback });
     // Use replyFlex helper
     await replyFlex(ev.replyToken, 'เมนูมินิเกม', flex.contents);
     track('open_menu', { userId, ts: Date.now() });
@@ -35,4 +41,3 @@ export async function onTextGameMenu(ev) {
 }
 
 export default { onTextGameMenu };
-

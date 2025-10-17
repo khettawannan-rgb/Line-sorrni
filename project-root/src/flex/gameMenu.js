@@ -1,11 +1,13 @@
 // project-root/src/flex/gameMenu.js
 
-export function buildGameMenuFlex(urls) {
+export function buildGameMenuFlex(urls, opts = {}) {
   const ci = {
     primary: process.env.CI_PRIMARY || '#0ea5e9',
     text: process.env.CI_TEXT || '#0f172a',
     soft: process.env.CI_SOFT || '#eef2ff',
   };
+  const isExternal = !!opts.externalFallback;
+  const suffix = isExternal ? ' (เปิดภายนอก)' : '';
 
   const header = {
     type: 'box',
@@ -34,9 +36,9 @@ export function buildGameMenuFlex(urls) {
       header,
       { type: 'separator', margin: 'lg' },
       { type: 'text', text: 'เลือกเกม', weight: 'bold', size: 'sm', color: ci.text, margin: 'md' },
-      button('1) Road Builder Quiz', urls.quizUrl),
-      button('2) Asphalt Runner', urls.runnerUrl),
-      button('3) Guess the Road Sign', urls.signUrl),
+      button('1) Road Builder Quiz' + suffix, urls.quizUrl),
+      button('2) Asphalt Runner' + suffix, urls.runnerUrl),
+      button('3) Guess the Road Sign' + suffix, urls.signUrl),
     ],
   };
 
@@ -48,4 +50,3 @@ export function buildGameMenuFlex(urls) {
 }
 
 export default { buildGameMenuFlex };
-

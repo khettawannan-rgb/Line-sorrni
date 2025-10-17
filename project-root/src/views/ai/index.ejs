@@ -2,8 +2,14 @@
 <% const fmt = (n) => Number(n||0).toLocaleString('th-TH'); %>
 <% const today = new Date().toLocaleDateString('th-TH', { dateStyle: 'medium' }); %>
 <% const showExt = (typeof extendedTables !== 'undefined' ? extendedTables : false)
-   || ((mock && Array.isArray(mock.weather)) && mock.weather.some(w => (w && (w.wind_speed!=null || w.uv_index!=null || w.feels_like!=null))))
-   || ((mock && Array.isArray(mock.materials)) && mock.materials.some(m => (m && (m.batch_no || m.last_updated || m.quality_grade || m.supplier)))); %>
+   || ((mock && Array.isArray(mock.weather)) && mock.weather.some(w => (w && (
+         w.wind_speed!=null || w.uv_index!=null || w.feels_like!=null ||
+         w.rainfall_mm!=null || w.visibility!=null || w.pressure!=null || w.cloud_cover!=null || w.dew_point!=null
+   ))))
+   || ((mock && Array.isArray(mock.materials)) && mock.materials.some(m => (m && (
+         m.batch_no || m.last_updated || m.quality_grade || m.supplier || m.storage || m.days_left!=null ||
+         m.unit_cost!=null || m.total_value!=null || m.next_delivery
+   )))); %>
 
 <section class="section-block">
   <header class="section-header">
@@ -56,6 +62,11 @@
                   <th class="text-right">ลม (km/h)</th>
                   <th class="text-right">UV</th>
                   <th class="text-right">Feels Like</th>
+                  <th class="text-right">ฝน (mm)</th>
+                  <th class="text-right">ทัศนวิสัย (km)</th>
+                  <th class="text-right">ความกดอากาศ (hPa)</th>
+                  <th class="text-right">เมฆ (%)</th>
+                  <th class="text-right">Dew Point</th>
                 <% } %>
               </tr>
             </thead>
@@ -71,6 +82,11 @@
                     <td class="text-right"><%= w.wind_speed != null ? w.wind_speed : '-' %></td>
                     <td class="text-right"><%= w.uv_index != null ? w.uv_index : '-' %></td>
                     <td class="text-right"><%= w.feels_like != null ? w.feels_like + '°C' : '-' %></td>
+                    <td class="text-right"><%= w.rainfall_mm != null ? w.rainfall_mm : '-' %></td>
+                    <td class="text-right"><%= w.visibility != null ? w.visibility : '-' %></td>
+                    <td class="text-right"><%= w.pressure != null ? w.pressure : '-' %></td>
+                    <td class="text-right"><%= w.cloud_cover != null ? w.cloud_cover + '%' : '-' %></td>
+                    <td class="text-right"><%= w.dew_point != null ? w.dew_point + '°C' : '-' %></td>
                   <% } %>
                 </tr>
               <% }) %>
@@ -112,6 +128,11 @@
                   <th>อัปเดตล่าสุด</th>
                   <th>เกรด</th>
                   <th>ผู้จัดส่ง</th>
+                  <th>สภาพเก็บ</th>
+                  <th class="text-right">Days Left</th>
+                  <th class="text-right">Unit Cost</th>
+                  <th class="text-right">Total Value</th>
+                  <th>ส่งรอบถัดไป</th>
                 <% } %>
               </tr>
             </thead>
@@ -127,6 +148,11 @@
                     <td><%= m.last_updated ? new Date(m.last_updated).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : '-' %></td>
                     <td><%= m.quality_grade || '-' %></td>
                     <td><%= m.supplier || '-' %></td>
+                    <td><%= m.storage || '-' %></td>
+                    <td class="text-right"><%= m.days_left != null ? m.days_left : '-' %></td>
+                    <td class="text-right"><%= m.unit_cost != null ? fmt(m.unit_cost) : '-' %></td>
+                    <td class="text-right"><%= m.total_value != null ? fmt(m.total_value) : '-' %></td>
+                    <td><%= m.next_delivery || '-' %></td>
                   <% } %>
                 </tr>
               <% }) %>

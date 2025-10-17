@@ -67,6 +67,12 @@ router.post('/admin/ai/mock/weather', (req, res) => {
     slot.uv_index = Math.max(0, Math.min(11, Math.round(Math.random() * 11)));
     const feels = Number(slot.tempC) + (2 + Math.round(Math.random() * 3));
     slot.feels_like = feels;
+    const rainRatio = Math.max(0, Math.min(1, Number(slot.rainProb || 0) / 100));
+    slot.rainfall_mm = Math.round(rainRatio * (2 + Math.random() * 18));
+    slot.visibility = Math.max(2, 12 - Math.round(rainRatio * 8) - Math.round(Math.random() * 2));
+    slot.pressure = 1000 + Math.round((1 - rainRatio) * 10) + Math.round(Math.random() * 2) - 5;
+    slot.cloud_cover = Math.min(100, Math.round(rainRatio * 70 + (slot.uv_index < 4 ? 30 : 10)));
+    slot.dew_point = Math.round(slot.tempC - ((100 - slot.humidity) / 5));
   }
   const next = { ...mock, weather: [slot, ...(mock.weather || []).slice(0, 9)] };
   saveMock(next);
@@ -87,6 +93,11 @@ router.post('/admin/ai/mock/material', (req, res) => {
     item.last_updated = new Date().toISOString();
     item.quality_grade = ['A', 'B', 'C'][Math.floor(Math.random() * 3)];
     item.supplier = ['Supplier A', 'Supplier B', 'Supplier C'][Math.floor(Math.random() * 3)];
+    item.storage = Math.random() < 0.5 ? 'indoor' : 'outdoor';
+    item.days_left = Math.floor(3 + Math.random() * 28);
+    item.unit_cost = Math.floor(600 + Math.random() * 1200);
+    item.total_value = Math.round((item.stockTons || 0) * (item.unit_cost || 0));
+    item.next_delivery = new Date(Date.now() + (1 + Math.floor(Math.random() * 14)) * 86400000).toISOString().slice(0, 10);
   }
   const next = { ...mock, materials: [item, ...(mock.materials || [])].slice(0, 10) };
   saveMock(next);

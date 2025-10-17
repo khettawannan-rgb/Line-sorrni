@@ -28,6 +28,12 @@ export function seedMockWeather({ seed = 123456, hours = [6, 9, 12, 15, 18, 21] 
     const uv = Math.max(0, Math.min(11, h >= 10 && h <= 14 ? rnd.int(5, 11) : rnd.int(0, 7)));
     const feelsLike = temp + rnd.int(2, 5);
     const status = rain > 70 ? 'ฝนฟ้าคะนอง' : rain > 40 ? 'ฝนตก' : uv > 8 ? 'แดดจัด' : 'เมฆเป็นส่วนมาก';
+    // extended metrics
+    const rainfall_mm = Math.max(0, Math.round((rain / 100) * rnd.int(0, 20)));
+    const visibility = Math.max(2, 12 - Math.round(rain / 15) - rnd.int(0, 2));
+    const pressure = 1000 + rnd.int(-8, 12) - Math.round(rain / 50); // 992–1012 approx
+    const cloud_cover = Math.min(100, Math.max(0, Math.round((rain / 100) * 30 + (uv < 4 ? rnd.int(30, 70) : rnd.int(10, 40)) + rnd.int(-5, 5))));
+    const dew_point = Math.round(temp - ((100 - humidity) / 5));
     return {
       time: `${String(h).padStart(2, '0')}:00`,
       condition: status,
@@ -37,6 +43,11 @@ export function seedMockWeather({ seed = 123456, hours = [6, 9, 12, 15, 18, 21] 
       wind_speed: wind,
       uv_index: uv,
       feels_like: feelsLike,
+      rainfall_mm,
+      visibility,
+      pressure,
+      cloud_cover,
+      dew_point,
     };
   });
   return rows;
@@ -57,6 +68,10 @@ export function seedMockMaterials({ seed = 654321, count = 6 } = {}) {
     const base = rnd.pick(pool);
     const qty = Number((rnd.int(5, 180) + rnd.next()).toFixed(2));
     const moisture = rnd.pick([undefined, Number((rnd.int(1, 10) + rnd.next()).toFixed(1))]);
+    const storage = rnd.pick(['indoor', 'outdoor']);
+    const days_left = rnd.int(3, 28);
+    const unit_cost = rnd.int(600, 1800);
+    const next_delivery = new Date(Date.now() + rnd.int(1, 14) * 86400000).toISOString().slice(0, 10);
     return {
       name: base.name,
       code: base.code,
@@ -66,10 +81,14 @@ export function seedMockMaterials({ seed = 654321, count = 6 } = {}) {
       last_updated: new Date(Date.now() - rnd.int(0, 72) * 3600 * 1000).toISOString(),
       quality_grade: rnd.pick(grades),
       supplier: rnd.pick(suppliers),
+      storage,
+      days_left,
+      unit_cost,
+      total_value: Math.round(qty * unit_cost),
+      next_delivery,
     };
   });
   return rows;
 }
 
 export default { seedMockWeather, seedMockMaterials };
-
