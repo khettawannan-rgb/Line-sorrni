@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initProcurementDialogs();
   initDynamicItemRows();
   initMockAnalyticsControls();
+  initCollapsiblePanels();
   initDashboardAnchors();
 });
 
@@ -1479,6 +1480,37 @@ function initDynamicItemRows() {
         }
       });
       container.appendChild(clone);
+    });
+  });
+}
+
+function initCollapsiblePanels() {
+  const panels = document.querySelectorAll('.panel[data-collapsible]');
+  if (!panels.length) return;
+
+  panels.forEach((panel) => {
+    const header = panel.querySelector('.panel__header');
+    const body = panel.querySelector('.panel__body');
+    if (!header || !body) return;
+
+    const shouldIgnore = (el) => {
+      const t = el.tagName?.toLowerCase();
+      return (
+        ['button', 'a', 'input', 'select', 'label', 'textarea'].includes(t) ||
+        el.closest('form')
+      );
+    };
+
+    header.addEventListener('click', (e) => {
+      if (shouldIgnore(e.target)) return;
+      const hidden = body.hasAttribute('hidden');
+      if (hidden) {
+        body.removeAttribute('hidden');
+        panel.classList.remove('is-collapsed');
+      } else {
+        body.setAttribute('hidden', 'hidden');
+        panel.classList.add('is-collapsed');
+      }
     });
   });
 }

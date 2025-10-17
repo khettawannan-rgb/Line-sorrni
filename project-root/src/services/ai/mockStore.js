@@ -1,6 +1,7 @@
 // project-root/src/services/ai/mockStore.js
 import fs from 'node:fs';
 import path from 'node:path';
+import { seedMockWeather, seedMockMaterials } from './mockSeeders.js';
 
 const STORAGE_DIR = path.resolve('storage');
 const STORE_FILE = path.join(STORAGE_DIR, 'ai_mock.json');
@@ -67,16 +68,16 @@ export function getDefaultMock() {
   const today = new Date();
   const fmt = (d) => d.toLocaleDateString('th-TH', { dateStyle: 'medium' });
   const hours = [17, 18, 19, 20, 21];
-  return {
+  const USE_EXT = String(process.env.USE_EXTENDED_MOCK_TABLES || '').toLowerCase() === 'true';
+  const base = {
     meta: { project: 'NILA Construction · Mock', generatedAt: fmt(today) },
-    weather:
-      hours.map((h, i) => ({
-        time: `${String(h).padStart(2, '0')}:00`,
-        condition: i < 2 ? 'ฝนฟ้าคะนอง' : i < 4 ? 'ฝนตกปรอย' : 'เมฆเป็นส่วนมาก',
-        tempC: 30 - i,
-        humidity: 70 + i * 3,
-        rainProb: 80 - i * 10,
-      })),
+    weather: hours.map((h, i) => ({
+      time: `${String(h).padStart(2, '0')}:00`,
+      condition: i < 2 ? 'ฝนฟ้าคะนอง' : i < 4 ? 'ฝนตกปรอย' : 'เมฆเป็นส่วนมาก',
+      tempC: 30 - i,
+      humidity: 70 + i * 3,
+      rainProb: 80 - i * 10,
+    })),
     location: { name: 'ไซต์งานหลัก', lat: 13.7563, lng: 100.5018 },
     materials: [
       { name: 'ยางมะตอย', code: 'ASPHALT', stockTons: 42.5, moisture: 7.5 },
@@ -105,6 +106,12 @@ export function getDefaultMock() {
       ],
     },
   };
+  if (!USE_EXT) return base;
+  // Extend with richer mock rows
+  const seed = 987654;
+  const weather = seedMockWeather({ seed });
+  const materials = seedMockMaterials({ seed });
+  return { ...base, weather, materials };
 }
 
 export default {

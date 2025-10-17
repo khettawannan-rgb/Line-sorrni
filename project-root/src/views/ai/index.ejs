@@ -12,7 +12,7 @@
   </header>
 
   <div class="control-grid">
-    <article class="panel card">
+    <article class="panel card" data-collapsible>
       <header class="panel__header">
         <div>
           <h3>Mock Weather</h3>
@@ -42,15 +42,33 @@
         </form>
         <div class="table-wrap mt-2">
           <table class="table compact">
-            <thead><tr><th>เวลา</th><th>สถานะ</th><th class="right">Temp</th><th class="right">Humidity</th><th class="right">ฝน</th></tr></thead>
+            <thead>
+              <tr>
+                <th>เวลา</th>
+                <th>สถานะ</th>
+                <th class="text-right">Temp</th>
+                <th class="text-right">Humidity</th>
+                <th class="text-right">ฝน</th>
+                <% if (extendedTables) { %>
+                  <th class="text-right">ลม (km/h)</th>
+                  <th class="text-right">UV</th>
+                  <th class="text-right">Feels Like</th>
+                <% } %>
+              </tr>
+            </thead>
             <tbody>
               <% (mock.weather||[]).forEach((w) => { %>
                 <tr>
                   <td><%= w.time %></td>
                   <td><%= w.condition %></td>
-                  <td class="right"><%= w.tempC %>°C</td>
-                  <td class="right"><%= w.humidity %>%</td>
-                  <td class="right"><%= w.rainProb %>%</td>
+                  <td class="text-right"><%= w.tempC %>°C</td>
+                  <td class="text-right"><%= w.humidity %>%</td>
+                  <td class="text-right"><%= w.rainProb %>%</td>
+                  <% if (extendedTables) { %>
+                    <td class="text-right"><%= w.wind_speed != null ? w.wind_speed : '-' %></td>
+                    <td class="text-right"><%= w.uv_index != null ? w.uv_index : '-' %></td>
+                    <td class="text-right"><%= w.feels_like != null ? w.feels_like + '°C' : '-' %></td>
+                  <% } %>
                 </tr>
               <% }) %>
             </tbody>
@@ -59,7 +77,7 @@
       </div>
     </article>
 
-    <article class="panel card">
+    <article class="panel card" data-collapsible>
       <header class="panel__header">
         <div>
           <h3>Mock Materials</h3>
@@ -80,14 +98,33 @@
         </form>
         <div class="table-wrap mt-2">
           <table class="table compact">
-            <thead><tr><th>ชื่อ</th><th>รหัส</th><th class="right">คงเหลือ</th><th class="right">ความชื้น</th></tr></thead>
+            <thead>
+              <tr>
+                <th>ชื่อ</th>
+                <th>รหัส</th>
+                <th class="text-right">คงเหลือ</th>
+                <th class="text-right">ความชื้น</th>
+                <% if (extendedTables) { %>
+                  <th>Batch</th>
+                  <th>อัปเดตล่าสุด</th>
+                  <th>เกรด</th>
+                  <th>ผู้จัดส่ง</th>
+                <% } %>
+              </tr>
+            </thead>
             <tbody>
               <% (mock.materials||[]).forEach((m) => { %>
                 <tr>
                   <td><%= m.name %></td>
                   <td><%= m.code %></td>
-                  <td class="right"><%= fmt(m.stockTons) %> ตัน</td>
-                  <td class="right"><%= m.moisture != null ? m.moisture + '%' : '-' %></td>
+                  <td class="text-right"><%= fmt(m.stockTons) %> ตัน</td>
+                  <td class="text-right"><%= m.moisture != null ? m.moisture + '%' : '-' %></td>
+                  <% if (extendedTables) { %>
+                    <td><%= m.batch_no || '-' %></td>
+                    <td><%= m.last_updated ? new Date(m.last_updated).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : '-' %></td>
+                    <td><%= m.quality_grade || '-' %></td>
+                    <td><%= m.supplier || '-' %></td>
+                  <% } %>
                 </tr>
               <% }) %>
             </tbody>
@@ -98,7 +135,7 @@
   </div>
 
   <div class="control-grid mt-3">
-    <article class="panel card">
+    <article class="panel card" data-collapsible>
       <header class="panel__header">
         <div>
           <h3>Preview · Weather Flex</h3>
@@ -114,7 +151,7 @@
       </div>
     </article>
 
-    <article class="panel card">
+    <article class="panel card" data-collapsible>
       <header class="panel__header">
         <div>
           <h3>Preview · Daily Summary</h3>
@@ -132,7 +169,7 @@
   </div>
 
   <div class="control-grid mt-3">
-    <article class="panel card">
+    <article class="panel card" data-collapsible>
       <header class="panel__header">
         <div>
           <h3>Preview · Task Recommendations</h3>
@@ -148,7 +185,7 @@
       </div>
     </article>
 
-    <article class="panel card">
+    <article class="panel card" data-collapsible>
       <header class="panel__header">
         <div>
           <h3>Preview · Chat Transcript</h3>
@@ -164,7 +201,7 @@
       </div>
     </article>
 
-    <article class="panel card">
+    <article class="panel card" data-collapsible>
       <header class="panel__header">
         <div>
           <h3>Preview · CDP Digest</h3>
@@ -181,7 +218,7 @@
     </article>
   </div>
 
-  <article class="panel card mt-3">
+  <article class="panel card mt-3" data-collapsible>
     <header class="panel__header">
       <div>
         <h3>Interaction Log</h3>
