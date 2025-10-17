@@ -45,6 +45,15 @@ import {
   getBotFaqStats,
   bulkInsertFaqs,
 } from '../services/botFaq.js';
+import {
+  seedMockAnalytics,
+  buildIntentTrend,
+  buildCohortHeatmap,
+  buildSentimentTrend,
+  buildSlaVsCsat,
+  buildHourHeatmap,
+  buildSegmentBreakdown,
+} from '../services/mock-analytics.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,6 +69,14 @@ const splitListInput = (value = '') =>
     .split(/[,\n;]/)
     .map((item) => item.trim())
     .filter(Boolean);
+
+// local helper to format UTC date to YYYY-MM-DD
+function toISODate(d) {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 async function renderBotFaq(res, { form = null, error = null, message = '' } = {}) {
   const [entries, stats] = await Promise.all([
@@ -764,8 +781,53 @@ router.get('/', requireAuth, async (req, res) => {
 router.get('/dashboard/engagement', requireAuth, async (req, res) => {
   try {
     const context = await buildDashboardContext();
+
+    const USE_MOCK = String(process.env.USE_MOCK_ANALYTICS || '').toLowerCase() === 'true';
+    const sessionSeed = Number(req.session?.mockAnalyticsSeed || 0);
+    const seed = Number(req.query.seed || sessionSeed || 123456);
+
+    let mock = null;
+    let mockPayload = {};
+    if (USE_MOCK) {
+      const to = new Date();
+      const from = new Date(to);
+      from.setUTCDate(from.getUTCDate() - 56);
+      mock = seedMockAnalytics({ seed, from: toISODate(from), to: toISODate(to) });
+
+      // Trend series (chat): per day counts and unique users
+      const byDay = new Map();
+      const uniqueByDay = new Map();
+      (mock.events || []).forEach((e) => {
+        const d = e.ts.slice(0, 10);
+        byDay.set(d, (byDay.get(d) || 0) + 1);
+        const set = uniqueByDay.get(d) || new Set();
+        set.add(e.user_id);
+        uniqueByDay.set(d, set);
+      });
+      const trendSeries = Array.from(byDay.entries())
+        .map(([date, messageCount]) => ({ date, messageCount, uniqueUsers: (uniqueByDay.get(date) || new Set()).size }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      mockPayload = {
+        useMockAnalytics: true,
+        mockSeed: seed,
+        mock,
+        trendSeries,
+        intentStack: buildIntentTrend(mock),
+        retention: buildCohortHeatmap(mock),
+        sentiment: buildSentimentTrend(mock),
+        hourHeatmap: buildHourHeatmap(mock),
+        segmentStack: buildSegmentBreakdown(mock),
+        agentResponse: buildSlaVsCsat(mock),
+      };
+
+      // Override data feeds used by dashboard engagement cards
+      context.trendSeries = trendSeries;
+    }
+
     res.render('dashboard', {
       ...context,
+      ...(mock ? mockPayload : {}),
       title: 'Dashboard · Engagement',
       active: 'dashboard',
       subPage: 'engagement',
@@ -789,6 +851,34 @@ router.get('/dashboard/control', requireAuth, async (req, res) => {
     console.error('[ADMIN] dashboard control error', err);
     res.status(500).render('error', { message: 'ไม่สามารถโหลดหน้าศูนย์ควบคุมได้', error: err });
   }
+});
+
+// ---- Mock analytics controls (logic only; used by Secret Manual Send button) ----
+router.post('/mock/analytics/regenerate', requireAuth, (req, res) => {
+  const USE_MOCK = String(process.env.USE_MOCK_ANALYTICS || '').toLowerCase() === 'true';
+  if (!USE_MOCK) return res.status(400).json({ ok: false, error: 'mock disabled' });
+  const seed = Number(req.body?.seed || Date.now() % 2147483647);
+  if (!req.session) return res.status(500).json({ ok: false, error: 'no session' });
+  req.session.mockAnalyticsSeed = seed >>> 0;
+  res.json({ ok: true, seed: req.session.mockAnalyticsSeed });
+});
+
+router.post('/mock/analytics/send', requireAuth, (req, res) => {
+  const USE_MOCK = String(process.env.USE_MOCK_ANALYTICS || '').toLowerCase() === 'true';
+  if (!USE_MOCK) return res.status(400).json({ ok: false, error: 'mock disabled' });
+  // This endpoint is a stub for sending demo flex or summary
+  // It simply regenerates a lightweight preview payload from the current seed
+  const seed = Number(req.session?.mockAnalyticsSeed || 123456);
+  const to = new Date();
+  const from = new Date(to);
+  from.setUTCDate(from.getUTCDate() - 7);
+  const mock = seedMockAnalytics({ seed, from: toISODate(from), to: toISODate(to) });
+  const topTopics = (mock.events || []).reduce((acc, e) => {
+    acc[e.topic] = (acc[e.topic] || 0) + 1;
+    return acc;
+  }, {});
+  const top = Object.entries(topTopics).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  res.json({ ok: true, preview: { seed, from: mock.from, to: mock.to, topTopics: top } });
 });
 
 router.get('/insights', requireAuth, async (req, res) => {

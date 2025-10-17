@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCustomerInsightCharts();
   initProcurementDialogs();
   initDynamicItemRows();
+  initMockAnalyticsControls();
   initDashboardAnchors();
 });
 
@@ -1478,6 +1479,29 @@ function initDynamicItemRows() {
         }
       });
       container.appendChild(clone);
+    });
+  });
+}
+
+function initMockAnalyticsControls() {
+  const regenButtons = document.querySelectorAll('[data-action="regenerate-mock"]');
+  if (!regenButtons.length) return;
+  regenButtons.forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        const seed = Date.now() % 2147483647;
+        const res = await fetch('/admin/mock/analytics/regenerate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ seed }),
+        });
+        if (res.ok) {
+          window.location.assign('/admin/dashboard/engagement');
+        }
+      } catch (err) {
+        // no-op
+      }
     });
   });
 }

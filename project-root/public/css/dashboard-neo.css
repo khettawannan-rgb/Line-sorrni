@@ -206,22 +206,35 @@ body.app-shell.use-fullwidth .dash-hero__actions--compact {
 .engagement-grid {
   display: grid;
   gap: var(--neo-gap);
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  /* Mobile-first: single column */
+  grid-template-columns: minmax(0, 1fr);
   width: min(100%, var(--console-shell-max));
   margin-inline: auto;
 }
 
+/* Primary card spans full width on small screens */
 .engagement-primary {
   grid-column: 1 / -1;
 }
 
+/* Medium screens: two columns */
+@media (min-width: 920px) {
+  .engagement-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .engagement-primary {
+    grid-column: 1 / span 2; /* still full width */
+  }
+}
+
+/* Large screens: 3 columns (2fr | 1fr | 1fr)
+   Big data card sits alone on the left; two small cards on the right */
 @media (min-width: 1200px) {
   .engagement-grid {
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
   }
-
   .engagement-primary {
-    grid-column: 1 / span 2;
+    grid-column: 1 / span 1;
   }
 }
 

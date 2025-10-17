@@ -356,6 +356,9 @@
           <span class="section-chip">ข้อความ 7 วัน <%= fmtCount(chatStats.messages7d) %></span>
         </div>
       </header>
+      <% if (useMockAnalytics) { %>
+        <script>window.__MOCK_CDP__ = <%- JSON.stringify(mock) %>;</script>
+      <% } %>
       <div class="section-body engagement-grid">
         <!-- Switch order: Make Mix Projects the primary large card -->
         <article class="panel card mix-card engagement-primary">
@@ -386,7 +389,7 @@
         </article>
         
         <!-- Make the trend card the regular size item -->
-        <article class="panel card chart-card insight-chart engagement-grid__item" data-chart-trend='<%- JSON.stringify(safeTrendSeries.slice(-14)) %>'>
+        <article class="panel card chart-card insight-chart engagement-grid__item" data-chart-trend='<%- JSON.stringify((trendSeries||safeTrendSeries||[]).slice(-14)) %>'>
           <header class="panel__header">
             <div>
               <h2>LINE Interaction Trend</h2>
@@ -465,6 +468,85 @@
             <% }) %>
           </ul>
         </article>
+
+        <% if (useMockAnalytics) { %>
+        <!-- Intent & Topic Trend (stacked) -->
+        <article class="panel card insight-chart engagement-grid__item" data-intent-stack='<%- JSON.stringify(intentStack || []) %>'>
+          <header class="panel__header">
+            <div>
+              <h2>Intent &amp; Topic Trend</h2>
+              <p class="muted">สัดส่วนการสนทนารายสัปดาห์ แยกตาม Intent</p>
+            </div>
+          </header>
+          <div class="chart-frame chart-card__body">
+            <canvas id="intent-stack-chart" height="220"></canvas>
+          </div>
+        </article>
+
+        <!-- Workday/Hour Heatmap -->
+        <article class="panel card insight-chart engagement-grid__item" data-heatmap='<%- JSON.stringify(hourHeatmap || []) %>'>
+          <header class="panel__header">
+            <div>
+              <h2>Workday / Hour Heatmap</h2>
+              <p class="muted">ช่วงเวลาที่มีปริมาณข้อความมาก</p>
+            </div>
+          </header>
+          <div class="chart-frame chart-card__body">
+            <canvas id="chat-heatmap-chart" height="220"></canvas>
+          </div>
+        </article>
+
+        <!-- Cohort Retention (weekly) -->
+        <article class="panel card insight-chart engagement-grid__item" data-retention='<%- JSON.stringify(retention || []) %>'>
+          <header class="panel__header">
+            <div>
+              <h2>Cohort Retention</h2>
+              <p class="muted">อัตรากลับมาใช้งานของผู้ใช้รายสัปดาห์</p>
+            </div>
+          </header>
+          <div class="chart-frame chart-card__body">
+            <canvas id="retention-cohort-chart" height="220"></canvas>
+          </div>
+        </article>
+
+        <!-- Sentiment + Top Drivers -->
+        <article class="panel card insight-chart engagement-grid__item" data-sentiment='<%- JSON.stringify((sentiment && sentiment.series) || []) %>'>
+          <header class="panel__header">
+            <div>
+              <h2>Sentiment Overview</h2>
+              <p class="muted">สัดส่วนความรู้สึกจากข้อความทั้งหมด</p>
+            </div>
+          </header>
+          <div class="chart-frame chart-card__body">
+            <canvas id="sentiment-pie-chart" height="220"></canvas>
+          </div>
+        </article>
+
+        <article class="panel card insight-chart engagement-grid__item" data-topic-payload='<%- JSON.stringify((sentiment && sentiment.topKeywords) || []) %>'>
+          <header class="panel__header">
+            <div>
+              <h2>Top Drivers</h2>
+              <p class="muted">หัวข้อที่ถูกพูดถึงมากสุด</p>
+            </div>
+          </header>
+          <div class="chart-frame chart-card__body">
+            <canvas id="topic-bar-chart" height="220"></canvas>
+          </div>
+        </article>
+
+        <!-- Response SLA vs Satisfaction (bar + line) -->
+        <article class="panel card insight-chart engagement-grid__item" data-agent-response='<%- JSON.stringify(agentResponse || []) %>'>
+          <header class="panel__header">
+            <div>
+              <h2>Response SLA &amp; First Reply</h2>
+              <p class="muted">ความเร็วตอบกลับต่อบทบาทงาน</p>
+            </div>
+          </header>
+          <div class="chart-frame chart-card__body">
+            <canvas id="agent-response-chart" height="220"></canvas>
+          </div>
+        </article>
+        <% } %>
       </div>
     </section>
     <% } %>
