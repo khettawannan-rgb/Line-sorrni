@@ -1,0 +1,114 @@
+{
+  "daily_summary": [
+    {
+      "date": "2025-10-17",
+      "site": {
+        "name": "ไซต์งานหลัก – ทางหลวง 11600",
+        "lat": 13.7563,
+        "lng": 100.5018,
+        "address": "เขตดอนเมือง กรุงเทพฯ"
+      },
+      "shifts": [
+        {
+          "time": "07:30–10:30",
+          "task": "เตรียมพื้นผิว/ตรวจสอบความชื้น",
+          "team": "Crew A",
+          "equipment": ["รถกวาดถนน", "Blower"],
+          "note": "ความชื้นพื้นผิว 5–7% ต้องเป่าเพิ่มก่อนปู"
+        },
+        {
+          "time": "10:30–12:00",
+          "task": "ขนย้ายวัสดุเข้าหน้างาน",
+          "team": "Logistics",
+          "equipment": ["รถ 10 ล้อ 3 คัน"],
+          "note": "กระจายจุดลงกอง 3 ตำแหน่ง"
+        },
+        {
+          "time": "13:00–15:30",
+          "task": "มิกยาง/ปูยางเลนใน",
+          "team": "Crew A + Mixer",
+          "equipment": ["เครื่อง Mixer", "Finisher", "รถบด"],
+          "note": "เริ่มปูยางเมื่อไม่มีสัญญาณฝนช่วง 13:00–14:00"
+        },
+        {
+          "time": "15:30–17:00",
+          "task": "เก็บงาน/ตรวจคุณภาพ",
+          "team": "QA",
+          "equipment": ["Thermo Gun", "Straightedge"],
+          "note": "อุณหภูมิพื้นผิวเฉลี่ย 105–115°C"
+        }
+      ],
+      "materials_used": [
+        { "name": "ยางมะตอย (AC 60/70)", "code": "ASPHALT", "qty_tons": 18.5, "moisture_pct": 6.8 },
+        { "name": "หินเบอร์ 3", "code": "AGG-3", "qty_tons": 9.2, "moisture_pct": 2.0 },
+        { "name": "ดีเซล", "code": "FUEL", "qty_tons": 0.38 }
+      ],
+      "totals": { "truck_in": 3, "workers": 12, "hours": 8.5 },
+      "summary_text": "\ud83d\udce3 สรุปประจำวัน – ไซต์งานหลัก – ทางหลวง 11600\n- งาน: เตรียมพื้นผิว/มิกยาง/ปูยาง/ตรวจคุณภาพ\n- ทีม: Crew A, Logistics, QA รวม 12 คน\n- วัสดุ: ยาง 18.5 ตัน • หิน 9.2 ตัน • ดีเซล 0.38 ตัน\n- หมายเหตุ: เริ่มปูเมื่อไม่มีสัญญาณฝน ช่วงบ่ายตรวจคุณภาพอุณหภูมิ 105–115°C"
+    }
+  ],
+  "weather_advisory": [
+    { "time": "08:00", "temp_c": 30, "condition": "เมฆมาก", "rain_prob_pct": 20, "advice": "เริ่มเตรียมพื้นผิว ตรวจความชื้นก่อน" },
+    { "time": "11:00", "temp_c": 33, "condition": "แดดจัด", "rain_prob_pct": 10, "advice": "ปูยางได้ เฝ้าดูอุณหภูมิพื้นผิว" },
+    { "time": "14:00", "temp_c": 31, "condition": "ฝนตกปรอย", "rain_prob_pct": 50, "advice": "ชะลอการปู/มิกชั่วคราว ตรวจพื้นผิวอีกครั้ง" },
+    { "time": "16:00", "temp_c": 29, "condition": "ฝนฟ้าคะนอง", "rain_prob_pct": 80, "advice": "ไม่ควรมิกยางหรือปูยางช่วงนี้" },
+    { "time": "18:00", "temp_c": 28, "condition": "เมฆเป็นส่วนมาก", "rain_prob_pct": 30, "advice": "ฝนซาแล้ว เริ่มงานต่อได้เมื่อพื้นผิวแห้ง" }
+  ],
+  "task_recommendation": [
+    {
+      "type": "stock",
+      "priority": "high",
+      "message": "สัปดาห์นี้ควรสั่งยางมะตอยเพิ่ม",
+      "reason": "คงคลังเหลือ 42.5 ตัน เทียบค่าเฉลี่ยใช้ต่อสัปดาห์ 60 ตัน",
+      "suggested_action": "ออกใบสั่งซื้อ 30–40 ตันภายใน 2 วัน"
+    },
+    {
+      "type": "quality",
+      "priority": "medium",
+      "message": "ตรวจสอบความชื้นวัสดุ",
+      "reason": "ค่าความชื้นยาง 6.8% เกินเกณฑ์ 6% เล็กน้อย",
+      "suggested_action": "อุ่นวัสดุก่อนมิก/ปู เพิ่ม sampling ทุกชั่วโมง"
+    },
+    {
+      "type": "planning",
+      "priority": "low",
+      "message": "วางแผนรถบรรทุกช่วงเช้า",
+      "reason": "มีแนวโน้มฝนช่วงบ่าย 14:00–17:00",
+      "suggested_action": "เร่งขน/ปูช่วง 10:00–13:30"
+    }
+  ],
+  "chat_interaction": [
+    {
+      "time": "2025-10-17T08:05:00+07:00",
+      "from": "site-foreman",
+      "message": { "type": "text", "text": "เช้านี้พื้นผิวชื้น 7% ปูยางได้ไหม?" },
+      "bot_reply": { "type": "text", "text": "ตอนนี้เมฆมาก ฝน 20% แนะนำเป่าให้แห้งจน < 6% ก่อนเริ่มปูยาง" }
+    },
+    {
+      "time": "2025-10-17T09:20:00+07:00",
+      "from": "site-foreman",
+      "message": { "type": "image", "url": "https://placehold.co/600x400?text=Site+Photo" },
+      "bot_reply": { "type": "text", "text": "ภาพพื้นผิวเรียบดี ตรวจอุณหภูมิหลังปูด้วย Thermo Gun 100–120°C" }
+    },
+    {
+      "time": "2025-10-17T13:45:00+07:00",
+      "from": "site-foreman",
+      "message": { "type": "location", "title": "จุดลงกอง A", "lat": 13.7561, "lng": 100.5022 },
+      "bot_reply": { "type": "text", "text": "ช่วงบ่ายมีฝนปรอย 50% ให้พักงานปู/มิกชั่วคราวและตรวจพื้นผิวอีกครั้ง" }
+    }
+  ]
+  ,
+  "cdp_dashboard": {
+    "summary": { "dailyActive": 64, "weeklyActive": 212, "newUsers7d": 17, "returning7d": 58, "messages7d": 1340 },
+    "segments": [
+      { "label": "Power Users", "users": 12 },
+      { "label": "Returning", "users": 58 },
+      { "label": "New", "users": 17 },
+      { "label": "Dormant 30d", "users": 24 }
+    ],
+    "predictive": [
+      { "type": "churn-risk", "message": "กลุ่ม Returning มีความเสี่ยงเป็น Dormant เพิ่มขึ้น 12% สัปดาห์นี้" },
+      { "type": "campaign", "message": "เสนอแคมเปญต้อนรับสำหรับ New users → เพิ่มการกลับมาใช้ซ้ำ" }
+    ]
+  }
+}

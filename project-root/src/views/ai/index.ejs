@@ -1,0 +1,186 @@
+<!-- project-root/src/views/ai/index.ejs -->
+<% const fmt = (n) => Number(n||0).toLocaleString('th-TH'); %>
+<% const today = new Date().toLocaleDateString('th-TH', { dateStyle: 'medium' }); %>
+
+<div class="container">
+  <header class="section-header">
+    <div class="section-header__titles">
+      <span class="section-pill section-pill--cdp">AI</span>
+      <h2>AI Assistant · Mock Lab</h2>
+      <p class="muted">ทดสอบสรุปรายวัน พยากรณ์อากาศ และคำแนะนำ โดยไม่แตะข้อมูลจริง</p>
+    </div>
+  </header>
+
+  <div class="grid-2">
+    <article class="panel card">
+      <header class="panel__header">
+        <div>
+          <h3>Mock Weather</h3>
+          <p class="muted">ปรับสภาพอากาศจำลองสำหรับไซต์งาน: <strong><%= mock.location?.name || '-' %></strong></p>
+        </div>
+        <div class="panel__actions">
+          <form method="post" action="/admin/ai/mock/load-demo">
+            <button class="btn primary small" type="submit">Load Demo Dataset</button>
+          </form>
+          <form method="post" action="/admin/ai/mock/reset">
+            <button class="btn ghost small" type="submit">Reset Default</button>
+          </form>
+        </div>
+      </header>
+      <form class="stack" method="post" action="/admin/ai/mock/weather">
+        <div class="grid-4">
+          <label>เวลา<input name="time" value="08:00" /></label>
+          <label>สถานะ<input name="condition" value="ฝนฟ้าคะนอง" /></label>
+          <label>อุณหภูมิ (°C)<input name="tempC" type="number" step="0.1" value="30" /></label>
+          <label>ความชื้น (%)<input name="humidity" type="number" step="1" value="78" /></label>
+          <label>โอกาสฝน (%)<input name="rainProb" type="number" step="1" value="70" /></label>
+        </div>
+        <button class="btn primary" type="submit">เพิ่ม Weather Slot</button>
+      </form>
+      <div class="mt-3">
+        <table class="table">
+          <thead><tr><th>เวลา</th><th>สถานะ</th><th class="text-right">Temp</th><th class="text-right">Humidity</th><th class="text-right">ฝน</th></tr></thead>
+          <tbody>
+            <% (mock.weather||[]).forEach((w) => { %>
+              <tr>
+                <td><%= w.time %></td>
+                <td><%= w.condition %></td>
+                <td class="text-right"><%= w.tempC %>°C</td>
+                <td class="text-right"><%= w.humidity %>%</td>
+                <td class="text-right"><%= w.rainProb %>%</td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="panel card">
+      <header class="panel__header">
+        <div>
+          <h3>Mock Materials</h3>
+          <p class="muted">ข้อมูลวัสดุ และความชื้น เพื่อคำแนะนำหน้างาน</p>
+        </div>
+      </header>
+      <form class="stack" method="post" action="/admin/ai/mock/material">
+        <div class="grid-4">
+          <label>ชื่อวัสดุ<input name="name" value="ยางมะตอย" /></label>
+          <label>รหัส<input name="code" value="ASPHALT" /></label>
+          <label>คงเหลือ (ตัน)<input name="stockTons" type="number" step="0.01" value="10" /></label>
+          <label>ความชื้น (%)<input name="moisture" type="number" step="0.1" value="7" /></label>
+        </div>
+        <button class="btn primary" type="submit">เพิ่มวัสดุ</button>
+      </form>
+      <div class="mt-3">
+        <table class="table">
+          <thead><tr><th>ชื่อ</th><th>รหัส</th><th class="text-right">คงเหลือ</th><th class="text-right">ความชื้น</th></tr></thead>
+          <tbody>
+            <% (mock.materials||[]).forEach((m) => { %>
+              <tr>
+                <td><%= m.name %></td>
+                <td><%= m.code %></td>
+                <td class="text-right"><%= fmt(m.stockTons) %> ตัน</td>
+                <td class="text-right"><%= m.moisture != null ? m.moisture + '%' : '-' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </div>
+
+  <div class="grid-2 mt-3">
+    <article class="panel card">
+      <header class="panel__header">
+        <div>
+          <h3>Preview · Weather Flex</h3>
+          <p class="muted">ตัวอย่าง Flex ที่จะส่งไป LINE</p>
+        </div>
+        <form method="post" action="/admin/ai/send/weather">
+          <input name="to" placeholder="LINE user/group id (optional)" style="min-width:260px" />
+          <button class="btn primary" type="submit">ส่ง Weather Flex (Mock)</button>
+        </form>
+      </header>
+      <pre class="code"><%= JSON.stringify(preview.weatherFlex, null, 2) %></pre>
+    </article>
+
+    <article class="panel card">
+      <header class="panel__header">
+        <div>
+          <h3>Preview · Daily Summary</h3>
+          <p class="muted">สรุปประจำวันพร้อมคำแนะนำ</p>
+        </div>
+        <form method="post" action="/admin/ai/send/summary">
+          <input name="to" placeholder="LINE user/group id (optional)" style="min-width:260px" />
+          <button class="btn primary" type="submit">ส่งสรุปประจำวัน (Mock)</button>
+        </form>
+      </header>
+      <pre class="code"><%= preview.summaryText %></pre>
+    </article>
+  </div>
+
+  <div class="grid-3 mt-3">
+    <article class="panel card">
+      <header class="panel__header">
+        <div>
+          <h3>Preview · Task Recommendations</h3>
+          <p class="muted">คำแนะนำเชิงคาดการณ์ (Flex)</p>
+        </div>
+        <form method="post" action="/admin/ai/send/tasks">
+          <input name="to" placeholder="LINE user/group id (optional)" style="min-width:220px" />
+          <button class="btn primary" type="submit">ส่ง Tasks (Mock)</button>
+        </form>
+      </header>
+      <pre class="code"><%= JSON.stringify(preview.tasksFlex, null, 2) %></pre>
+    </article>
+
+    <article class="panel card">
+      <header class="panel__header">
+        <div>
+          <h3>Preview · Chat Transcript</h3>
+          <p class="muted">บันทึกแชทล่าสุด</p>
+        </div>
+        <form method="post" action="/admin/ai/send/chat">
+          <input name="to" placeholder="LINE user/group id (optional)" style="min-width:220px" />
+          <button class="btn primary" type="submit">ส่ง Chat Transcript (Mock)</button>
+        </form>
+      </header>
+      <pre class="code"><%= preview.chatText %></pre>
+    </article>
+
+    <article class="panel card">
+      <header class="panel__header">
+        <div>
+          <h3>Preview · CDP Digest</h3>
+          <p class="muted">พฤติกรรมผู้ใช้/การแบ่งกลุ่ม/คาดการณ์</p>
+        </div>
+        <form method="post" action="/admin/ai/send/cdp">
+          <input name="to" placeholder="LINE user/group id (optional)" style="min-width:220px" />
+          <button class="btn primary" type="submit">ส่ง CDP Digest (Mock)</button>
+        </form>
+      </header>
+      <pre class="code"><%= preview.cdpText %></pre>
+    </article>
+  </div>
+
+  <article class="panel card mt-3">
+    <header class="panel__header">
+      <div>
+        <h3>Interaction Log</h3>
+        <p class="muted">เก็บประวัติ mock แชทและการส่งล่าสุด (ไม่ใช่ข้อมูลจริง)</p>
+      </div>
+    </header>
+    <ul class="timeline">
+      <% (chatLog||[]).forEach((log) => { %>
+        <li>
+          <strong><%= log.type %></strong>
+          <div class="muted"><%= new Date(log.time).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) %></div>
+          <div style="margin-top:6px"><pre class="code"><%= JSON.stringify(log, null, 2) %></pre></div>
+        </li>
+      <% }) %>
+      <% if (!(chatLog||[]).length) { %>
+        <li>ยังไม่มีข้อมูล</li>
+      <% } %>
+    </ul>
+  </article>
+</div>

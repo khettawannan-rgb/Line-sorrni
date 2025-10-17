@@ -1926,6 +1926,20 @@ textarea:focus {
   width: 100%;
 }
 
+/* Engagement grid for CDP section */
+.engagement-grid {
+  display: grid;
+  gap: var(--grid-gutter);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  width: 100%;
+  align-items: start;
+  grid-auto-flow: dense;
+}
+
+.engagement-primary {
+  grid-column: span 2;
+}
+
 .task-list,
 .province-list,
 .progress-list,
@@ -2265,7 +2279,8 @@ textarea:focus {
 
   .ops-overview,
   .ops-grid,
-  .dash-panel-grid {
+  .dash-panel-grid,
+  .engagement-grid {
     grid-template-columns: 1fr;
   }
 
@@ -2300,6 +2315,10 @@ textarea:focus {
   .guest-callout {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .engagement-primary {
+    grid-column: auto;
   }
 }
 
@@ -2547,4 +2566,3 @@ textarea:focus {
 .topnav-menu.is-open .topnav-menu__trigger svg {
   transform: rotate(180deg);
 }
-
