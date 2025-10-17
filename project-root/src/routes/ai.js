@@ -165,7 +165,7 @@ router.post('/admin/ai/send/summary', async (req, res) => {
   const dryRun = !to;
   appendChatLog({ type: 'send-summary', to: to || '(none)', dryRun, text: summary });
   try {
-    if (!dryRun) await pushLineMessage(to, { type: 'text', text: summary });
+    if (!dryRun) await pushLineMessage(to, [{ type: 'text', text: summary }]);
     return res.redirect('/admin/ai');
   } catch (err) {
     appendChatLog({ type: 'send-summary-error', error: err?.message || 'unknown' });
@@ -186,7 +186,7 @@ router.post('/admin/ai/send/weather', async (req, res) => {
   const dryRun = !to;
   appendChatLog({ type: 'send-weather', to: to || '(none)', dryRun, flex });
   try {
-    if (!dryRun) await pushLineMessage(to, flex);
+    if (!dryRun) await pushLineMessage(to, [flex]);
     return res.redirect('/admin/ai');
   } catch (err) {
     appendChatLog({ type: 'send-weather-error', error: err?.message || 'unknown' });
@@ -201,7 +201,7 @@ router.post('/admin/ai/send/tasks', async (req, res) => {
   const dryRun = !to;
   appendChatLog({ type: 'send-tasks', to: to || '(none)', dryRun, flex });
   try {
-    if (!dryRun) await pushLineMessage(to, flex);
+    if (!dryRun) await pushLineMessage(to, [flex]);
     return res.redirect('/admin/ai');
   } catch (err) {
     appendChatLog({ type: 'send-tasks-error', error: err?.message || 'unknown' });
@@ -216,7 +216,7 @@ router.post('/admin/ai/send/chat', async (req, res) => {
   const dryRun = !to;
   appendChatLog({ type: 'send-chat-transcript', to: to || '(none)', dryRun, text });
   try {
-    if (!dryRun) await pushLineMessage(to, { type: 'text', text });
+    if (!dryRun) await pushLineMessage(to, [{ type: 'text', text }]);
     return res.redirect('/admin/ai');
   } catch (err) {
     appendChatLog({ type: 'send-chat-transcript-error', error: err?.message || 'unknown' });
@@ -231,7 +231,7 @@ router.post('/admin/ai/send/cdp', async (req, res) => {
   const dryRun = !to;
   appendChatLog({ type: 'send-cdp-digest', to: to || '(none)', dryRun, text });
   try {
-    if (!dryRun) await pushLineMessage(to, { type: 'text', text });
+    if (!dryRun) await pushLineMessage(to, [{ type: 'text', text }]);
     return res.redirect('/admin/ai');
   } catch (err) {
     appendChatLog({ type: 'send-cdp-digest-error', error: err?.message || 'unknown' });
