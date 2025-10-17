@@ -48,84 +48,86 @@
   </div>
 </div>
 
-<div class="panel mt-3">
-  <div class="panel-header panel__header">
-    <h3>ประวัติความยินยอม</h3>
-  </div>
-  <div class="table-wrap">
-    <table class="table compact">
-      <thead>
-        <tr>
-          <th>ผู้ใช้</th>
-          <th>สถานะ</th>
-          <th>ยินยอมเมื่อ</th>
-          <th>อัปเดตล่าสุด</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% if (consents && consents.length) { %>
-          <% consents.forEach(function(c){ %>
-            <tr>
-              <td>
-                <strong><%= c.displayName || c.userId %></strong>
-                <div class="muted"><%= c.userId %></div>
-              </td>
-              <td>
-                <% if (c.status === 'granted') { %>
-                  <span class="badge success">ยินยอม</span>
-                <% } else if (c.status === 'revoked') { %>
-                  <span class="badge warn">เพิกถอน</span>
-                <% } else { %>
-                  <span class="badge gray">รอดำเนินการ</span>
-                <% } %>
-              </td>
-              <td><%= c.grantedAt ? new Date(c.grantedAt).toLocaleString('th-TH') : '-' %></td>
-              <td><%= c.updatedAt ? new Date(c.updatedAt).toLocaleString('th-TH') : '-' %></td>
-            </tr>
-          <% }) %>
-        <% } else { %>
+<div class="grid-2 mt-3">
+  <article class="panel card">
+    <div class="panel-header panel__header">
+      <h3>ประวัติความยินยอม</h3>
+    </div>
+    <div class="table-wrap">
+      <table class="table compact">
+        <thead>
           <tr>
-            <td colspan="4" class="center muted">ยังไม่มีข้อมูล</td>
+            <th>ผู้ใช้</th>
+            <th>สถานะ</th>
+            <th>ยินยอมเมื่อ</th>
+            <th>อัปเดตล่าสุด</th>
           </tr>
-        <% } %>
-      </tbody>
-    </table>
-  </div>
-</div>
+        </thead>
+        <tbody>
+          <% if (consents && consents.length) { %>
+            <% consents.forEach(function(c){ %>
+              <tr>
+                <td>
+                  <strong><%= c.displayName || c.userId %></strong>
+                  <div class="muted"><%= c.userId %></div>
+                </td>
+                <td>
+                  <% if (c.status === 'granted') { %>
+                    <span class="badge success">ยินยอม</span>
+                  <% } else if (c.status === 'revoked') { %>
+                    <span class="badge warn">เพิกถอน</span>
+                  <% } else { %>
+                    <span class="badge gray">รอดำเนินการ</span>
+                  <% } %>
+                </td>
+                <td><%= c.grantedAt ? new Date(c.grantedAt).toLocaleString('th-TH') : '-' %></td>
+                <td><%= c.updatedAt ? new Date(c.updatedAt).toLocaleString('th-TH') : '-' %></td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="4" class="center muted">ยังไม่มีข้อมูล</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </article>
 
-<div class="panel mt-3">
-  <div class="panel-header panel__header">
-    <h3>ข้อความล่าสุด</h3>
-  </div>
-  <div class="table-wrap">
-    <table class="table compact">
-      <thead>
-        <tr>
-          <th>ผู้ใช้</th>
-          <th>ข้อความ</th>
-          <th>เวลา</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% if (recentMessages && recentMessages.length) { %>
-          <% recentMessages.forEach(function(msg){
-               const meta = consentMap && consentMap[msg.userId];
-          %>
-            <tr>
-              <td>
-                <strong><%= (meta && meta.displayName) || msg.userId %></strong>
-                <div class="muted"><%= msg.userId %></div>
-              </td>
-              <td><%= msg.text || '[' + (msg.messageType || msg.type || 'event') + ']' %></td>
-              <td><%= new Date(msg.createdAt).toLocaleString('th-TH') %></td>
-            </tr>
-          <% }) %>
-        <% } else { %>
+  <article class="panel card">
+    <div class="panel-header panel__header">
+      <h3>ข้อความล่าสุด</h3>
+    </div>
+    <div class="table-wrap">
+      <table class="table compact">
+        <thead>
           <tr>
-            <td colspan="3" class="center muted">ยังไม่มีบันทึกข้อความ</td>
+            <th>ผู้ใช้</th>
+            <th>ข้อความ</th>
+            <th>เวลา</th>
           </tr>
-        <% } %>
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          <% if (recentMessages && recentMessages.length) { %>
+            <% recentMessages.forEach(function(msg){
+                 const meta = consentMap && consentMap[msg.userId];
+            %>
+              <tr>
+                <td>
+                  <strong><%= (meta && meta.displayName) || msg.userId %></strong>
+                  <div class="muted"><%= msg.userId %></div>
+                </td>
+                <td><%= msg.text || '[' + (msg.messageType || msg.type || 'event') + ']' %></td>
+                <td><%= new Date(msg.createdAt).toLocaleString('th-TH') %></td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="3" class="center muted">ยังไม่มีบันทึกข้อความ</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </article>
 </div>
