@@ -228,4 +228,4 @@ export function buildCdpDigestText(cdp = {}) {
   ].filter(Boolean).join('\n');
 }
 
-export { buildTaskRecommendationsFlex as buildTasksFlex, buildChatTranscriptText as buildChatText, buildCdpDigestText as buildCdpText, buildChatTranscriptFlex };
+export { buildTaskRecommendationsFlex as buildTasksFlex, buildChatTranscriptText as buildChatText, buildCdpDigestText as buildCdpText };
