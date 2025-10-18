@@ -10,6 +10,7 @@ import { buildDailySummary, renderDailySummaryMessage } from '../services/summar
 import { pushLineMessage } from '../services/line.js';
 import { runAutoReorder } from '../services/procurement/automationService.js';
 import { generateSnapshot } from '../services/procurement/stockService.js';
+import { ensureMockForYesterdayAllCompanies, backfillMockUntilTodayAllCompanies } from '../services/mock/recordMocker.js';
 
 dayjs.extend(utc);
 dayjs.extend(tz);
@@ -115,4 +116,23 @@ export function setupDailyCron() {
   }
 
   console.log('[CRON] daily scheduler started');
+
+  // Auto mock records (BUY/SELL) for demo mode
+  const AUTO_MOCK = String(process.env.AUTO_MOCK_RECORDS || '').toLowerCase() === 'true';
+  if (AUTO_MOCK) {
+    // Backfill missing data up to today on boot (lightweight, default 14 days)
+    backfillMockUntilTodayAllCompanies({ sinceDays: Number(process.env.MOCK_BACKFILL_DAYS || 14) })
+      .then(() => console.log('[MOCK] backfill completed'))
+      .catch((err) => console.warn('[MOCK] backfill error', err?.message || err));
+
+    // Generate yesterday dataset every day at 03:05 server time
+    cron.schedule('5 3 * * *', async () => {
+      try {
+        await ensureMockForYesterdayAllCompanies();
+        console.log('[MOCK] generated yesterday records for all companies');
+      } catch (err) {
+        console.error('[MOCK] daily generate failed:', err?.message || err);
+      }
+    });
+  }
 }

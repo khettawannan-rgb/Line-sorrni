@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initMockAnalyticsControls();
   initCollapsiblePanels();
   initDashboardAnchors();
+  initMockDailySummaryControls();
 });
 
 window.addEventListener('resize', debounce(setupTopbarHeight, 150));
@@ -1481,6 +1482,29 @@ function initDynamicItemRows() {
       });
       container.appendChild(clone);
     });
+  });
+}
+
+function initMockDailySummaryControls() {
+  const btn = document.getElementById('btnPreviewDailyFlex');
+  const pre = document.getElementById('daily-flex-pre');
+  const idxEl = document.getElementById('dailyFlexIndex');
+  if (!btn || !pre) return;
+  btn.addEventListener('click', async () => {
+    try {
+      const res = await fetch('/admin/ai/mock/daily/preview', { headers: { 'Accept': 'application/json' } });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.flex) {
+        pre.textContent = JSON.stringify(data.flex, null, 2);
+      }
+      if (idxEl && typeof data?.index === 'number' && typeof data?.summary === 'object') {
+        const total = Number(document.body.getAttribute('data-daily-total')) || 10;
+        idxEl.textContent = `Report ${data.index + 1}/${total}`;
+      }
+    } catch (err) {
+      // no-op
+    }
   });
 }
 

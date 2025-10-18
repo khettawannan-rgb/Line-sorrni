@@ -23,6 +23,7 @@ import { liffLink } from './utils/liff.js';
 import { getBotInfo } from './services/line.js';
 import adviceRouter from './routes/advice.js';
 import aiRouter from './routes/ai.js';
+import mockDailySummaryRouter from './routes/mockDailySummary.js';
 import cdpRouter from './routes/cdp.js';
 import checkSuperAdmin from './middleware/checkSuperAdmin.js';
 import viewHelpers from './middleware/viewHelpers.js';
@@ -312,6 +313,7 @@ app.use('/line', lineRouter);
 app.use('/auth/line', authLineRouter);
 app.use('/admin', adminRouter);
 app.use(aiRouter);
+app.use(mockDailySummaryRouter);
 app.use(cdpRouter);
 
 // 404

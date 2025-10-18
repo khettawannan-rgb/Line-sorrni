@@ -1,0 +1,44 @@
+<div class="panel">
+  <div class="panel-header panel__header">
+    <h2>Mock Records (BUY/SELL)</h2>
+    <p class="muted">สร้างข้อมูลนำเข้า/จ่ายออกแบบ mock สำหรับทุกบริษัท ใช้โชว์สาธิตโดยไม่ต้องอัปโหลด Excel</p>
+  </div>
+  <div class="panel-body panel__body">
+    <% if (result?.error) { %><div class="alert error"><%= result.error %></div><% } %>
+    <% if (result?.ok && result?.message) { %><div class="alert success"><%= result.message %></div><% } %>
+
+    <div class="grid-2">
+      <article class="card">
+        <header class="panel__header"><h3>Backfill จนถึงวันนี้</h3></header>
+        <form class="form" method="post" action="/admin/tools/mock-records">
+          <input type="hidden" name="action" value="backfill" />
+          <div class="form-grid">
+            <div class="field">
+              <label>ย้อนหลัง (วัน)</label>
+              <input type="number" min="1" max="180" step="1" name="sinceDays" value="<%= form?.sinceDays || 14 %>" />
+              <div class="form-help">ระบบจะเติมวันว่างตั้งแต่ N วันที่แล้ว → วันนี้ สำหรับทุกบริษัท</div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Backfill ตอนนี้</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="card">
+        <header class="panel__header"><h3>Generate ของเมื่อวาน</h3></header>
+        <form class="form" method="post" action="/admin/tools/mock-records">
+          <input type="hidden" name="action" value="yesterday" />
+          <div class="form-help">สร้างข้อมูล mock ของ “เมื่อวาน” ให้ทุกบริษัททันที</div>
+          <div class="form-actions">
+            <button class="btn" type="submit">สร้างข้อมูลเมื่อวาน</button>
+          </div>
+        </form>
+      </article>
+    </div>
+
+    <div class="form-help mt-3">
+      เคล็ดลับ: ตั้งค่า <code>AUTO_MOCK_RECORDS=true</code> เพื่อให้ระบบสร้าง mock ทุกวันอัตโนมัติ และ <code>MOCK_BACKFILL_DAYS</code> เพื่อกำหนดช่วงย้อนหลังตอนบูต
+    </div>
+  </div>
+</div>

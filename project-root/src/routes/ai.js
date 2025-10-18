@@ -5,6 +5,8 @@ import path from 'node:path';
 import { loadMock, saveMock, appendChatLog, loadChatLog, getDefaultMock } from '../services/ai/mockStore.js';
 import { seedMockWeather, seedMockMaterials } from '../services/ai/mockSeeders.js';
 import { buildWeatherFlex, analyzeWeatherSlots, generateDailySummary, buildDailySummaryFlex, buildTasksFlex, buildChatText, buildChatTranscriptFlex, buildCdpText } from '../services/ai/advisor.js';
+import { DAILY_REPORTS, summarizeDaily } from '../services/dailySummary.js';
+import { getReportIndex } from '../mock/state.js';
 import { pushLineMessage } from '../services/line.js';
 
 const router = express.Router();
@@ -46,6 +48,10 @@ router.get('/admin/ai', (req, res) => {
 
   const lastWeather = viewMock.weather?.[0] || null;
   const { worst, advice } = analyzeWeatherSlots(viewMock.weather);
+  // Daily summary mock preview (current index)
+  const dsIndex = getReportIndex() % DAILY_REPORTS.length;
+  const dsSummary = summarizeDaily(DAILY_REPORTS[dsIndex]);
+  const dsFlex = buildDailySummaryFlex(dsSummary);
 
   res.render('ai/index', {
     title: 'AI Assistant (Mock)',
@@ -66,6 +72,9 @@ router.get('/admin/ai', (req, res) => {
       }),
       summaryText: generateDailySummary(viewMock),
       summaryFlex: buildDailySummaryFlex(viewMock),
+      dailyFlex: dsFlex,
+      dailyIndex: dsIndex,
+      dailyTotal: DAILY_REPORTS.length,
       tasksFlex: buildTasksFlex(viewMock.tasks || []),
       chatText: buildChatText(viewMock.chatSamples || []),
       chatFlex: buildChatTranscriptFlex(viewMock.chatSamples || []),

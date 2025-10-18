@@ -45,6 +45,7 @@ import {
   getBotFaqStats,
   bulkInsertFaqs,
 } from '../services/botFaq.js';
+import { ensureMockForYesterdayAllCompanies, backfillMockUntilTodayAllCompanies } from '../services/mock/recordMocker.js';
 import {
   seedMockAnalytics,
   buildIntentTrend,
@@ -2172,6 +2173,49 @@ router.get('/tools/send-daily', requireAuth, async (req, res) => {
     title: 'Send Daily (Manual)',
     active: 'tools',
   });
+});
+
+// Tools: Mock records (BUY/SELL) generator
+router.get('/tools/mock-records', requireAuth, async (req, res) => {
+  res.render('tools/mock_records', {
+    title: 'Mock Records',
+    active: 'tools',
+    result: null,
+    form: { sinceDays: 14 },
+  });
+});
+
+router.post('/tools/mock-records', requireAuth, async (req, res) => {
+  const { action, sinceDays } = req.body || {};
+  try {
+    if (action === 'backfill') {
+      await backfillMockUntilTodayAllCompanies({ sinceDays: Number(sinceDays || 14) });
+      return res.render('tools/mock_records', {
+        title: 'Mock Records', active: 'tools',
+        form: { sinceDays },
+        result: { ok: true, message: `Backfill สำเร็จย้อนหลัง ${sinceDays || 14} วัน` },
+      });
+    }
+    if (action === 'yesterday') {
+      await ensureMockForYesterdayAllCompanies();
+      return res.render('tools/mock_records', {
+        title: 'Mock Records', active: 'tools',
+        form: { sinceDays },
+        result: { ok: true, message: 'สร้างข้อมูล mock ของเมื่อวานให้ทุกบริษัทแล้ว' },
+      });
+    }
+    return res.render('tools/mock_records', {
+      title: 'Mock Records', active: 'tools',
+      form: { sinceDays },
+      result: { ok: false, error: 'ไม่พบ action ที่สั่ง' },
+    });
+  } catch (err) {
+    return res.render('tools/mock_records', {
+      title: 'Mock Records', active: 'tools',
+      form: { sinceDays },
+      result: { ok: false, error: err?.message || String(err) },
+    });
+  }
 });
 
 router.post('/tools/send-daily', requireAuth, async (req, res) => {
