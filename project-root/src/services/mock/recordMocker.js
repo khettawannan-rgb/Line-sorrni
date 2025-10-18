@@ -1,8 +1,8 @@
 // project-root/src/services/mock/recordMocker.js
 import crypto from 'node:crypto';
 import dayjs from 'dayjs';
-import Company from '../../src/models/Company.js';
-import Record from '../../src/models/Record.js';
+import Company from '../../models/Company.js';
+import Record from '../../models/Record.js';
 
 const PRODUCTS = [
   { code: 'ASPHALT', name: 'ยางมะตอย' },
@@ -109,4 +109,3 @@ export default {
   ensureMockForYesterdayAllCompanies,
   backfillMockUntilTodayAllCompanies,
 };
-
