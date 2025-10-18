@@ -63,6 +63,11 @@ router.get('/admin/ai', (req, res) => {
       extendedTables: extendedView,
       mock: viewMock,
       chatLog,
+      // expose daily summary preview at top-level for EJS
+      dailyFlex: dsFlex,
+      dailyIndex: dsIndex,
+      dailyTotal: DAILY_REPORTS.length,
+      poFlex: poFlexPreview,
       preview: {
         worst,
         advice,
