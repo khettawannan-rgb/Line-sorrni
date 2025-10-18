@@ -24,68 +24,72 @@ function asNumber(val, d = 0) {
 }
 
 router.get('/admin/ai', (req, res) => {
-  const mock = loadMock();
-  const chatLog = loadChatLog(20);
-  // Augment mock for view when flag is off (display-only; store ไม่เปลี่ยน)
-  let viewMock = mock;
-  let extendedView = EXTENDED_TABLES;
-  if (!EXTENDED_TABLES) {
-    const hours = Array.isArray(mock.weather)
-      ? mock.weather.map((w) => {
-          const hh = String(w.time || '0').slice(0, 2);
-          const n = Number(hh);
-          return Number.isFinite(n) ? n : 0;
-        })
-      : [6, 9, 12, 15, 18, 21];
-    const enrichedWeather = seedMockWeather({ seed: Date.now() % 1000000, hours }).map((row, idx) => ({
-      ...mock.weather?.[idx],
-      ...row,
-    }));
-    const count = Array.isArray(mock.materials) ? mock.materials.length : 6;
-    const enrichedMaterialsSeed = seedMockMaterials({ seed: (Date.now() + 12345) % 1000000, count });
-    const enrichedMaterials = (mock.materials || []).map((m, idx) => ({ ...m, ...enrichedMaterialsSeed[idx % enrichedMaterialsSeed.length] }));
-    viewMock = { ...mock, weather: enrichedWeather, materials: enrichedMaterials };
-    extendedView = true;
-  }
+  try {
+    const mock = loadMock();
+    const chatLog = loadChatLog(20);
+    // Augment mock for view when flag is off (display-only; store ไม่เปลี่ยน)
+    let viewMock = mock;
+    let extendedView = EXTENDED_TABLES;
+    if (!EXTENDED_TABLES) {
+      const hours = Array.isArray(mock.weather)
+        ? mock.weather.map((w) => {
+            const hh = String(w.time || '0').slice(0, 2);
+            const n = Number(hh);
+            return Number.isFinite(n) ? n : 0;
+          })
+        : [6, 9, 12, 15, 18, 21];
+      const enrichedWeather = seedMockWeather({ seed: Date.now() % 1000000, hours }).map((row, idx) => ({
+        ...mock.weather?.[idx],
+        ...row,
+      }));
+      const count = Array.isArray(mock.materials) ? mock.materials.length : 6;
+      const enrichedMaterialsSeed = seedMockMaterials({ seed: (Date.now() + 12345) % 1000000, count });
+      const enrichedMaterials = (mock.materials || []).map((m, idx) => ({ ...m, ...enrichedMaterialsSeed[idx % enrichedMaterialsSeed.length] }));
+      viewMock = { ...mock, weather: enrichedWeather, materials: enrichedMaterials };
+      extendedView = true;
+    }
 
-  const lastWeather = viewMock.weather?.[0] || null;
-  const { worst, advice } = analyzeWeatherSlots(viewMock.weather);
-  // Daily summary mock preview (current index)
-  const dsIndex = getReportIndex() % DAILY_REPORTS.length;
-  const dsSummary = summarizeDaily(DAILY_REPORTS[dsIndex]);
-  const dsFlex = buildDailySummaryFlex(dsSummary);
-  const poListPreview = buildMockPOs(8);
-  const poFlexPreview = buildPoStatusFlex(poListPreview);
+    const lastWeather = viewMock.weather?.[0] || null;
+    const { worst, advice } = analyzeWeatherSlots(viewMock.weather);
+    const dsIndex = getReportIndex() % DAILY_REPORTS.length;
+    const dsSummary = summarizeDaily(DAILY_REPORTS[dsIndex]);
+    const dsFlex = buildDailySummaryFlex(dsSummary);
+    const poListPreview = buildMockPOs(8);
+    const poFlexPreview = buildPoStatusFlex(poListPreview);
 
-  res.render('ai/index', {
-    title: 'AI Assistant (Mock)',
-    active: 'ai',
-    extendedTables: extendedView,
-    mock: viewMock,
-    chatLog,
-    preview: {
-      worst,
-      advice,
-      weatherFlex: buildWeatherFlex({
-        dateLabel: new Date().toLocaleDateString('th-TH', { dateStyle: 'medium' }),
-        locationName: viewMock.location?.name,
-        status: lastWeather?.condition || 'ไม่ทราบ',
-        temp: lastWeather ? `${lastWeather.tempC}°C` : null,
+    res.render('ai/index', {
+      title: 'AI Assistant (Mock)',
+      active: 'ai',
+      extendedTables: extendedView,
+      mock: viewMock,
+      chatLog,
+      preview: {
+        worst,
         advice,
-        detailsUrl: '#',
-      }),
-      summaryText: generateDailySummary(viewMock),
-      summaryFlex: buildDailySummaryFlex(viewMock),
-      dailyFlex: dsFlex,
-      dailyIndex: dsIndex,
-      dailyTotal: DAILY_REPORTS.length,
-      poFlex: poFlexPreview,
-      tasksFlex: buildTasksFlex(viewMock.tasks || []),
-      chatText: buildChatText(viewMock.chatSamples || []),
-      chatFlex: buildChatTranscriptFlex(viewMock.chatSamples || []),
-      cdpText: buildCdpText(viewMock.cdp || {}),
-    },
-  });
+        weatherFlex: buildWeatherFlex({
+          dateLabel: new Date().toLocaleDateString('th-TH', { dateStyle: 'medium' }),
+          locationName: viewMock.location?.name,
+          status: lastWeather?.condition || 'ไม่ทราบ',
+          temp: lastWeather ? `${lastWeather.tempC}°C` : null,
+          advice,
+          detailsUrl: '#',
+        }),
+        summaryText: generateDailySummary(viewMock),
+        summaryFlex: buildDailySummaryFlex(viewMock),
+        dailyFlex: dsFlex,
+        dailyIndex: dsIndex,
+        dailyTotal: DAILY_REPORTS.length,
+        poFlex: poFlexPreview,
+        tasksFlex: buildTasksFlex(viewMock.tasks || []),
+        chatText: buildChatText(viewMock.chatSamples || []),
+        chatFlex: buildChatTranscriptFlex(viewMock.chatSamples || []),
+        cdpText: buildCdpText(viewMock.cdp || {}),
+      },
+    });
+  } catch (err) {
+    console.error('[AI] render error', err);
+    res.status(500).render('error', { message: 'ไม่สามารถโหลดหน้า AI Mock Lab ได้', error: err });
+  }
 });
 
 router.post('/admin/ai/mock/weather', (req, res) => {

@@ -837,7 +837,27 @@ router.get('/dashboard/engagement', requireAuth, async (req, res) => {
     });
   } catch (err) {
     console.error('[ADMIN] dashboard engagement error', err);
-    res.status(500).render('error', { message: 'ไม่สามารถโหลดหน้าพฤติกรรมผู้ใช้ได้', error: err });
+    // Fail-soft: render page with minimal context so that UIยังใช้งานได้
+    try {
+      res.render('dashboard', {
+        title: 'Dashboard · Engagement',
+        active: 'dashboard',
+        subPage: 'engagement',
+        useMockAnalytics: false,
+        dailySeries: [],
+        productChart: [],
+        mixSummary: [],
+        companySummary: [],
+        latestRecords: [],
+        chat: { distinctUsers: 0, recentCount: 0, messageTypeCount: {}, topicSummary: [], latestUsers: [] },
+        chatTrend: [], chatUserStats: {},
+        consentStatusSummary: {},
+        provinceMap: [], provinceMapTop: [], provinceMapStats: {},
+      });
+    } catch (err2) {
+      console.error('[ADMIN] engagement fallback render failed', err2);
+      res.status(500).render('error', { message: 'ไม่สามารถโหลดหน้าพฤติกรรมผู้ใช้ได้', error: err2 });
+    }
   }
 });
 
