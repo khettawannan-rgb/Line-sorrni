@@ -76,6 +76,18 @@ const BASE_URL = process.env.BASE_URL; // updated to use BASE_URL
 const BASE_URL_CLEAN = (BASE_URL || '').replace(/\/$/, '');
 const PROCUREMENT_SAFETY_DAYS = Number(process.env.PROCUREMENT_SAFETY_DAYS || 3);
 
+// Fallback resolver: when DEFAULT_COMPANY_ID is not configured, pick the first company
+async function resolveCompanyIdFallback() {
+  if (DEFAULT_COMPANY_ID) return DEFAULT_COMPANY_ID;
+  try {
+    const doc = await Company.findOne({}).sort({ name: 1 }).lean();
+    return doc?._id ? String(doc._id) : null;
+  } catch (err) {
+    console.warn('[WEBHOOK] resolveCompanyIdFallback error:', err?.message || err);
+    return null;
+  }
+}
+
 const SUPER_ADMIN_SUPPLIER_CATALOG = [
   {
     id: 'tipco',
@@ -699,10 +711,16 @@ async function handleText(ev) {
       return replyText(ev.replyToken, outputs.join('\n\n'));
     }
 
-    const companyId = process.env.DEFAULT_COMPANY_ID || '';
+    let companyId = process.env.DEFAULT_COMPANY_ID || '';
     if (!companyId) {
-      console.warn('[WEBHOOK] DEFAULT_COMPANY_ID is missing in env');
-      return replyText(ev.replyToken, 'ยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID');
+      const fallbackId = await resolveCompanyIdFallback();
+      if (fallbackId) {
+        console.warn('[WEBHOOK] DEFAULT_COMPANY_ID missing; using fallback company', fallbackId);
+        companyId = fallbackId;
+      } else {
+        console.warn('[WEBHOOK] DEFAULT_COMPANY_ID is missing and no companies found');
+        return replyText(ev.replyToken, 'ยังไม่มีข้อมูลบริษัทในระบบ');
+      }
     }
 
     console.log('[WEBHOOK] buildDailySummary', { companyId, date });
@@ -749,8 +767,9 @@ async function replyStockSummary(ev) {
   if (!ev.replyToken) return null;
   const userId = getUserId(ev);
   const superAdmin = await isSuperAdminUser(userId);
-  if (!DEFAULT_COMPANY_ID && !superAdmin) {
-    return replyText(ev.replyToken, 'ยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID ในระบบ');
+  let companyIdForUser = DEFAULT_COMPANY_ID;
+  if (!companyIdForUser && !superAdmin) {
+    companyIdForUser = await resolveCompanyIdFallback();
   }
 
   try {
@@ -784,7 +803,7 @@ async function replyStockSummary(ev) {
       return replyText(ev.replyToken, summaries.join('\n\n'));
     }
 
-    const items = await getLowStockItems(DEFAULT_COMPANY_ID, {
+    const items = await getLowStockItems(companyIdForUser, {
       safetyDays: PROCUREMENT_SAFETY_DAYS,
     });
     if (!items.length) {
@@ -1222,24 +1241,11 @@ async function replyPurchaseOrderStatus(ev, text = '', options = {}) {
 
     let targetCompanyId = options.companyId || null;
     if (!targetCompanyId && !superAdmin) {
-      targetCompanyId = DEFAULT_COMPANY_ID || null;
+      targetCompanyId = DEFAULT_COMPANY_ID || (await resolveCompanyIdFallback());
     }
-
     if (!targetCompanyId && !superAdmin) {
-      return replyActionCard(ev.replyToken, {
-        title: 'ยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID',
-        body: [
-          'ระบบไม่พบบริษัทเริ่มต้นสำหรับการดึงสถานะใบสั่งซื้ออัตโนมัติ',
-          'เลือกคำสั่งอื่นหรือพิมพ์ชื่อบริษัทที่ต้องการตรวจสอบ',
-        ],
-        actions: [
-          { label: 'สร้างใบสั่งซื้อ', text: 'สร้างใบสั่งซื้อ' },
-          { label: 'เปิดใบขอซื้อ', text: 'เปิดใบขอซื้อ' },
-          { label: 'กลับเมนูหลัก', text: 'เมนู' },
-        ],
-        color: '#1f2937',
-        altText: 'ยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID',
-      });
+      // No company in database; guide user gracefully
+      return replyText(ev.replyToken, 'ยังไม่มีข้อมูลบริษัทในระบบ');
     }
 
     let companyDoc = null;
@@ -2210,17 +2216,19 @@ async function tryCreatePoFromFreeform(ev, rawText) {
     company = await Company.findById(DEFAULT_COMPANY_ID).lean();
   }
   if (!company) {
-    await replyActionCard(ev.replyToken, {
-      title: 'ไม่พบบริษัทที่ระบุ',
-      body: 'ไม่พบบริษัทตามที่กรอกไว้ และยังไม่ได้ตั้งค่า DEFAULT_COMPANY_ID',
-      actions: [
-        { label: 'เลือกบริษัท', postbackData: 'po-status?company=menu', displayText: 'เลือกบริษัท' },
-        { label: 'กลับเมนูหลัก', text: 'เมนู' },
-      ],
-      color: '#1f2937',
-      altText: 'ไม่พบบริษัทที่ระบุ',
-    });
-    return true;
+    const fallbackId = await resolveCompanyIdFallback();
+    if (fallbackId) {
+      company = await Company.findById(fallbackId).lean();
+    } else {
+      await replyActionCard(ev.replyToken, {
+        title: 'ยังไม่มีข้อมูลบริษัท',
+        body: 'ระบบยังไม่มีบริษัทให้ตรวจสอบสถานะ',
+        actions: [ { label: 'กลับเมนูหลัก', text: 'เมนู' } ],
+        color: '#1f2937',
+        altText: 'ไม่มีบริษัท',
+      });
+      return true;
+    }
   }
 
   let vendor = null;

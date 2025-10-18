@@ -4,6 +4,7 @@ import { buildFlexWeatherAdvice } from '../line/buildFlexWeatherAdvice.js';
 import { buildStockAlert } from '../services/stock/stock-alert.js';
 import { buildFlexStockAlert } from '../line/buildFlexStockAlert.js';
 import stockMock from '../services/stock/mocks/stock.json' with { type: 'json' };
+import Company from '../models/Company.js';
 
 const router = Router();
 
@@ -59,9 +60,19 @@ router.get('/api/stock/alert', async (req, res) => {
       advice = buildWeatherAdvice(adviceData);
     }
     const baseUrl = process.env.BASE_URL ? process.env.BASE_URL.replace(/\/$/, '') : '';
+    // Resolve company id (fallback to first company if not provided)
+    let companyId = String(req.query.companyId || process.env.DEFAULT_COMPANY_ID || '').trim();
+    if (!companyId) {
+      try {
+        const doc = await Company.findOne({}).sort({ name: 1 }).lean();
+        companyId = doc?._id ? String(doc._id) : 'demo';
+      } catch {
+        companyId = 'demo';
+      }
+    }
     const alert = buildStockAlert(stockData.items, advice, {
       baseUrl,
-      companyId: req.query.companyId || process.env.DEFAULT_COMPANY_ID || 'demo',
+      companyId,
       uuid: req.query.uuid || '',
     });
     res.json(alert);
