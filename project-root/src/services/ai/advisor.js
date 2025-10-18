@@ -187,6 +187,33 @@ export function buildChatTranscriptText(items = []) {
   return ['บันทึกแชทล่าสุด', ...(items || []).slice(-10).map(mapLine)].join('\n');
 }
 
+export function buildChatTranscriptFlex(items = []) {
+  const lines = (items || []).slice(-8).map((it) => {
+    const t = new Date(it.time || Date.now()).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+    const body = it?.message?.type === 'text' ? it.message.text
+      : it?.message?.type === 'image' ? '[ภาพถ่าย]'
+      : it?.message?.type === 'location' ? `[ตำแหน่ง] ${it.message.title || ''}`
+      : '[ข้อความ]';
+    return `${t} • ${it.from || 'user'}: ${body}`;
+  });
+
+  return {
+    type: 'flex',
+    altText: 'Chat Transcript',
+    contents: {
+      type: 'bubble',
+      header: { type: 'box', layout: 'vertical', contents: [
+        { type: 'text', text: '🗒️ Chat Transcript', weight: 'bold', size: 'lg' },
+        { type: 'text', text: 'บันทึกแชทล่าสุด', size: 'sm', color: '#6B7280' },
+      ]},
+      body: {
+        type: 'box', layout: 'vertical', spacing: 'sm', contents:
+          (lines.length ? lines : ['ยังไม่มีข้อมูล']).map((txt) => ({ type: 'text', text: txt, wrap: true, size: 'sm', color: '#0f172a' })),
+      },
+    },
+  };
+}
+
 export function buildCdpDigestText(cdp = {}) {
   const s = cdp?.summary || {};
   const segs = (cdp?.segments || []).map((g) => `${g.label}: ${g.users}`).join(' • ');
@@ -201,4 +228,4 @@ export function buildCdpDigestText(cdp = {}) {
   ].filter(Boolean).join('\n');
 }
 
-export { buildTaskRecommendationsFlex as buildTasksFlex, buildChatTranscriptText as buildChatText, buildCdpDigestText as buildCdpText };
+export { buildTaskRecommendationsFlex as buildTasksFlex, buildChatTranscriptText as buildChatText, buildCdpDigestText as buildCdpText, buildChatTranscriptFlex };

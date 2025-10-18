@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { loadMock, saveMock, appendChatLog, loadChatLog, getDefaultMock } from '../services/ai/mockStore.js';
 import { seedMockWeather, seedMockMaterials } from '../services/ai/mockSeeders.js';
-import { buildWeatherFlex, analyzeWeatherSlots, generateDailySummary, buildDailySummaryFlex, buildTasksFlex, buildChatText, buildCdpText } from '../services/ai/advisor.js';
+import { buildWeatherFlex, analyzeWeatherSlots, generateDailySummary, buildDailySummaryFlex, buildTasksFlex, buildChatText, buildChatTranscriptFlex, buildCdpText } from '../services/ai/advisor.js';
 import { pushLineMessage } from '../services/line.js';
 
 const router = express.Router();
@@ -68,6 +68,7 @@ router.get('/admin/ai', (req, res) => {
       summaryFlex: buildDailySummaryFlex(viewMock),
       tasksFlex: buildTasksFlex(viewMock.tasks || []),
       chatText: buildChatText(viewMock.chatSamples || []),
+      chatFlex: buildChatTranscriptFlex(viewMock.chatSamples || []),
       cdpText: buildCdpText(viewMock.cdp || {}),
     },
   });
@@ -247,11 +248,12 @@ router.post('/admin/ai/send/tasks', async (req, res) => {
 router.post('/admin/ai/send/chat', async (req, res) => {
   const mock = loadMock();
   const text = buildChatText(mock.chatSamples || []);
+  const flex = buildChatTranscriptFlex(mock.chatSamples || []);
   const to = (req.body.to || DEFAULT_RECIPIENT || '').trim();
   const dryRun = !to;
   appendChatLog({ type: 'send-chat-transcript', to: to || '(none)', dryRun, text });
   try {
-    if (!dryRun) await pushLineMessage(to, [{ type: 'text', text }]);
+    if (!dryRun) await pushLineMessage(to, [flex]);
     return res.redirect('/admin/ai');
   } catch (err) {
     appendChatLog({ type: 'send-chat-transcript-error', error: err?.message || 'unknown' });

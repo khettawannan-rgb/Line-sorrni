@@ -29,8 +29,30 @@
 
   <script>
     const $ = (sel) => document.querySelector(sel);
-    const qp = new URL(location.href).searchParams;
-    const game = (qp.get('game') || 'quiz').toLowerCase();
+    function resolveGame() {
+      const url = new URL(location.href);
+      const qp = url.searchParams;
+      let g = qp.get('game');
+      if (!g) {
+        // LIFF forwards query via liff.state when opening by liff.line.me/<ID>?game=...
+        const state = qp.get('liff.state');
+        if (state) {
+          try {
+            const forwarded = new URL(state, location.origin);
+            g = forwarded.searchParams.get('game') || g;
+          } catch (e) { /* ignore */ }
+        }
+      }
+      if (!g && location.hash) {
+        const hash = location.hash.replace(/^#/, '');
+        try {
+          const hq = new URLSearchParams(hash.includes('?') ? hash.split('?')[1] : hash);
+          g = hq.get('game') || g;
+        } catch (e) { /* ignore */ }
+      }
+      return (g || 'quiz').toLowerCase();
+    }
+    const game = resolveGame();
     const state = { userId: '', sessionId: Math.random().toString(36).slice(2), score: 0, step: 0 };
 
     async function track(name, payload){
