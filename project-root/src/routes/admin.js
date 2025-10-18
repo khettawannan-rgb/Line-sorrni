@@ -46,6 +46,7 @@ import {
   bulkInsertFaqs,
 } from '../services/botFaq.js';
 import { ensureMockForYesterdayAllCompanies, backfillMockUntilTodayAllCompanies } from '../services/mock/recordMocker.js';
+import { generateSnapshot } from '../services/procurement/stockService.js';
 import {
   seedMockAnalytics,
   buildIntentTrend,
@@ -2215,6 +2216,47 @@ router.post('/tools/mock-records', requireAuth, async (req, res) => {
       form: { sinceDays },
       result: { ok: false, error: err?.message || String(err) },
     });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* Settings: Procurement                                              */
+/* ------------------------------------------------------------------ */
+
+router.get('/settings/procurement', requireAuth, async (req, res) => {
+  const defaultCompanyId = process.env.DEFAULT_COMPANY_ID || null;
+  let resolvedCompanyId = defaultCompanyId;
+  if (!resolvedCompanyId) {
+    const first = await Company.findOne({}).sort({ name: 1 }).lean();
+    resolvedCompanyId = first?._id ? String(first._id) : null;
+  }
+  const config = {
+    defaultCompanyId: resolvedCompanyId,
+    emailProvider: process.env.EMAIL_PROVIDER || 'disabled',
+    lineChannel: process.env.LINE_CHANNEL_ACCESS_TOKEN ? 'configured' : 'not set',
+    notifyRoles: ['Procurement', 'Finance', 'Supervisor'],
+    safetyStockDays: Number(process.env.PROCUREMENT_SAFETY_DAYS || 3),
+  };
+  return res.render('procurement/settings', { title: 'Settings', active: 'tools', config });
+});
+
+router.post('/settings/procurement/snapshot', requireAuth, async (req, res) => {
+  const safetyStockDays = Number(req.body?.safetyStockDays || process.env.PROCUREMENT_SAFETY_DAYS || 3);
+  const first = await Company.findOne({}).sort({ name: 1 }).lean();
+  const targetCompanyId = process.env.DEFAULT_COMPANY_ID || (first?._id ? String(first._id) : null);
+  const config = {
+    defaultCompanyId: targetCompanyId,
+    emailProvider: process.env.EMAIL_PROVIDER || 'disabled',
+    lineChannel: process.env.LINE_CHANNEL_ACCESS_TOKEN ? 'configured' : 'not set',
+    notifyRoles: ['Procurement', 'Finance', 'Supervisor'],
+    safetyStockDays,
+  };
+  try {
+    if (!targetCompanyId) throw new Error('ยังไม่มีบริษัทในระบบ');
+    await generateSnapshot(targetCompanyId, { safetyStockDays });
+    return res.render('procurement/settings', { title: 'Settings', active: 'tools', config, result: { ok: true, message: 'สร้าง snapshot สำเร็จ' } });
+  } catch (err) {
+    return res.render('procurement/settings', { title: 'Settings', active: 'tools', config, result: { ok: false, error: err?.message || 'สร้าง snapshot ไม่สำเร็จ' } });
   }
 });
 

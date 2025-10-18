@@ -7,6 +7,8 @@ import { seedMockWeather, seedMockMaterials } from '../services/ai/mockSeeders.j
 import { buildWeatherFlex, analyzeWeatherSlots, generateDailySummary, buildDailySummaryFlex, buildTasksFlex, buildChatText, buildChatTranscriptFlex, buildCdpText } from '../services/ai/advisor.js';
 import { DAILY_REPORTS, summarizeDaily } from '../services/dailySummary.js';
 import { getReportIndex } from '../mock/state.js';
+import { buildMockPOs } from '../services/procurement/poMock.js';
+import { buildPoStatusFlex } from '../flex/poStatus.js';
 import { pushLineMessage } from '../services/line.js';
 
 const router = express.Router();
@@ -52,6 +54,8 @@ router.get('/admin/ai', (req, res) => {
   const dsIndex = getReportIndex() % DAILY_REPORTS.length;
   const dsSummary = summarizeDaily(DAILY_REPORTS[dsIndex]);
   const dsFlex = buildDailySummaryFlex(dsSummary);
+  const poListPreview = buildMockPOs(8);
+  const poFlexPreview = buildPoStatusFlex(poListPreview);
 
   res.render('ai/index', {
     title: 'AI Assistant (Mock)',
@@ -75,6 +79,7 @@ router.get('/admin/ai', (req, res) => {
       dailyFlex: dsFlex,
       dailyIndex: dsIndex,
       dailyTotal: DAILY_REPORTS.length,
+      poFlex: poFlexPreview,
       tasksFlex: buildTasksFlex(viewMock.tasks || []),
       chatText: buildChatText(viewMock.chatSamples || []),
       chatFlex: buildChatTranscriptFlex(viewMock.chatSamples || []),
@@ -267,6 +272,20 @@ router.post('/admin/ai/send/chat', async (req, res) => {
   } catch (err) {
     appendChatLog({ type: 'send-chat-transcript-error', error: err?.message || 'unknown' });
     return res.status(500).send('Failed to send');
+  }
+});
+
+router.post('/admin/ai/mock/po/send', async (req, res) => {
+  try {
+    const list = buildMockPOs(8);
+    const flex = buildPoStatusFlex(list);
+    const to = (req.body.to || process.env.DAILY_SUMMARY_TO || process.env.AI_TEST_RECIPIENT || process.env.SUPER_ADMIN_LINE_USER_ID || '').trim();
+    if (!to) return res.redirect('/admin/ai');
+    await pushLineMessage(to, [flex]);
+    res.redirect('/admin/ai');
+  } catch (err) {
+    console.warn('[AI] send po mock failed', err?.message || err);
+    res.redirect('/admin/ai');
   }
 });
 

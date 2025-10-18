@@ -205,6 +205,22 @@
     <article class="panel card" data-collapsible>
       <header class="panel__header">
         <div>
+          <h3>Preview · PO Status (Mock)</h3>
+          <p class="muted">สถานะ PO ล่าสุดหลายรายการ (Flex Carousel)</p>
+        </div>
+        <form method="post" action="/admin/ai/mock/po/send">
+          <input name="to" placeholder="LINE user/group id (optional)" style="min-width:220px" />
+          <button class="btn primary" type="submit">ส่ง PO Status (Mock)</button>
+        </form>
+      </header>
+      <div class="panel__body">
+        <pre class="code"><%= JSON.stringify(poFlex, null, 2) %></pre>
+      </div>
+    </article>
+
+    <article class="panel card" data-collapsible>
+      <header class="panel__header">
+        <div>
           <h3>Preview · Daily Summary</h3>
           <p class="muted">สรุปประจำวันพร้อมคำแนะนำ</p>
         </div>
