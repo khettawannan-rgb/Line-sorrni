@@ -17,6 +17,7 @@ import MixMap from '../models/MixMap.js';
 import MixAggregate from '../models/MixAggregate.js';
 import Member from '../models/Member.js';
 import LineConsent from '../models/lineConsent.model.js';
+import AudienceGroup from '../models/audienceGroup.model.js';
 import LineChatLog from '../models/lineChatLog.model.js';
 import LineMedia from '../models/lineMedia.model.js';
 import { sanitizeRedirect } from '../utils/url.js';
@@ -968,6 +969,50 @@ router.get('/insights', requireAuth, async (req, res) => {
     recentMessages,
   });
 });
+
+/* ------------------------------------------------------------------ */
+/* Audience groups                                                     */
+/* ------------------------------------------------------------------ */
+
+router.get('/audiences', requireAuth, async (req, res) => {
+  const groups = await AudienceGroup.find({}).sort({ updatedAt: -1 }).lean();
+  res.render('audience_groups', {
+    title: 'Audience Groups',
+    active: 'dashboard',
+    groups,
+  });
+});
+
+router.get('/audiences/new', requireAuth, async (req, res) => {
+  const q = String(req.query.q || '').trim();
+  const criteria = { status: 'granted' };
+  if (q) {
+    criteria.$or = [{ displayName: new RegExp(q, 'i') }, { userId: new RegExp(q, 'i') }];
+  }
+  const users = await LineConsent.find(criteria).sort({ updatedAt: -1 }).limit(200).lean();
+  res.render('audience_group_form', {
+    title: 'New Audience Group',
+    active: 'dashboard',
+    users,
+    q,
+    form: {},
+  });
+});
+
+router.post('/audiences', requireAuth, async (req, res) => {
+  const name = String(req.body.name || '').trim();
+  const description = String(req.body.description || '').trim();
+  const userIds = Array.isArray(req.body.userIds)
+    ? req.body.userIds.filter(Boolean)
+    : req.body.userIds
+    ? [String(req.body.userIds)]
+    : [];
+  if (!name) return res.status(400).send('name required');
+  const uniq = [...new Set(userIds)];
+  await AudienceGroup.create({ name, description, userIds: uniq });
+  res.redirect('/admin/audiences');
+});
+
 
 /* ------------------------------------------------------------------ */
 /* Consents (Manual override for testing)                             */

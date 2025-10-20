@@ -173,6 +173,21 @@
             <input name="to" placeholder="LINE user/group id (optional)" style="min-width:220px" />
             <button class="btn primary" type="submit">Send Daily Summary (Mock)</button>
           </form>
+          <% if ((audiences||[]).length) { %>
+          <form method="post" action="/admin/ai/mock/daily/send" style="display:inline-flex; gap:8px; align-items:center;">
+            <select name="groupId" style="min-width:220px">
+              <option value="">— เลือกกลุ่ม —</option>
+              <% audiences.forEach(g => { %>
+                <option value="<%= g._id %>"><%= g.name %> (<%= (g.userIds||[]).length %>)</option>
+              <% }) %>
+            </select>
+            <button class="btn secondary" type="submit">ส่งทั้งกลุ่ม</button>
+          </form>
+          <% } %>
+          <form method="post" action="/admin/ai/mock/daily/send">
+            <input type="hidden" name="toAll" value="1" />
+            <button class="btn ghost" type="submit">ส่งทุกคน (<%= audienceTotal || 0 %>)</button>
+          </form>
           <form method="post" action="/admin/ai/mock/daily/reset" style="display:inline-flex; gap:8px; align-items:center;">
             <button class="btn ghost" type="submit">Reset Rotation</button>
           </form>
@@ -197,6 +212,21 @@
           <input name="to" placeholder="LINE user/group id (optional)" style="min-width:260px" />
           <button class="btn primary" type="submit">ส่ง Weather Flex (Mock)</button>
         </form>
+        <% if ((audiences||[]).length) { %>
+        <form method="post" action="/admin/ai/send/weather" style="display:inline-flex; gap:8px; align-items:center;">
+          <select name="groupId" style="min-width:220px">
+            <option value="">— เลือกกลุ่ม —</option>
+            <% audiences.forEach(g => { %>
+              <option value="<%= g._id %>"><%= g.name %> (<%= (g.userIds||[]).length %>)</option>
+            <% }) %>
+          </select>
+          <button class="btn secondary" type="submit">ส่งทั้งกลุ่ม</button>
+        </form>
+        <% } %>
+        <form method="post" action="/admin/ai/send/weather">
+          <input type="hidden" name="toAll" value="1" />
+          <button class="btn ghost" type="submit">ส่งทุกคน (<%= audienceTotal || 0 %>)</button>
+        </form>
       </header>
       <div class="panel__body">
         <div data-code-collapsible data-collapsed="true">
@@ -218,6 +248,21 @@
           <input name="to" placeholder="LINE user/group id (optional)" style="min-width:220px" />
           <button class="btn primary" type="submit">ส่ง PO Status (Mock)</button>
         </form>
+        <% if ((audiences||[]).length) { %>
+        <form method="post" action="/admin/ai/mock/po/send" style="display:inline-flex; gap:8px; align-items:center;">
+          <select name="groupId" style="min-width:220px">
+            <option value="">— เลือกกลุ่ม —</option>
+            <% audiences.forEach(g => { %>
+              <option value="<%= g._id %>"><%= g.name %> (<%= (g.userIds||[]).length %>)</option>
+            <% }) %>
+          </select>
+          <button class="btn secondary" type="submit">ส่งทั้งกลุ่ม</button>
+        </form>
+        <% } %>
+        <form method="post" action="/admin/ai/mock/po/send">
+          <input type="hidden" name="toAll" value="1" />
+          <button class="btn ghost" type="submit">ส่งทุกคน (<%= audienceTotal || 0 %>)</button>
+        </form>
       </header>
       <div class="panel__body">
         <div data-code-collapsible data-collapsed="true">
@@ -235,6 +280,21 @@
         <form method="post" action="/admin/ai/send/summary">
           <input name="to" placeholder="LINE user/group id (optional)" style="min-width:260px" />
           <button class="btn primary" type="submit">ส่งสรุปประจำวัน (Mock)</button>
+        </form>
+        <% if ((audiences||[]).length) { %>
+        <form method="post" action="/admin/ai/send/summary" style="display:inline-flex; gap:8px; align-items:center;">
+          <select name="groupId" style="min-width:220px">
+            <option value="">— เลือกกลุ่ม —</option>
+            <% audiences.forEach(g => { %>
+              <option value="<%= g._id %>"><%= g.name %> (<%= (g.userIds||[]).length %>)</option>
+            <% }) %>
+          </select>
+          <button class="btn secondary" type="submit">ส่งทั้งกลุ่ม</button>
+        </form>
+        <% } %>
+        <form method="post" action="/admin/ai/send/summary">
+          <input type="hidden" name="toAll" value="1" />
+          <button class="btn ghost" type="submit">ส่งทุกคน (<%= audienceTotal || 0 %>)</button>
         </form>
       </header>
       <div class="panel__body">
@@ -257,6 +317,21 @@
           <input name="to" placeholder="LINE user/group id (optional)" style="min-width:220px" />
           <button class="btn primary" type="submit">ส่ง Tasks (Mock)</button>
         </form>
+        <% if ((audiences||[]).length) { %>
+        <form method="post" action="/admin/ai/send/tasks" style="display:inline-flex; gap:8px; align-items:center;">
+          <select name="groupId" style="min-width:220px">
+            <option value="">— เลือกกลุ่ม —</option>
+            <% audiences.forEach(g => { %>
+              <option value="<%= g._id %>"><%= g.name %> (<%= (g.userIds||[]).length %>)</option>
+            <% }) %>
+          </select>
+          <button class="btn secondary" type="submit">ส่งทั้งกลุ่ม</button>
+        </form>
+        <% } %>
+        <form method="post" action="/admin/ai/send/tasks">
+          <input type="hidden" name="toAll" value="1" />
+          <button class="btn ghost" type="submit">ส่งทุกคน (<%= audienceTotal || 0 %>)</button>
+        </form>
       </header>
       <div class="panel__body">
         <div data-code-collapsible data-collapsed="true">
@@ -275,6 +350,21 @@
         <form method="post" action="/admin/ai/send/chat">
           <input name="to" placeholder="LINE user/group id (optional)" style="min-width:220px" />
           <button class="btn primary" type="submit">ส่ง Chat Transcript (Mock)</button>
+        </form>
+        <% if ((audiences||[]).length) { %>
+        <form method="post" action="/admin/ai/send/chat" style="display:inline-flex; gap:8px; align-items:center;">
+          <select name="groupId" style="min-width:220px">
+            <option value="">— เลือกกลุ่ม —</option>
+            <% audiences.forEach(g => { %>
+              <option value="<%= g._id %>"><%= g.name %> (<%= (g.userIds||[]).length %>)</option>
+            <% }) %>
+          </select>
+          <button class="btn secondary" type="submit">ส่งทั้งกลุ่ม</button>
+        </form>
+        <% } %>
+        <form method="post" action="/admin/ai/send/chat">
+          <input type="hidden" name="toAll" value="1" />
+          <button class="btn ghost" type="submit">ส่งทุกคน (<%= audienceTotal || 0 %>)</button>
         </form>
       </header>
       <div class="panel__body">
@@ -296,6 +386,21 @@
         <form method="post" action="/admin/ai/send/cdp">
           <input name="to" placeholder="LINE user/group id (optional)" style="min-width:220px" />
           <button class="btn primary" type="submit">ส่ง CDP Digest (Mock)</button>
+        </form>
+        <% if ((audiences||[]).length) { %>
+        <form method="post" action="/admin/ai/send/cdp" style="display:inline-flex; gap:8px; align-items:center;">
+          <select name="groupId" style="min-width:220px">
+            <option value="">— เลือกกลุ่ม —</option>
+            <% audiences.forEach(g => { %>
+              <option value="<%= g._id %>"><%= g.name %> (<%= (g.userIds||[]).length %>)</option>
+            <% }) %>
+          </select>
+          <button class="btn secondary" type="submit">ส่งทั้งกลุ่ม</button>
+        </form>
+        <% } %>
+        <form method="post" action="/admin/ai/send/cdp">
+          <input type="hidden" name="toAll" value="1" />
+          <button class="btn ghost" type="submit">ส่งทุกคน (<%= audienceTotal || 0 %>)</button>
         </form>
       </header>
       <div class="panel__body">

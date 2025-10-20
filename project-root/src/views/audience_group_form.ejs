@@ -1,0 +1,74 @@
+<!-- project-root/src/views/audience_group_form.ejs -->
+<section class="section-block">
+  <header class="section-header">
+    <div class="section-header__titles">
+      <span class="section-pill">Messaging</span>
+      <h2>New Audience Group</h2>
+      <p class="muted">เลือกผู้รับจากรายชื่อที่ให้ยินยอม</p>
+    </div>
+  </header>
+
+  <article class="panel card">
+    <header class="panel__header">
+      <div>
+        <h3>รายละเอียดกลุ่ม</h3>
+      </div>
+    </header>
+    <div class="panel__body">
+      <form class="form" method="post" action="/admin/audiences">
+        <div class="form-grid">
+          <div class="field">
+            <label>ชื่อกลุ่ม</label>
+            <input name="name" required />
+          </div>
+          <div class="field">
+            <label>คำอธิบาย</label>
+            <input name="description" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">บันทึกกลุ่ม</button>
+        </div>
+
+        <hr class="sep" />
+
+        <div class="cluster" style="justify-content: space-between; gap:12px;">
+          <strong>เลือกผู้รับ (สถานะยินยอมแล้ว)</strong>
+          <form method="get" action="/admin/audiences/new" style="display:flex; gap:8px; align-items:center;">
+            <input type="search" name="q" placeholder="ค้นหาชื่อหรือ userId" value="<%= q || '' %>" />
+            <button class="btn" type="submit">ค้นหา</button>
+          </form>
+        </div>
+        <div class="table-wrap" style="max-height:420px; overflow:auto; margin-top:12px;">
+          <table class="table compact">
+            <thead>
+              <tr>
+                <th style="width:36px"></th>
+                <th>ชื่อ</th>
+                <th>userId</th>
+                <th>อัปเดต</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% (users||[]).forEach(u => { %>
+                <tr>
+                  <td><input type="checkbox" name="userIds" value="<%= u.userId %>" /></td>
+                  <td><%= u.displayName || '-' %></td>
+                  <td class="mono"><code><%= u.userId %></code></td>
+                  <td class="muted"><%= new Date(u.updatedAt).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) %></td>
+                </tr>
+              <% }) %>
+              <% if (!(users||[]).length) { %>
+                <tr><td colspan="4" class="muted">ไม่พบผู้ใช้</td></tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">บันทึกกลุ่ม</button>
+        </div>
+      </form>
+    </div>
+  </article>
+</section>
+

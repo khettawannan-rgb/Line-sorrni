@@ -10,6 +10,8 @@ import { getReportIndex, nextIndex } from '../mock/state.js';
 import { buildMockPOs } from '../services/procurement/poMock.js';
 import { buildPoStatusFlex } from '../flex/poStatus.js';
 import { pushLineMessage } from '../services/line.js';
+import AudienceGroup from '../models/audienceGroup.model.js';
+import LineConsent from '../models/lineConsent.model.js';
 
 const router = express.Router();
 // Allow sending when a recipient is explicitly provided, regardless of AI_MOCK_ONLY
@@ -57,12 +59,17 @@ router.get('/admin/ai', (req, res) => {
     const poListPreview = buildMockPOs(8);
     const poFlexPreview = buildPoStatusFlex(poListPreview);
 
-    res.render('ai/index', {
+    Promise.resolve().then(async () => {
+      const audiences = await AudienceGroup.find({}).sort({ updatedAt: -1 }).lean();
+      const audienceTotal = await LineConsent.countDocuments({ status: 'granted' });
+      res.render('ai/index', {
       title: 'AI Assistant (Mock)',
       active: 'ai',
       extendedTables: extendedView,
       mock: viewMock,
       chatLog,
+      audiences,
+      audienceTotal,
       // expose daily summary preview at top-level for EJS
       dailyFlex: dsFlex,
       dailyIndex: dsIndex,
@@ -90,6 +97,44 @@ router.get('/admin/ai', (req, res) => {
         chatFlex: buildChatTranscriptFlex(viewMock.chatSamples || []),
         cdpText: buildCdpText(viewMock.cdp || {}),
       },
+      });
+    }).catch(() => {
+      res.render('ai/index', {
+        title: 'AI Assistant (Mock)',
+        active: 'ai',
+        extendedTables: extendedView,
+        mock: viewMock,
+        chatLog,
+        audiences: [],
+        audienceTotal: 0,
+        // expose daily summary preview at top-level for EJS
+        dailyFlex: dsFlex,
+        dailyIndex: dsIndex,
+        dailyTotal: DAILY_REPORTS.length,
+        poFlex: poFlexPreview,
+        preview: {
+          worst,
+          advice,
+          weatherFlex: buildWeatherFlex({
+            dateLabel: new Date().toLocaleDateString('th-TH', { dateStyle: 'medium' }),
+            locationName: viewMock.location?.name,
+            status: lastWeather?.condition || 'ไม่ทราบ',
+            temp: lastWeather ? `${lastWeather.tempC}°C` : null,
+            advice,
+            detailsUrl: '#',
+          }),
+          summaryText: generateDailySummary(viewMock),
+          summaryFlex: buildDailySummaryFlex(viewMock),
+          dailyFlex: dsFlex,
+          dailyIndex: dsIndex,
+          dailyTotal: DAILY_REPORTS.length,
+          poFlex: poFlexPreview,
+          tasksFlex: buildTasksFlex(viewMock.tasks || []),
+          chatText: buildChatText(viewMock.chatSamples || []),
+          chatFlex: buildChatTranscriptFlex(viewMock.chatSamples || []),
+          cdpText: buildCdpText(viewMock.cdp || {}),
+        },
+      });
     });
   } catch (err) {
     console.error('[AI] render error', err);
@@ -226,11 +271,25 @@ router.post('/admin/ai/send/summary', async (req, res) => {
   const summary = generateDailySummary(mock);
   const flex = buildDailySummaryFlex(mock);
   const to = (req.body.to || DEFAULT_RECIPIENT || '').trim();
-  // If a destination is provided, allow actual send; otherwise stay in dry-run
-  const dryRun = !to;
+  const groupId = String(req.body.groupId || '').trim();
+  const toAll = String(req.body.toAll || '').toLowerCase() === '1' || String(req.body.toAll || '').toLowerCase() === 'true';
+  let recipients = [];
+  if (groupId) {
+    const g = await AudienceGroup.findById(groupId).lean();
+    recipients = (g?.userIds || []).filter(Boolean);
+  } else if (toAll) {
+    recipients = (await LineConsent.find({ status: 'granted' }).select('userId').lean()).map((r) => r.userId);
+  } else if (to) {
+    recipients = [to];
+  }
+  const dryRun = !recipients.length;
   appendChatLog({ type: 'send-summary', to: to || '(none)', dryRun, text: summary, flex });
   try {
-    if (!dryRun) await pushLineMessage(to, [flex]);
+    if (!dryRun) {
+      for (const uid of recipients) {
+        await pushLineMessage(uid, [flex]);
+      }
+    }
     return res.redirect('/admin/ai');
   } catch (err) {
     appendChatLog({ type: 'send-summary-error', error: err?.message || 'unknown' });
@@ -250,10 +309,23 @@ router.post('/admin/ai/send/weather', async (req, res) => {
     advice,
   });
   const to = (req.body.to || DEFAULT_RECIPIENT || '').trim();
-  const dryRun = !to;
+  const groupId = String(req.body.groupId || '').trim();
+  const toAll = String(req.body.toAll || '').toLowerCase() === '1' || String(req.body.toAll || '').toLowerCase() === 'true';
+  let recipients = [];
+  if (groupId) {
+    const g = await AudienceGroup.findById(groupId).lean();
+    recipients = (g?.userIds || []).filter(Boolean);
+  } else if (toAll) {
+    recipients = (await LineConsent.find({ status: 'granted' }).select('userId').lean()).map((r) => r.userId);
+  } else if (to) {
+    recipients = [to];
+  }
+  const dryRun = !recipients.length;
   appendChatLog({ type: 'send-weather', to: to || '(none)', dryRun, flex });
   try {
-    if (!dryRun) await pushLineMessage(to, [flex]);
+    if (!dryRun) {
+      for (const uid of recipients) await pushLineMessage(uid, [flex]);
+    }
     return res.redirect('/admin/ai');
   } catch (err) {
     appendChatLog({ type: 'send-weather-error', error: err?.message || 'unknown' });
@@ -266,10 +338,23 @@ router.post('/admin/ai/send/tasks', async (req, res) => {
   const tasks = seedMockTasks({ seed: 500000 + idx, count: 5 });
   const flex = buildTasksFlex(tasks);
   const to = (req.body.to || DEFAULT_RECIPIENT || '').trim();
-  const dryRun = !to;
+  const groupId = String(req.body.groupId || '').trim();
+  const toAll = String(req.body.toAll || '').toLowerCase() === '1' || String(req.body.toAll || '').toLowerCase() === 'true';
+  let recipients = [];
+  if (groupId) {
+    const g = await AudienceGroup.findById(groupId).lean();
+    recipients = (g?.userIds || []).filter(Boolean);
+  } else if (toAll) {
+    recipients = (await LineConsent.find({ status: 'granted' }).select('userId').lean()).map((r) => r.userId);
+  } else if (to) {
+    recipients = [to];
+  }
+  const dryRun = !recipients.length;
   appendChatLog({ type: 'send-tasks', to: to || '(none)', dryRun, flex });
   try {
-    if (!dryRun) await pushLineMessage(to, [flex]);
+    if (!dryRun) {
+      for (const uid of recipients) await pushLineMessage(uid, [flex]);
+    }
     return res.redirect('/admin/ai');
   } catch (err) {
     appendChatLog({ type: 'send-tasks-error', error: err?.message || 'unknown' });
@@ -283,10 +368,23 @@ router.post('/admin/ai/send/chat', async (req, res) => {
   const text = buildChatText(chat);
   const flex = buildChatTranscriptFlex(chat);
   const to = (req.body.to || DEFAULT_RECIPIENT || '').trim();
-  const dryRun = !to;
+  const groupId = String(req.body.groupId || '').trim();
+  const toAll = String(req.body.toAll || '').toLowerCase() === '1' || String(req.body.toAll || '').toLowerCase() === 'true';
+  let recipients = [];
+  if (groupId) {
+    const g = await AudienceGroup.findById(groupId).lean();
+    recipients = (g?.userIds || []).filter(Boolean);
+  } else if (toAll) {
+    recipients = (await LineConsent.find({ status: 'granted' }).select('userId').lean()).map((r) => r.userId);
+  } else if (to) {
+    recipients = [to];
+  }
+  const dryRun = !recipients.length;
   appendChatLog({ type: 'send-chat-transcript', to: to || '(none)', dryRun, text });
   try {
-    if (!dryRun) await pushLineMessage(to, [flex]);
+    if (!dryRun) {
+      for (const uid of recipients) await pushLineMessage(uid, [flex]);
+    }
     return res.redirect('/admin/ai');
   } catch (err) {
     appendChatLog({ type: 'send-chat-transcript-error', error: err?.message || 'unknown' });
@@ -299,9 +397,20 @@ router.post('/admin/ai/mock/po/send', async (req, res) => {
     const idx = nextIndex('ai.send.po', 10);
     const list = buildMockPOs(8, 300000 + idx);
     const flex = buildPoStatusFlex(list);
-    const to = (req.body.to || process.env.DAILY_SUMMARY_TO || process.env.AI_TEST_RECIPIENT || process.env.SUPER_ADMIN_LINE_USER_ID || '').trim();
-    if (!to) return res.redirect('/admin/ai');
-    await pushLineMessage(to, [flex]);
+    const to = (req.body.to || '').trim();
+    const groupId = String(req.body.groupId || '').trim();
+    const toAll = String(req.body.toAll || '').toLowerCase() === '1' || String(req.body.toAll || '').toLowerCase() === 'true';
+    let recipients = [];
+    if (groupId) {
+      const g = await AudienceGroup.findById(groupId).lean();
+      recipients = (g?.userIds || []).filter(Boolean);
+    } else if (toAll) {
+      recipients = (await LineConsent.find({ status: 'granted' }).select('userId').lean()).map((r) => r.userId);
+    } else if (to) {
+      recipients = [to];
+    }
+    if (!recipients.length) return res.redirect('/admin/ai');
+    for (const uid of recipients) await pushLineMessage(uid, [flex]);
     res.redirect('/admin/ai');
   } catch (err) {
     console.warn('[AI] send po mock failed', err?.message || err);
@@ -313,11 +422,24 @@ router.post('/admin/ai/send/cdp', async (req, res) => {
   const idx = nextIndex('ai.send.cdp', 10);
   const cdp = seedMockCdp({ seed: 200000 + idx });
   const text = buildCdpText(cdp);
-  const to = (req.body.to || DEFAULT_RECIPIENT || '').trim();
-  const dryRun = !to;
+  const to = (req.body.to || '').trim();
+  const groupId = String(req.body.groupId || '').trim();
+  const toAll = String(req.body.toAll || '').toLowerCase() === '1' || String(req.body.toAll || '').toLowerCase() === 'true';
+  let recipients = [];
+  if (groupId) {
+    const g = await AudienceGroup.findById(groupId).lean();
+    recipients = (g?.userIds || []).filter(Boolean);
+  } else if (toAll) {
+    recipients = (await LineConsent.find({ status: 'granted' }).select('userId').lean()).map((r) => r.userId);
+  } else if (to) {
+    recipients = [to];
+  }
+  const dryRun = !recipients.length;
   appendChatLog({ type: 'send-cdp-digest', to: to || '(none)', dryRun, text });
   try {
-    if (!dryRun) await pushLineMessage(to, [{ type: 'text', text }]);
+    if (!dryRun) {
+      for (const uid of recipients) await pushLineMessage(uid, [{ type: 'text', text }]);
+    }
     return res.redirect('/admin/ai');
   } catch (err) {
     appendChatLog({ type: 'send-cdp-digest-error', error: err?.message || 'unknown' });

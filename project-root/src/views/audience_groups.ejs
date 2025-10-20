@@ -1,0 +1,46 @@
+<!-- project-root/src/views/audience_groups.ejs -->
+<section class="section-block">
+  <header class="section-header">
+    <div class="section-header__titles">
+      <span class="section-pill">Messaging</span>
+      <h2>Audience Groups</h2>
+      <p class="muted">จัดกลุ่มผู้รับเพื่อส่งข้อความครั้งเดียวหลายคน</p>
+    </div>
+    <div class="section-header__actions">
+      <a class="btn primary" href="/admin/audiences/new">+ New Group</a>
+    </div>
+  </header>
+
+  <article class="panel card">
+    <header class="panel__header">
+      <div>
+        <h3>รายการกลุ่ม</h3>
+        <p class="muted">ทั้งหมด <%= (groups||[]).length %> กลุ่ม</p>
+      </div>
+    </header>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ชื่อกลุ่ม</th>
+            <th>จำนวนผู้รับ</th>
+            <th>ปรับปรุง</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% (groups||[]).forEach(g => { %>
+            <tr>
+              <td><strong><%= g.name %></strong><div class="muted"><%= g.description || '-' %></div></td>
+              <td><%= (g.userIds||[]).length %></td>
+              <td class="muted"><%= new Date(g.updatedAt).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) %></td>
+            </tr>
+          <% }) %>
+          <% if (!(groups||[]).length) { %>
+            <tr><td colspan="3" class="muted">ยังไม่มีกลุ่ม</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+

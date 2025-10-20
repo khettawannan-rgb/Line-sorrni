@@ -6,6 +6,8 @@ import { buildDailySummaryFlex } from '../flex/dailySummary.js';
 import { pushLineMessage } from '../services/line.js';
 import { track } from '../lib/cdp.js';
 import { nextReportIndex, resetReportIndex, getReportIndex } from '../mock/state.js';
+import AudienceGroup from '../models/audienceGroup.model.js';
+import LineConsent from '../models/lineConsent.model.js';
 
 const router = Router();
 
@@ -29,13 +31,24 @@ router.post(['/mock/send-daily-summary', '/admin/ai/mock/daily/send'], async (re
   const summary = summarizeDaily(data);
   const flex = buildDailySummaryFlex(summary);
   const bodyTo = typeof req.body?.to === 'string' ? req.body.to.trim() : '';
-  const to = bodyTo || process.env.DAILY_SUMMARY_TO || process.env.AI_TEST_RECIPIENT || process.env.SUPER_ADMIN_LINE_USER_ID || '';
-  if (!to) {
+  const groupId = String(req.body.groupId || '').trim();
+  const toAll = String(req.body.toAll || '').toLowerCase() === '1' || String(req.body.toAll || '').toLowerCase() === 'true';
+  let recipients = [];
+  if (groupId) {
+    const g = await AudienceGroup.findById(groupId).lean();
+    recipients = (g?.userIds || []).filter(Boolean);
+  } else if (toAll) {
+    recipients = (await LineConsent.find({ status: 'granted' }).select('userId').lean()).map((r) => r.userId);
+  } else if (bodyTo) {
+    recipients = [bodyTo];
+  } else {
     return res.redirect(303, '/admin/ai');
   }
   try {
-    await pushLineMessage(to, [flex]);
-    track('push_daily_summary_mock', { index: useIndex, date: data.date, sites: data.sites.length, pos: summary.pos_sites, neg: summary.neg_sites, to });
+    for (const uid of recipients) {
+      await pushLineMessage(uid, [flex]);
+      track('push_daily_summary_mock', { index: useIndex, date: data.date, sites: data.sites.length, pos: summary.pos_sites, neg: summary.neg_sites, to: uid });
+    }
     return res.redirect(303, '/admin/ai');
   } catch (err) {
     return res.redirect(303, '/admin/ai');
