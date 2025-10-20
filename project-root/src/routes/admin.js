@@ -791,40 +791,45 @@ router.get('/dashboard/engagement', requireAuth, async (req, res) => {
     let mock = null;
     let mockPayload = {};
     if (USE_MOCK) {
-      const to = new Date();
-      const from = new Date(to);
-      from.setUTCDate(from.getUTCDate() - 56);
-      mock = seedMockAnalytics({ seed, from: toISODate(from), to: toISODate(to) });
+      try {
+        const to = new Date();
+        const from = new Date(to);
+        from.setUTCDate(from.getUTCDate() - 56);
+        mock = seedMockAnalytics({ seed, from: toISODate(from), to: toISODate(to) });
 
-      // Trend series (chat): per day counts and unique users
-      const byDay = new Map();
-      const uniqueByDay = new Map();
-      (mock.events || []).forEach((e) => {
-        const d = e.ts.slice(0, 10);
-        byDay.set(d, (byDay.get(d) || 0) + 1);
-        const set = uniqueByDay.get(d) || new Set();
-        set.add(e.user_id);
-        uniqueByDay.set(d, set);
-      });
-      const trendSeries = Array.from(byDay.entries())
-        .map(([date, messageCount]) => ({ date, messageCount, uniqueUsers: (uniqueByDay.get(date) || new Set()).size }))
-        .sort((a, b) => a.date.localeCompare(b.date));
+        // Trend series (chat): per day counts and unique users
+        const byDay = new Map();
+        const uniqueByDay = new Map();
+        (mock.events || []).forEach((e) => {
+          const d = e.ts.slice(0, 10);
+          byDay.set(d, (byDay.get(d) || 0) + 1);
+          const set = uniqueByDay.get(d) || new Set();
+          set.add(e.user_id);
+          uniqueByDay.set(d, set);
+        });
+        const trendSeries = Array.from(byDay.entries())
+          .map(([date, messageCount]) => ({ date, messageCount, uniqueUsers: (uniqueByDay.get(date) || new Set()).size }))
+          .sort((a, b) => a.date.localeCompare(b.date));
 
-      mockPayload = {
-        useMockAnalytics: true,
-        mockSeed: seed,
-        mock,
-        trendSeries,
-        intentStack: buildIntentTrend(mock),
-        retention: buildCohortHeatmap(mock),
-        sentiment: buildSentimentTrend(mock),
-        hourHeatmap: buildHourHeatmap(mock),
-        segmentStack: buildSegmentBreakdown(mock),
-        agentResponse: buildSlaVsCsat(mock),
-      };
+        mockPayload = {
+          useMockAnalytics: true,
+          mockSeed: seed,
+          mock,
+          trendSeries,
+          intentStack: buildIntentTrend(mock),
+          retention: buildCohortHeatmap(mock),
+          sentiment: buildSentimentTrend(mock),
+          hourHeatmap: buildHourHeatmap(mock),
+          segmentStack: buildSegmentBreakdown(mock),
+          agentResponse: buildSlaVsCsat(mock),
+        };
 
-      // Override data feeds used by dashboard engagement cards
-      context.trendSeries = trendSeries;
+        // Override data feeds used by dashboard engagement cards
+        context.trendSeries = trendSeries;
+      } catch (e) {
+        console.warn('[ADMIN] mock analytics generation failed:', e?.message || e);
+        mock = null;
+      }
     }
 
     res.render('dashboard', {
@@ -844,6 +849,7 @@ router.get('/dashboard/engagement', requireAuth, async (req, res) => {
         active: 'dashboard',
         subPage: 'engagement',
         useMockAnalytics: false,
+        mapboxToken: MAPBOX_TOKEN,
         dailySeries: [],
         productChart: [],
         mixSummary: [],
