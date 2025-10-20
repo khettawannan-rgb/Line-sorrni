@@ -1,5 +1,6 @@
 // src/services/line.js
 import axios from 'axios';
+import { liffLink } from '../utils/liff.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -135,7 +136,44 @@ export async function pushLineMessage(to, messageOrMessages) {
     ? messageOrMessages
     : [{ type: 'text', text: String(messageOrMessages ?? '') }];
 
-  const payload = { to: String(to || ''), messages };
+  // Sanitize possible invalid URIs inside Flex messages to avoid 400 from LINE
+  const normalizeUri = (u) => {
+    if (!u || typeof u !== 'string') return u;
+    if (/^https?:\/\//i.test(u)) return u;
+    const base = (process.env.BASE_URL || '').replace(/\/$/, '');
+    if (u.startsWith('/')) {
+      try {
+        if (process.env.LIFF_ID) return liffLink(u);
+      } catch {}
+      if (base) return base + u;
+    }
+    return 'https://line.me';
+  };
+  const sanitize = (node) => {
+    if (Array.isArray(node)) return node.map(sanitize);
+    if (node && typeof node === 'object') {
+      const out = {};
+      for (const [k, v] of Object.entries(node)) {
+        if (k === 'uri' && typeof v === 'string') {
+          out[k] = normalizeUri(v);
+        } else if (v && typeof v === 'object') {
+          out[k] = sanitize(v);
+        } else {
+          out[k] = v;
+        }
+      }
+      return out;
+    }
+    return node;
+  };
+  const safeMessages = messages.map((m) => {
+    if (m && m.type === 'flex' && m.contents) {
+      return { ...m, contents: sanitize(m.contents) };
+    }
+    return m;
+  });
+
+  const payload = { to: String(to || ''), messages: safeMessages };
   const res = await api.post('/v2/bot/message/push', payload, {
     headers: { 'Content-Type': 'application/json' },
   });
