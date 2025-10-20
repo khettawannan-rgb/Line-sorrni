@@ -25,6 +25,7 @@
             <th>ชื่อกลุ่ม</th>
             <th>จำนวนผู้รับ</th>
             <th>ปรับปรุง</th>
+            <th class="col-actions">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -33,14 +34,18 @@
               <td><strong><%= g.name %></strong><div class="muted"><%= g.description || '-' %></div></td>
               <td><%= (g.userIds||[]).length %></td>
               <td class="muted"><%= new Date(g.updatedAt).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) %></td>
+              <td class="table-actions col-actions">
+                <form method="post" action="/admin/audiences/<%= g._id %>/delete">
+                  <button class="btn small danger" type="submit" data-confirm="ลบกลุ่มนี้หรือไม่?">Delete</button>
+                </form>
+              </td>
             </tr>
           <% }) %>
           <% if (!(groups||[]).length) { %>
-            <tr><td colspan="3" class="muted">ยังไม่มีกลุ่ม</td></tr>
+            <tr><td colspan="4" class="muted">ยังไม่มีกลุ่ม</td></tr>
           <% } %>
         </tbody>
       </table>
     </div>
   </article>
 </section>
-

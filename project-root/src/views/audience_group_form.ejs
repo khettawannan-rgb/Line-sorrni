@@ -8,6 +8,21 @@
     </div>
   </header>
 
+  <!-- Search users (GET) -->
+  <article class="panel card">
+    <header class="panel__header">
+      <div>
+        <h3>ค้นหาผู้รับ</h3>
+      </div>
+    </header>
+    <div class="panel__body">
+      <form method="get" action="/admin/audiences/new" class="form" style="display:flex; gap:8px; align-items:center;">
+        <input type="search" name="q" placeholder="ค้นหาชื่อหรือ userId" value="<%= q || '' %>" style="min-width:260px" />
+        <button class="btn" type="submit">ค้นหา</button>
+      </form>
+    </div>
+  </article>
+
   <article class="panel card">
     <header class="panel__header">
       <div>
@@ -16,6 +31,7 @@
     </header>
     <div class="panel__body">
       <form class="form" method="post" action="/admin/audiences">
+        <input type="hidden" name="q" value="<%= q || '' %>" />
         <div class="form-grid">
           <div class="field">
             <label>ชื่อกลุ่ม</label>
@@ -32,13 +48,7 @@
 
         <hr class="sep" />
 
-        <div class="cluster" style="justify-content: space-between; gap:12px;">
-          <strong>เลือกผู้รับ (สถานะยินยอมแล้ว)</strong>
-          <form method="get" action="/admin/audiences/new" style="display:flex; gap:8px; align-items:center;">
-            <input type="search" name="q" placeholder="ค้นหาชื่อหรือ userId" value="<%= q || '' %>" />
-            <button class="btn" type="submit">ค้นหา</button>
-          </form>
-        </div>
+        <div class="cluster" style="justify-content: space-between; gap:12px;"><strong>เลือกผู้รับ (สถานะยินยอมแล้ว)</strong></div>
         <div class="table-wrap" style="max-height:420px; overflow:auto; margin-top:12px;">
           <table class="table compact">
             <thead>
@@ -71,4 +81,3 @@
     </div>
   </article>
 </section>
-

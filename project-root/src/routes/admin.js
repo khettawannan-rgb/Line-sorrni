@@ -1013,6 +1013,14 @@ router.post('/audiences', requireAuth, async (req, res) => {
   res.redirect('/admin/audiences');
 });
 
+router.post('/audiences/:id/delete', requireAuth, async (req, res) => {
+  const id = String(req.params.id || '').trim();
+  if (id) {
+    try { await AudienceGroup.findByIdAndDelete(id); } catch {}
+  }
+  res.redirect('/admin/audiences');
+});
+
 
 /* ------------------------------------------------------------------ */
 /* Consents (Manual override for testing)                             */
