@@ -92,3 +92,71 @@ export function seedMockMaterials({ seed = 654321, count = 6 } = {}) {
 }
 
 export default { seedMockWeather, seedMockMaterials };
+
+// ---- Additional mock generators for rotation ----
+export function seedMockTasks({ seed = 111111, count = 5 } = {}) {
+  const rnd = seeded(seed);
+  const priorities = ['low', 'medium', 'high'];
+  const types = ['stock', 'quality', 'logistics', 'safety'];
+  const actions = [
+    ['ตรวจความชื้นวัสดุ', 'ความชื้นเกินเกณฑ์', 'อุ่นวัสดุก่อนมิก/ปู'],
+    ['ติดตามการส่งของ', 'ขนส่งล่าช้า', 'ปรับตารางรับสินค้า'],
+    ['เตรียมเครื่องจักร', 'รอบซ่อมบำรุงใกล้ถึง', 'กำหนดเวลาซ่อมบำรุง'],
+    ['สั่งซื้อวัสดุเพิ่ม', 'สต็อกต่ำกว่า ROP', 'ออกใบ PR/PO'],
+  ];
+  return Array.from({ length: count }).map(() => {
+    const [message, reason, suggest] = rnd.pick(actions);
+    return {
+      type: rnd.pick(types),
+      priority: rnd.pick(priorities),
+      message,
+      reason,
+      suggest,
+    };
+  });
+}
+
+export function seedMockChat({ seed = 222222, count = 8 } = {}) {
+  const rnd = seeded(seed);
+  const senders = ['site-foreman', 'driver', 'qc', 'warehouse', 'manager'];
+  const texts = [
+    'รถติดหน้าไซต์ ขอเลื่อนส่ง 30 นาที',
+    'เริ่มมิกวัสดุแล้ว',
+    'อากาศเริ่มมีฝนโปรย',
+    'ภาพถ่ายพื้นที่ก่อนปูยาง',
+    'จุด A พร้อมเทแล้ว',
+    'ขอเติมน้ำมันเพิ่ม',
+    'พรุ่งนี้มีงานเร่งด่วน',
+  ];
+  return Array.from({ length: count }).map(() => {
+    const type = rnd.pick(['text', 'text', 'text', 'image']);
+    const message = type === 'image' ? { type: 'image', url: 'https://picsum.photos/seed/' + rnd.int(1, 10000) + '/300/200' } : { type: 'text', text: rnd.pick(texts) };
+    return {
+      time: new Date(Date.now() - rnd.int(0, 6) * 3600 * 1000).toISOString(),
+      from: rnd.pick(senders),
+      message,
+    };
+  });
+}
+
+export function seedMockCdp({ seed = 333333 } = {}) {
+  const rnd = seeded(seed);
+  const summary = {
+    dailyActive: rnd.int(40, 120),
+    weeklyActive: rnd.int(180, 400),
+    newUsers7d: rnd.int(8, 40),
+    returning7d: rnd.int(30, 100),
+    messages7d: rnd.int(800, 2400),
+  };
+  const segments = [
+    { label: 'Power Users', users: rnd.int(8, 24) },
+    { label: 'Returning', users: rnd.int(30, 120) },
+    { label: 'New', users: rnd.int(8, 50) },
+    { label: 'Dormant 30d', users: rnd.int(12, 46) },
+  ];
+  const predictive = [
+    { type: 'churn-risk', message: `กลุ่ม Returning มีความเสี่ยงเพิ่มขึ้น ${rnd.int(5, 18)}% สัปดาห์นี้` },
+    { type: 'campaign', message: 'เสนอแคมเปญต้อนรับสำหรับ New users → เพิ่มการกลับมาใช้ซ้ำ' },
+  ];
+  return { summary, segments, predictive };
+}

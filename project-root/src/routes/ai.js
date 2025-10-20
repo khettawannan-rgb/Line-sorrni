@@ -3,10 +3,10 @@ import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadMock, saveMock, appendChatLog, loadChatLog, getDefaultMock } from '../services/ai/mockStore.js';
-import { seedMockWeather, seedMockMaterials } from '../services/ai/mockSeeders.js';
+import { seedMockWeather, seedMockMaterials, seedMockTasks, seedMockChat, seedMockCdp } from '../services/ai/mockSeeders.js';
 import { buildWeatherFlex, analyzeWeatherSlots, generateDailySummary, buildDailySummaryFlex, buildTasksFlex, buildChatText, buildChatTranscriptFlex, buildCdpText } from '../services/ai/advisor.js';
 import { DAILY_REPORTS, summarizeDaily } from '../services/dailySummary.js';
-import { getReportIndex } from '../mock/state.js';
+import { getReportIndex, nextIndex } from '../mock/state.js';
 import { buildMockPOs } from '../services/procurement/poMock.js';
 import { buildPoStatusFlex } from '../flex/poStatus.js';
 import { pushLineMessage } from '../services/line.js';
@@ -216,7 +216,13 @@ router.post('/admin/ai/mock/load-demo', (req, res) => {
 });
 
 router.post('/admin/ai/send/summary', async (req, res) => {
-  const mock = loadMock();
+  const idx = nextIndex('ai.send.summary', 10);
+  // Build a rotating snapshot for each send (10 variants loop)
+  const base = loadMock();
+  const weather = seedMockWeather({ seed: 700000 + idx });
+  const materials = seedMockMaterials({ seed: 800000 + idx, count: (base.materials?.length || 6) });
+  const locations = ['ไซต์เหนือ', 'ไซต์ใต้', 'ไซต์ตะวันออก', 'ไซต์ตะวันตก', 'ไซต์หลัก', 'ไซต์สำรอง'];
+  const mock = { weather, materials, location: { name: locations[idx % locations.length] } };
   const summary = generateDailySummary(mock);
   const flex = buildDailySummaryFlex(mock);
   const to = (req.body.to || DEFAULT_RECIPIENT || '').trim();
@@ -233,10 +239,12 @@ router.post('/admin/ai/send/summary', async (req, res) => {
 });
 
 router.post('/admin/ai/send/weather', async (req, res) => {
-  const mock = loadMock();
-  const { worst, advice } = analyzeWeatherSlots(mock.weather);
+  const idx = nextIndex('ai.send.weather', 10);
+  const wx = seedMockWeather({ seed: 600000 + idx });
+  const { worst, advice } = analyzeWeatherSlots(wx);
+  const siteNames = ['ไซต์ A', 'ไซต์ B', 'ไซต์ C', 'ไซต์ D'];
   const flex = buildWeatherFlex({
-    locationName: mock.location?.name,
+    locationName: siteNames[idx % siteNames.length],
     status: worst?.condition || 'ไม่ทราบ',
     temp: worst ? `${worst.tempC}°C` : null,
     advice,
@@ -254,8 +262,9 @@ router.post('/admin/ai/send/weather', async (req, res) => {
 });
 
 router.post('/admin/ai/send/tasks', async (req, res) => {
-  const mock = loadMock();
-  const flex = buildTasksFlex(mock.tasks || []);
+  const idx = nextIndex('ai.send.tasks', 10);
+  const tasks = seedMockTasks({ seed: 500000 + idx, count: 5 });
+  const flex = buildTasksFlex(tasks);
   const to = (req.body.to || DEFAULT_RECIPIENT || '').trim();
   const dryRun = !to;
   appendChatLog({ type: 'send-tasks', to: to || '(none)', dryRun, flex });
@@ -269,9 +278,10 @@ router.post('/admin/ai/send/tasks', async (req, res) => {
 });
 
 router.post('/admin/ai/send/chat', async (req, res) => {
-  const mock = loadMock();
-  const text = buildChatText(mock.chatSamples || []);
-  const flex = buildChatTranscriptFlex(mock.chatSamples || []);
+  const idx = nextIndex('ai.send.chat', 10);
+  const chat = seedMockChat({ seed: 400000 + idx, count: 8 });
+  const text = buildChatText(chat);
+  const flex = buildChatTranscriptFlex(chat);
   const to = (req.body.to || DEFAULT_RECIPIENT || '').trim();
   const dryRun = !to;
   appendChatLog({ type: 'send-chat-transcript', to: to || '(none)', dryRun, text });
@@ -286,7 +296,8 @@ router.post('/admin/ai/send/chat', async (req, res) => {
 
 router.post('/admin/ai/mock/po/send', async (req, res) => {
   try {
-    const list = buildMockPOs(8);
+    const idx = nextIndex('ai.send.po', 10);
+    const list = buildMockPOs(8, 300000 + idx);
     const flex = buildPoStatusFlex(list);
     const to = (req.body.to || process.env.DAILY_SUMMARY_TO || process.env.AI_TEST_RECIPIENT || process.env.SUPER_ADMIN_LINE_USER_ID || '').trim();
     if (!to) return res.redirect('/admin/ai');
@@ -299,8 +310,9 @@ router.post('/admin/ai/mock/po/send', async (req, res) => {
 });
 
 router.post('/admin/ai/send/cdp', async (req, res) => {
-  const mock = loadMock();
-  const text = buildCdpText(mock.cdp || {});
+  const idx = nextIndex('ai.send.cdp', 10);
+  const cdp = seedMockCdp({ seed: 200000 + idx });
+  const text = buildCdpText(cdp);
   const to = (req.body.to || DEFAULT_RECIPIENT || '').trim();
   const dryRun = !to;
   appendChatLog({ type: 'send-cdp-digest', to: to || '(none)', dryRun, text });
