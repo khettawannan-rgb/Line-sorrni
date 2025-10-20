@@ -35,7 +35,7 @@
       <div class="form-grid">
         <div class="field">
           <label>บริษัท</label>
-          <select name="companyId" required>
+          <select name="companyId" required onchange="location.href='/admin/tools/send-daily?companyId='+this.value">
             <option value="">— เลือก —</option>
             <% companies.forEach(c => { %>
               <option value="<%= c._id %>" <%= (form?.companyId===c._id.toString()?'selected':'') %>><%= c.name %></option>
@@ -45,6 +45,16 @@
         <div class="field">
           <label>วันที่</label>
           <input type="date" name="date" value="<%= form?.date || '' %>" required />
+        </div>
+        <div class="field">
+          <label>ผู้รับ (LINE userId)</label>
+          <select name="to">
+            <option value="">— ส่งให้สมาชิกทุกคน —</option>
+            <% (members||[]).forEach(m => { if (m.lineUserId) { %>
+              <option value="<%= m.lineUserId %>" <%= (form?.to===m.lineUserId?'selected':'') %>><%= (m.displayName||'-')+' · '+m.lineUserId %></option>
+            <% } }) %>
+          </select>
+          <div class="form-help">หรือใส่ userId เอง: <input name="to" value="<%= form?.to || '' %>" placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="min-width:280px" /></div>
         </div>
       </div>
       <div class="form-actions">

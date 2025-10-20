@@ -28,14 +28,20 @@ router.post(['/mock/send-daily-summary', '/admin/ai/mock/daily/send'], async (re
   const data = DAILY_REPORTS[useIndex];
   const summary = summarizeDaily(data);
   const flex = buildDailySummaryFlex(summary);
-  const to = process.env.DAILY_SUMMARY_TO || process.env.AI_TEST_RECIPIENT || process.env.SUPER_ADMIN_LINE_USER_ID || '';
-  if (!to) return res.status(400).json({ ok: false, error: 'missing recipient env DAILY_SUMMARY_TO/AI_TEST_RECIPIENT' });
+  const bodyTo = typeof req.body?.to === 'string' ? req.body.to.trim() : '';
+  const to = bodyTo || process.env.DAILY_SUMMARY_TO || process.env.AI_TEST_RECIPIENT || process.env.SUPER_ADMIN_LINE_USER_ID || '';
+  if (!to) {
+    if (req.accepts('json')) return res.status(400).json({ ok: false, error: 'missing recipient env DAILY_SUMMARY_TO/AI_TEST_RECIPIENT' });
+    return res.redirect('/admin/ai');
+  }
   try {
     await pushLineMessage(to, [flex]);
     track('push_daily_summary_mock', { index: useIndex, date: data.date, sites: data.sites.length, pos: summary.pos_sites, neg: summary.neg_sites, to });
-    res.json({ ok: true, sent: true, index: useIndex, next: getReportIndex() });
+    if (req.accepts('json')) return res.json({ ok: true, sent: true, index: useIndex, next: getReportIndex() });
+    return res.redirect('/admin/ai');
   } catch (err) {
-    res.status(500).json({ ok: false, error: err?.message || 'push failed' });
+    if (req.accepts('json')) return res.status(500).json({ ok: false, error: err?.message || 'push failed' });
+    return res.redirect('/admin/ai');
   }
 });
 

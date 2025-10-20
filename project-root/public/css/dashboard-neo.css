@@ -180,6 +180,14 @@ body.app-shell.use-fullwidth .control-grid {
   margin-inline: auto;
 }
 
+/* Force two columns for certain sections */
+.control-grid.two-col {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 960px) {
+  .control-grid.two-col { grid-template-columns: minmax(0, 1fr); }
+}
+
 body.app-shell.use-fullwidth .dashboard-subnav__item {
   flex: 0 1 200px;
   justify-content: center;

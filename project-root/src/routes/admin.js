@@ -2187,10 +2187,16 @@ router.post('/tools/purge', requireAuth, async (req, res) => {
 
 router.get('/tools/send-daily', requireAuth, async (req, res) => {
   const companies = await Company.find().lean();
+  const defaultCompanyId = companies[0]?._id?.toString() || '';
+  const selectedCompanyId = String(req.query.companyId || defaultCompanyId);
+  const members = selectedCompanyId
+    ? await Member.find({ companyId: selectedCompanyId, active: true }).lean()
+    : [];
   res.render('tools/send_daily', {
     companies,
+    members,
     result: null,
-    form: { companyId: companies[0]?._id?.toString() || '', date: dayjs().format('YYYY-MM-DD') },
+    form: { companyId: selectedCompanyId, date: dayjs().format('YYYY-MM-DD'), to: '' },
     title: 'Send Daily (Manual)',
     active: 'tools',
   });
@@ -2283,9 +2289,12 @@ router.post('/settings/procurement/snapshot', requireAuth, async (req, res) => {
 router.post('/tools/send-daily', requireAuth, async (req, res) => {
   const companies = await Company.find().lean();
   const { companyId, date } = req.body || {};
+  const toRaw = req.body?.to;
+  const to = Array.isArray(toRaw) ? (toRaw.find((v) => v && String(v).trim()) || '').trim() : (toRaw || '').trim();
   if (!companyId || !date) {
     return res.render('tools/send_daily', {
       companies,
+      members: await Member.find({ companyId, active: true }).lean(),
       result: { ok: false, error: 'กรุณาเลือกบริษัทและวันที่' },
       form: req.body,
       title: 'Send Daily (Manual)',
@@ -2302,7 +2311,10 @@ router.post('/tools/send-daily', requireAuth, async (req, res) => {
     const members = await Member.find({ companyId, active: true, lineUserId: { $ne: '' } }).lean();
 
     const sent = [];
-    for (const m of members) {
+    const targets = (typeof to === 'string' && to)
+      ? [{ lineUserId: to, displayName: 'Direct' }]
+      : members;
+    for (const m of targets) {
       try {
         const prefix = (reason !== 'exact')
           ? `ℹ️ (${reason === 'same-month'
@@ -2318,8 +2330,9 @@ router.post('/tools/send-daily', requireAuth, async (req, res) => {
 
     return res.render('tools/send_daily', {
       companies,
+      members: await Member.find({ companyId, active: true }).lean(),
       result: { ok: true, sent, preview: message, picked, reason },
-      form: { companyId, date: picked },
+      form: { companyId, date: picked, to },
       title: 'Send Daily (Manual)',
       active: 'tools',
     });
@@ -2327,6 +2340,7 @@ router.post('/tools/send-daily', requireAuth, async (req, res) => {
     console.error('[TOOLS SEND ERROR]', err);
     return res.render('tools/send_daily', {
       companies,
+      members: await Member.find({ companyId, active: true }).lean(),
       result: { ok: false, error: err.message || String(err) },
       form: req.body,
       title: 'Send Daily (Manual)',

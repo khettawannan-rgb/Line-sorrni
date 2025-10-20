@@ -20,7 +20,7 @@
     </div>
   </header>
 
-  <div class="control-grid">
+  <div class="control-grid two-col">
     <article class="panel card" data-collapsible>
       <header class="panel__header">
         <div>
@@ -163,7 +163,7 @@
     </article>
   </div>
 
-  <div class="control-grid mt-3">
+  <div class="control-grid two-col mt-3">
     <article class="panel card" data-collapsible>
       <header class="panel__header">
         <div>
@@ -173,6 +173,7 @@
         <div class="panel__actions" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
           <button class="btn" id="btnPreviewDailyFlex" type="button">Preview Flex</button>
           <form method="post" action="/admin/ai/mock/daily/send" style="display:inline-flex; gap:8px; align-items:center;">
+            <input name="to" placeholder="LINE user/group id (optional)" style="min-width:220px" />
             <button class="btn primary" type="submit">Send Daily Summary (Mock)</button>
           </form>
           <form method="post" action="/admin/ai/mock/daily/reset" style="display:inline-flex; gap:8px; align-items:center;">
@@ -182,7 +183,10 @@
         </div>
       </header>
       <div class="panel__body">
-        <pre class="code" id="daily-flex-pre"><%= JSON.stringify(dailyFlex, null, 2) %></pre>
+        <div data-code-collapsible data-collapsed="true">
+          <button class="btn ghost small" type="button" data-code-toggle>Show JSON</button>
+          <pre class="code" id="daily-flex-pre"><%= JSON.stringify(dailyFlex, null, 2) %></pre>
+        </div>
       </div>
     </article>
 
@@ -198,7 +202,10 @@
         </form>
       </header>
       <div class="panel__body">
-        <pre class="code"><%= JSON.stringify(preview.weatherFlex, null, 2) %></pre>
+        <div data-code-collapsible data-collapsed="true">
+          <button class="btn ghost small" type="button" data-code-toggle>Show JSON</button>
+          <pre class="code"><%= JSON.stringify(preview.weatherFlex, null, 2) %></pre>
+        </div>
       </div>
     </article>
 
@@ -214,7 +221,10 @@
         </form>
       </header>
       <div class="panel__body">
-        <pre class="code"><%= JSON.stringify(poFlex, null, 2) %></pre>
+        <div data-code-collapsible data-collapsed="true">
+          <button class="btn ghost small" type="button" data-code-toggle>Show JSON</button>
+          <pre class="code"><%= JSON.stringify(poFlex, null, 2) %></pre>
+        </div>
       </div>
     </article>
 
@@ -230,12 +240,15 @@
         </form>
       </header>
       <div class="panel__body">
-        <pre class="code"><%= JSON.stringify(preview.summaryFlex, null, 2) %></pre>
+        <div data-code-collapsible data-collapsed="true">
+          <button class="btn ghost small" type="button" data-code-toggle>Show JSON</button>
+          <pre class="code"><%= JSON.stringify(preview.summaryFlex, null, 2) %></pre>
+        </div>
       </div>
     </article>
   </div>
 
-  <div class="control-grid mt-3">
+  <div class="control-grid two-col mt-3">
     <article class="panel card" data-collapsible>
       <header class="panel__header">
         <div>
@@ -248,7 +261,10 @@
         </form>
       </header>
       <div class="panel__body">
-        <pre class="code"><%= JSON.stringify(preview.tasksFlex, null, 2) %></pre>
+        <div data-code-collapsible data-collapsed="true">
+          <button class="btn ghost small" type="button" data-code-toggle>Show JSON</button>
+          <pre class="code"><%= JSON.stringify(preview.tasksFlex, null, 2) %></pre>
+        </div>
       </div>
     </article>
 
@@ -264,7 +280,10 @@
         </form>
       </header>
       <div class="panel__body">
-        <pre class="code"><%= JSON.stringify(preview.chatFlex, null, 2) %></pre>
+        <div data-code-collapsible data-collapsed="true">
+          <button class="btn ghost small" type="button" data-code-toggle>Show JSON</button>
+          <pre class="code"><%= JSON.stringify(preview.chatFlex, null, 2) %></pre>
+        </div>
       </div>
     </article>
 
@@ -280,7 +299,10 @@
         </form>
       </header>
       <div class="panel__body">
-        <pre class="code"><%= preview.cdpText %></pre>
+        <div data-code-collapsible data-collapsed="true">
+          <button class="btn ghost small" type="button" data-code-toggle>Show JSON</button>
+          <pre class="code"><%= preview.cdpText %></pre>
+        </div>
       </div>
     </article>
   </div>
@@ -298,7 +320,10 @@
           <li>
             <strong><%= log.type %></strong>
             <div class="muted"><%= new Date(log.time).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) %></div>
-            <div style="margin-top:6px"><pre class="code"><%= JSON.stringify(log, null, 2) %></pre></div>
+            <div style="margin-top:6px" data-code-collapsible data-collapsed="true">
+              <button class="btn ghost small" type="button" data-code-toggle>Show JSON</button>
+              <pre class="code"><%= JSON.stringify(log, null, 2) %></pre>
+            </div>
           </li>
         <% }) %>
         <% if (!(chatLog||[]).length) { %>

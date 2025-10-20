@@ -28,6 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initCollapsiblePanels();
   initDashboardAnchors();
   initMockDailySummaryControls();
+  initLiveSelectSearch();
+  initLiveTableSearch();
+  initCodeToggles();
 });
 
 window.addEventListener('resize', debounce(setupTopbarHeight, 150));
@@ -1505,6 +1508,115 @@ function initMockDailySummaryControls() {
     } catch (err) {
       // no-op
     }
+  });
+}
+
+// ---- Live search for selects (auto-enable when many options) ----
+function initLiveSelectSearch() {
+  const MIN_OPTIONS = 8;
+  const selects = Array.from(document.querySelectorAll('select')).filter(
+    (el) => !el.hasAttribute('data-no-live-search') && el.options && el.options.length >= MIN_OPTIONS,
+  );
+  if (!selects.length) return;
+
+  selects.forEach((select) => {
+    // Avoid duplicate search input
+    if (select.previousElementSibling && select.previousElementSibling.classList?.contains('select-search')) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'field';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'ค้นหา…';
+    input.className = 'select-search';
+    input.style.marginBottom = '6px';
+    select.parentNode.insertBefore(wrap, select);
+    wrap.appendChild(input);
+    wrap.appendChild(select);
+
+    const normalize = (s) => String(s || '').toLowerCase().trim();
+    const filter = () => {
+      const q = normalize(input.value);
+      const opts = Array.from(select.options);
+      if (!q) {
+        opts.forEach((opt) => (opt.hidden = false));
+        return;
+      }
+      opts.forEach((opt) => {
+        const label = normalize(opt.textContent + ' ' + opt.value);
+        opt.hidden = !label.includes(q);
+      });
+    };
+
+    input.addEventListener('input', filter);
+  });
+}
+
+// ---- Live search for tables (first table or those with data-live-search) ----
+function initLiveTableSearch() {
+  const wrappers = document.querySelectorAll('.table-wrap[data-live-search], .table-wrap.auto-live-search');
+  let list = Array.from(wrappers);
+  if (!list.length) {
+    // Heuristic: single large table on page
+    const firstTableWrap = document.querySelector('.table-wrap');
+    const rowCount = document.querySelectorAll('.table tbody tr').length;
+    if (firstTableWrap && rowCount > 12) list = [firstTableWrap];
+  }
+  if (!list.length) return;
+
+  list.forEach((wrap) => {
+    if (wrap.querySelector('.table-live-search')) return;
+    const box = document.createElement('div');
+    box.style.display = 'flex';
+    box.style.justifyContent = 'flex-end';
+    box.style.padding = '8px 10px';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'ค้นหาในตาราง…';
+    input.className = 'table-live-search';
+    input.style.minWidth = '220px';
+    box.appendChild(input);
+    wrap.parentNode.insertBefore(box, wrap);
+
+    const rows = Array.from(wrap.querySelectorAll('tbody tr'));
+    const normalize = (s) => String(s || '').toLowerCase().trim();
+    input.addEventListener('input', () => {
+      const q = normalize(input.value);
+      if (!q) {
+        rows.forEach((tr) => (tr.style.display = ''));
+        return;
+      }
+      rows.forEach((tr) => {
+        const text = normalize(tr.textContent);
+        tr.style.display = text.includes(q) ? '' : 'none';
+      });
+    });
+  });
+}
+
+function initCodeToggles() {
+  const blocks = document.querySelectorAll('[data-code-collapsible]');
+  if (!blocks.length) return;
+  blocks.forEach((wrap) => {
+    const btn = wrap.querySelector('[data-code-toggle]');
+    const pre = wrap.querySelector('pre');
+    if (!btn || !pre) return;
+    const set = (collapsed) => {
+      if (collapsed) {
+        pre.style.display = 'none';
+        btn.textContent = 'Show JSON';
+      } else {
+        pre.style.display = '';
+        btn.textContent = 'Hide JSON';
+      }
+      wrap.dataset.collapsed = collapsed ? 'true' : 'false';
+    };
+    // initial
+    set(wrap.getAttribute('data-collapsed') === 'true');
+    btn.addEventListener('click', () => {
+      const now = wrap.dataset.collapsed === 'true';
+      set(!now);
+    });
   });
 }
 
