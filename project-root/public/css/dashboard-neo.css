@@ -429,6 +429,9 @@ body.app-shell.use-fullwidth .progress-track span {
   background: linear-gradient(90deg, #0ea5e9 0%, #08b86f 100%);
 }
 
+/* Utility: make a card span two columns inside control-grid */
+.control-grid .span-2 { grid-column: 1 / -1; }
+
 body.app-shell.use-fullwidth .company-rank,
 body.app-shell.use-fullwidth .product-index {
   background: rgba(8, 184, 111, 0.12);
