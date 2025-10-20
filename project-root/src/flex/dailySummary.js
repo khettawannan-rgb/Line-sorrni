@@ -29,6 +29,20 @@ function chartUrl(points, primary, plan) {
   return `https://quickchart.io/chart?w=640&h=200&c=${encoded}`;
 }
 
+import { liffLink } from '../utils/liff.js';
+
+function buildAbsolute(path) {
+  const base = (process.env.BASE_URL || '').replace(/\/$/, '');
+  if (process.env.LIFF_ID) {
+    try {
+      return liffLink(path);
+    } catch (_) {}
+  }
+  if (base) return `${base}${path}`;
+  // Last-resort valid https to avoid LINE URI validation failure
+  return 'https://line.me';
+}
+
 export function buildDailySummaryFlex(summary) {
   const c = ci();
   const bubbles = [];
@@ -69,7 +83,7 @@ export function buildDailySummaryFlex(summary) {
       ] },
       footer: { type: 'box', layout: 'horizontal', spacing: 'sm', contents: [
         { type: 'button', style: 'primary', color: c.primary, action: { type: 'uri', label: 'ดูแผนที่', uri: `https://maps.google.com/?q=${s.lat},${s.lng}&z=15` } },
-        { type: 'button', style: 'secondary', action: { type: 'uri', label: 'ดูรูปวันนี้ (Mock)', uri: '/liff/index.html?game=sign' } },
+        { type: 'button', style: 'secondary', action: { type: 'uri', label: 'ดูรูปวันนี้ (Mock)', uri: buildAbsolute('/liff/index.html?game=sign') } },
       ] },
     });
   });
