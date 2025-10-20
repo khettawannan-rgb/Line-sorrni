@@ -20,7 +20,7 @@ function setSessionForMember(req, member) {
 
 router.get('/start', (req, res) => {
   const redirect = sanitizeRedirect(req.query.redirect || '/admin');
-  const liffId = process.env.LIFF_ID || '';
+  const liffId = process.env.LIFF_ID || process.env.LIFF_ID_AI || '';
   if (!liffId) {
     return res.status(500).render('error', {
       title: 'LINE Login misconfigured',

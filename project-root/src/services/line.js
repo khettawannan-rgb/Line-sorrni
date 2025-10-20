@@ -143,7 +143,8 @@ export async function pushLineMessage(to, messageOrMessages) {
     const base = (process.env.BASE_URL || '').replace(/\/$/, '');
     if (u.startsWith('/')) {
       try {
-        if (process.env.LIFF_ID) return liffLink(u);
+        // Try LIFF first (supports LIFF_ID or LIFF_ID_AI via liffLink util)
+        return liffLink(u);
       } catch {}
       if (base) return base + u;
     }

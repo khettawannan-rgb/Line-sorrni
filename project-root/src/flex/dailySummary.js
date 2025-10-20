@@ -33,11 +33,9 @@ import { liffLink } from '../utils/liff.js';
 
 function buildAbsolute(path) {
   const base = (process.env.BASE_URL || '').replace(/\/$/, '');
-  if (process.env.LIFF_ID) {
-    try {
-      return liffLink(path);
-    } catch (_) {}
-  }
+  try {
+    return liffLink(path);
+  } catch (_) {}
   if (base) return `${base}${path}`;
   // Last-resort valid https to avoid LINE URI validation failure
   return 'https://line.me';

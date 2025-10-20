@@ -17,7 +17,7 @@ export async function onTextGameMenu(ev) {
     }
 
     touchCooldown(userId, 'game_menu', 30_000);
-    const liffId = process.env.LIFF_ID_GAMES || process.env.LIFF_ID || '';
+    const liffId = process.env.LIFF_ID_GAMES || process.env.LIFF_ID || process.env.LIFF_ID_AI || '';
     const pickBase = () => {
       const cand = (
         process.env.BASE_URL ||

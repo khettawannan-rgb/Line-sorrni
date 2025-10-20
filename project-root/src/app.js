@@ -32,10 +32,10 @@ const PORT = Number(process.env.PORT || 10000);
 const PRIMARY_MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/line-erp-notifier';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret';
 const BASE_URL = (process.env.BASE_URL || '').replace(/\/$/, '');
-const LIFF_ID = process.env.LIFF_ID || '';
+const LIFF_ID = process.env.LIFF_ID || process.env.LIFF_ID_AI || '';
 const TRUSTED_ORIGINS = [BASE_URL, 'https://liff.line.me'].filter(Boolean);
 
-if (process.env.LIFF_ID) {
+try {
   try {
     console.log('LIFF_BASE   =', liffLink());
     console.log('LIFF_PR     =', liffLink('/admin/pr'));
@@ -43,7 +43,7 @@ if (process.env.LIFF_ID) {
   } catch (err) {
     console.warn('[LIFF] Failed to log LIFF links:', err.message);
   }
-}
+} catch {}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -274,7 +274,7 @@ app.get('/', (req, res) => {
 app.get('/liff-open-admin', (req, res) => {
   const rawTo = typeof req.query.to === 'string' ? req.query.to : '';
   const target = rawTo.startsWith('/') ? rawTo : '/admin';
-  const liffId = process.env.LIFF_ID || '';
+  const liffId = process.env.LIFF_ID || process.env.LIFF_ID_AI || '';
   const baseUrl = BASE_URL || '';
   res.set('Cache-Control', 'no-store');
   res.send(`<!doctype html><html><head>
