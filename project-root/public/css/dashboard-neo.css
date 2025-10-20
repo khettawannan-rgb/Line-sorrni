@@ -181,11 +181,19 @@ body.app-shell.use-fullwidth .control-grid {
 }
 
 /* Force two columns for certain sections */
+/* Force two columns for certain sections, with nicer spacing */
 .control-grid.two-col {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(18px, 2.4vw, 32px);
 }
 @media (max-width: 960px) {
   .control-grid.two-col { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Ensure override when using fullwidth shell */
+body.app-shell.use-fullwidth .control-grid.two-col {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(18px, 2.4vw, 32px);
 }
 
 body.app-shell.use-fullwidth .dashboard-subnav__item {
