@@ -254,7 +254,12 @@ app.get('/health/line', async (req, res) => {
 });
 
 // ===== Routes =====
+// Root: allow a simple 200 for platforms that expect success on '/'
+const SIMPLE_ROOT_HEALTH = String(process.env.SIMPLE_ROOT_HEALTH || '').toLowerCase() === 'true';
 app.get('/', (req, res) => {
+  if (SIMPLE_ROOT_HEALTH) {
+    return res.status(200).send('ok');
+  }
   if (!req.session?.user) {
     const target = BASE_URL ? `${BASE_URL}/admin/login` : '/admin/login'; // updated to use BASE_URL
     return res.redirect(target);
