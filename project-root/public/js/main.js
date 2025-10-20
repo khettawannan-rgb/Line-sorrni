@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initLiveSelectSearch();
   initLiveTableSearch();
   initCodeToggles();
+  initDataWidthBars();
 });
 
 window.addEventListener('resize', debounce(setupTopbarHeight, 150));
@@ -1617,6 +1618,16 @@ function initCodeToggles() {
       const now = wrap.dataset.collapsed === 'true';
       set(!now);
     });
+  });
+}
+
+function initDataWidthBars() {
+  const nodes = document.querySelectorAll('[data-width]');
+  if (!nodes.length) return;
+  nodes.forEach((el) => {
+    const raw = Number(el.getAttribute('data-width') || 0);
+    const w = Math.max(0, Math.min(raw, 100));
+    el.style.width = w + '%';
   });
 }
 

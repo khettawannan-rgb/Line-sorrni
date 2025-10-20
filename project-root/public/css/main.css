@@ -2010,6 +2010,7 @@ textarea:focus {
   display: block;
   height: 100%;
   background: linear-gradient(90deg, var(--primary-600), var(--primary));
+  width: calc(var(--w, 0) * 1%);
 }
 
 .progress-list li {
@@ -2035,6 +2036,7 @@ textarea:focus {
   display: block;
   height: 100%;
   background: linear-gradient(90deg, #22c55e, #16a34a);
+  width: calc(var(--w, 0) * 1%);
 }
 
 .profile-card {
