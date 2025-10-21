@@ -1,10 +1,17 @@
 // project-root/src/services/reportImages.js
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 function resolveImgDir() {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
   const candidates = [
+    // 1) Relative to src (same base as express static in app.js)
+    path.resolve(__dirname, '..', '..', 'public', 'img-report'),
+    // 2) Repo layout when CWD is repo root
     path.resolve('project-root/public/img-report'),
+    // 3) When app is run with CWD at project-root
     path.resolve('public/img-report'),
   ];
   for (const p of candidates) {
