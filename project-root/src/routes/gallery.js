@@ -6,14 +6,29 @@ import fs from 'node:fs';
 const router = Router();
 
 function listImages() {
-  const dirs = [path.resolve('project-root/public/img-report'), path.resolve('public/img-report')];
-  let dir = null;
-  for (const d of dirs) {
-    try { if (fs.existsSync(d) && fs.statSync(d).isDirectory()) { dir = d; break; } } catch {}
+  const roots = [path.resolve('project-root/public/img-report'), path.resolve('public/img-report')];
+  let root = null;
+  for (const d of roots) {
+    try { if (fs.existsSync(d) && fs.statSync(d).isDirectory()) { root = d; break; } } catch {}
   }
-  if (!dir) return [];
-  const files = fs.readdirSync(dir).filter((f) => /\.(jpe?g|png|gif|webp)$/i.test(f));
-  return files.map((f) => ({ name: f, url: `/static/img-report/${encodeURIComponent(f)}` }));
+  if (!root) return [];
+  const out = [];
+  const exts = /\.(jpe?g|png|gif|webp)$/i;
+  const walk = (abs, rel = '') => {
+    let entries = [];
+    try { entries = fs.readdirSync(abs, { withFileTypes: true }); } catch {}
+    for (const ent of entries) {
+      const absChild = path.join(abs, ent.name);
+      const relChild = rel ? path.posix.join(rel.replaceAll('\\','/'), ent.name) : ent.name;
+      if (ent.isDirectory()) walk(absChild, relChild);
+      else if (exts.test(ent.name)) {
+        const url = `/static/img-report/${encodeURIComponent(relChild)}`.replace(/%2F/g, '/');
+        out.push({ name: relChild, url });
+      }
+    }
+  };
+  walk(root, '');
+  return out;
 }
 
 router.get('/gallery/photos', (req, res) => {

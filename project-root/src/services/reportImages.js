@@ -26,19 +26,34 @@ export function loadImagePool() {
   const dir = resolveImgDir();
   const pool = { all: [], road: [], bridge: [], clear: [], misc: [] };
   if (!dir) return pool;
-  const files = fs.readdirSync(dir).filter((f) => /\.(jpe?g|png|gif|webp)$/i.test(f));
-  const classify = (name) => {
-    const n = name.toLowerCase();
+  const classify = (nameOrPath) => {
+    const n = String(nameOrPath || '').toLowerCase();
     if (/(road|ถนน|asphalt|ยาง)/i.test(n)) return 'road';
     if (/(bridge|สะพาน)/i.test(n)) return 'bridge';
     if (/(clear|clearing|เคลียร์|รื้อ|ปรับพื้นที่)/i.test(n)) return 'clear';
     return 'misc';
   };
-  for (const f of files) {
-    const cat = classify(f);
-    pool.all.push(f);
-    pool[cat].push(f);
-  }
+  const exts = /\.(jpe?g|png|gif|webp)$/i;
+  const relRoot = 'img-report';
+  const walk = (absDir, rel = '') => {
+    let entries = [];
+    try {
+      entries = fs.readdirSync(absDir, { withFileTypes: true });
+    } catch {}
+    for (const ent of entries) {
+      const abs = path.join(absDir, ent.name);
+      const relPath = rel ? path.posix.join(rel.replaceAll('\\', '/'), ent.name) : ent.name;
+      if (ent.isDirectory()) {
+        walk(abs, relPath);
+      } else if (exts.test(ent.name)) {
+        const logical = `${relRoot}/${relPath}`.replaceAll('\\', '/');
+        const cat = classify(logical);
+        pool.all.push(logical);
+        pool[cat].push(logical);
+      }
+    }
+  };
+  walk(dir, '');
   return pool;
 }
 
