@@ -274,12 +274,12 @@
     <article class="panel card" data-collapsible>
       <header class="panel__header">
         <div>
-          <h3>Preview · Daily Summary</h3>
-          <p class="muted">สรุปประจำวันพร้อมคำแนะนำ</p>
+      <h3>Preview · I/O Summary</h3>
+          <p class="muted">รายงานขาเข้า/ขาออก + คำแนะนำ (ข้อความ)</p>
         </div>
         <form method="post" action="/admin/ai/send/summary">
           <input name="to" placeholder="LINE user/group id (optional)" style="min-width:260px" />
-          <button class="btn primary" type="submit">ส่งสรุปประจำวัน (Mock)</button>
+          <button class="btn primary" type="submit">ส่ง I/O Summary (Mock)</button>
         </form>
         <% if ((audiences||[]).length) { %>
         <form method="post" action="/admin/ai/send/summary" style="display:inline-flex; gap:8px; align-items:center;">

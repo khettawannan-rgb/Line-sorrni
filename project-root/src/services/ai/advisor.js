@@ -83,51 +83,72 @@ export function generateDailySummary({ weather = [], materials = [], location = 
 }
 
 export function buildDailySummaryFlex({ weather = [], materials = [], location = {} } = {}) {
-  const dateText = new Date().toLocaleDateString('th-TH', { dateStyle: 'medium' });
-  const site = location?.name || 'ไซต์งาน';
-  const { worst } = analyzeWeatherSlots(weather);
-  const wxText = worst
-    ? `${worst.time} · ${worst.condition} · ฝน ${worst.rainProb || 0}%`
-    : '—';
-  const topMats = (materials || [])
-    .slice(0, 4)
-    .map((m) => `${m.name || '-'} ${Number(m.stockTons || 0).toLocaleString('th-TH')} ตัน${m.moisture != null ? ` • ชื้น ${m.moisture}%` : ''}`);
+  const d = new Date();
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = String(d.getFullYear());
+  const dateSlash = `${dd}/${mm}/${yyyy}`;
+  const { worst, advice } = analyzeWeatherSlots(weather);
+
+  // Build inbound/outbound mock from materials
+  const byQty = [...(materials || [])].sort((a, b) => (Number(b.stockTons || 0) - Number(a.stockTons || 0)));
+  const pickIcon = (name = '') => {
+    const n = String(name).toLowerCase();
+    if (/(หิน|stone|aggregate|3\/4)/.test(n)) return '🪨';
+    if (/(ฝุ่น|dust|fine)/.test(n)) return '🌫️';
+    if (/(ทราย|sand)/.test(n)) return '🏖️';
+    return '📦';
+  };
+  const inboundItems = byQty.slice(0, 2).map((m) => `${pickIcon(m.name)} ${m.name}: ${Number(m.stockTons || 0).toLocaleString('th-TH')} ตัน`);
+  const inboundTotal = byQty.slice(0, 2).reduce((a, m) => a + Number(m.stockTons || 0), 0);
+  const outboundTons = Math.max(80, Math.round(inboundTotal * 1.4));
+
+  const project = 'จ้างเหมาทำการขยายช่องจราจรจาก 2 เป็น 4 ช่องทางจราจร ทล.ที่ 12 สุพรรณบุรี';
+  const place1 = location?.name || 'ทางหลวงหมายเลข 311';
+  const place2 = 'ตอนควบคุม 0300 ตอน บ้านม้า – ชัยนาท';
+  const span = 'ระยะทาง 1.455 กม. / พื้นที่ 31,485 ตร.ม.';
+  const moreUrl = process.env.IO_MORE_URL || process.env.DAILY_IO_URL || 'https://app.nilasolutions.co/hmp/cm84i3gve7jm0cl01ayd6f2pj/inventory/analysis/weighbridge';
+
+  const lines = [
+    'ทดสอบบอทรายงานประจำวัน',
+    `📌 รายงานประจำวัน ${dateSlash}`,
+    '',
+    '📥 ขาเข้า (วัตถุดิบ)',
+    ...(inboundItems.length ? inboundItems : ['—']),
+    `รวมขาเข้า : ${inboundTotal.toLocaleString('th-TH')} ตัน`,
+    '',
+    '📤 ขาออก',
+    `🛣️ แอสฟัลต์ติกคอนกรีต : ${outboundTons.toLocaleString('th-TH')} ตัน`,
+    '',
+    `➡️ โครงการ: ${project}`,
+    '',
+    `📍 สถานที่: ${place1}`,
+    place2,
+    `📏 ${span}`,
+    '',
+    '💡 คำแนะนำ',
+    advice,
+    '',
+    '🔗 ดูข้อมูลเพิ่มเติมได้ที่ :',
+    moreUrl,
+  ];
 
   return {
     type: 'flex',
-    altText: 'สรุปประจำวัน',
+    altText: 'สรุปรายงานประจำวัน',
     contents: {
       type: 'bubble',
-      header: {
-        type: 'box',
-        layout: 'vertical',
-        contents: [
-          { type: 'text', text: '📣 Daily Summary', weight: 'bold', size: 'lg' },
-          { type: 'text', text: dateText, size: 'sm', color: '#888888' },
-          { type: 'text', text: site, size: 'sm', color: '#888888' },
-        ],
-      },
       body: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'md',
-        contents: [
-          { type: 'text', text: 'สภาพอากาศ', weight: 'bold', size: 'sm' },
-          { type: 'text', text: wxText, size: 'sm', color: '#475569' },
-          { type: 'separator', margin: 'md' },
-          { type: 'text', text: 'วัสดุ/คงเหลือ', weight: 'bold', size: 'sm', margin: 'md' },
-          ...(
-            topMats.length
-              ? topMats.map((t) => ({ type: 'text', text: `• ${t}`, size: 'sm', color: '#475569', wrap: true }))
-              : [{ type: 'text', text: '—', size: 'sm', color: '#9ca3af' }]
-          ),
-        ],
+        type: 'box', layout: 'vertical', spacing: 'sm', contents: (
+          lines.map((t) => ({ type: 'text', text: t, wrap: true, size: 'sm' }))
+        ),
       },
       footer: {
         type: 'box', layout: 'horizontal', spacing: 'sm', contents: [
-          { type: 'button', style: 'primary', action: { type: 'message', label: 'ส่งสรุปอีกครั้ง', text: 'ขอสรุปประจำวัน' } },
-          { type: 'spacer', size: 'sm' },
-        ] },
+          { type: 'button', style: 'primary', action: { type: 'uri', label: 'เปิดรายงาน', uri: moreUrl } },
+          { type: 'button', style: 'secondary', action: { type: 'message', label: 'ขอคำแนะนำ', text: 'ขอคำแนะนำเพิ่มเติม' } },
+        ],
+      },
     },
   };
 }

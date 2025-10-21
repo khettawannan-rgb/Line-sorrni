@@ -39,6 +39,8 @@ import { buildWeatherAdvice } from '../services/advice/weather-advice.js';
 import { buildFlexWeatherAdvice } from '../line/buildFlexWeatherAdvice.js';
 import { buildStockAlert } from '../services/stock/stock-alert.js';
 import { buildFlexStockAlert } from '../line/buildFlexStockAlert.js';
+import { buildPoStatusMockFlex, buildIoSummaryListFlex } from '../services/mock/menuMock.js';
+import { nextIndex } from '../mock/state.js';
 
 const router = Router();
 
@@ -649,6 +651,12 @@ async function handleText(ev) {
   }
 
   if (text === 'สถานะ' || text === 'เช็คสถานะ') {
+    const useMock = String(process.env.MENU_MOCK_MODE || 'true').toLowerCase() === 'true';
+    if (useMock) {
+      const idx = nextIndex('menu.po', 10);
+      const flex = buildPoStatusMockFlex(300000 + idx);
+      return replyFlex(ev.replyToken, 'สถานะใบสั่งซื้อ (Mock)', flex.contents);
+    }
     if (superAdmin && !/^เช็คสถานะใบสั่งซื้อ/i.test(text)) {
       return replyCompanyStatusMenu(ev);
     }
@@ -684,6 +692,14 @@ async function handleText(ev) {
   }
 
   if (text.startsWith('สรุป')) {
+    const useMock = String(process.env.MENU_MOCK_MODE || 'true').toLowerCase() === 'true';
+    if (useMock) {
+      // Determine range keyword
+      const kw = /เมื่อวาน/.test(text) ? 'yesterday' : /สัปดาห์/.test(text) ? 'week' : /เดือน/.test(text) ? 'month' : 'today';
+      const idx = nextIndex(`menu.summary.${kw}`, 10);
+      const flex = buildIoSummaryListFlex(kw, 400000 + idx);
+      return replyFlex(ev.replyToken, 'สรุปรายงาน (Mock)', flex.contents);
+    }
     const range = getDateRangeFromKeyword(text);
     if (!range) {
       return replyText(ev.replyToken, 'เช่น "สรุป วันนี้" หรือ "สรุป 10/09/2025"');
