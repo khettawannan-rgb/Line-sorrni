@@ -64,7 +64,9 @@ export function buildDailySummaryFlex(summary, opts = {}) {
       ...(summary.portfolio_notes?.negative_notes?.length ? [{ type: 'text', text: `⚠️ ${summary.portfolio_notes.negative_notes[0]}`, size: 'sm', color: c.warn, wrap: true }] : []),
       ...(overviewImages.length ? [{
         type: 'box', layout: 'horizontal', spacing: 'sm', margin: 'md', contents: overviewImages.slice(0, 3).map((url) => ({
-          type: 'image', url, size: 'full', aspectMode: 'cover', aspectRatio: '4:3'
+          type: 'box', layout: 'vertical', flex: 1, contents: [
+            { type: 'image', url, size: 'full', aspectMode: 'cover', aspectRatio: '4:3' },
+          ],
         }))
       }] : []),
     ] },
@@ -86,17 +88,31 @@ export function buildDailySummaryFlex(summary, opts = {}) {
         { type: 'text', text: s.risks?.length ? `ความเสี่ยง: ${s.risks.join(' • ')}` : 'ไม่มีความเสี่ยงเด่น', size: 'sm', color: c.warn, wrap: true, margin: 'sm' },
         { type: 'image', url: sChart, size: 'full', aspectRatio: '6:2', margin: 'md' },
         ...(Array.isArray(siteImagesMap[s.site_id]) && siteImagesMap[s.site_id].length ? [{
-          type: 'box', layout: 'horizontal', spacing: 'sm', margin: 'md', contents: siteImagesMap[s.site_id].slice(0, 2).map((url) => ({
-            type: 'image', url, size: 'full', aspectMode: 'cover', aspectRatio: '4:3'
+          type: 'box', layout: 'horizontal', spacing: 'sm', margin: 'md', contents: siteImagesMap[s.site_id].slice(0, 3).map((url) => ({
+            type: 'box', layout: 'vertical', flex: 1, contents: [
+              { type: 'image', url, size: 'full', aspectMode: 'cover', aspectRatio: '4:3' },
+            ],
           }))
         }] : []),
       ] },
       footer: { type: 'box', layout: 'horizontal', spacing: 'sm', contents: [
         { type: 'button', style: 'primary', color: c.primary, action: { type: 'uri', label: 'ดูแผนที่', uri: `https://maps.google.com/?q=${s.lat},${s.lng}&z=15` } },
-        { type: 'button', style: 'secondary', action: { type: 'uri', label: 'ดูรูปวันนี้ (Mock)', uri: buildAbsolute('/liff/index.html?game=sign') } },
+        { type: 'button', style: 'secondary', action: { type: 'uri', label: 'ดูเพิ่ม', uri: buildAbsolute(`/liff-open-admin?to=${encodeURIComponent(`/gallery/photos?site=${encodeURIComponent(s.site_id || '')}`)}`) } },
       ] },
     });
   });
+
+  // Add gallery link for overview as last bubble action (optional separate bubble not needed)
+  if (bubbles.length) {
+    // Inject a tiny footer action into first bubble via hero footer-like box at end
+    const first = bubbles[0];
+    if (first && first.body && Array.isArray(first.body.contents)) {
+      first.body.contents.push({ type: 'separator', margin: 'md' });
+      first.body.contents.push({ type: 'box', layout: 'horizontal', spacing: 'sm', contents: [
+        { type: 'button', style: 'secondary', action: { type: 'uri', label: 'ดูเพิ่ม (ทั้งหมด)', uri: buildAbsolute(`/liff-open-admin?to=${encodeURIComponent('/gallery/photos')}`) } },
+      ] });
+    }
+  }
 
   return { type: 'flex', altText: 'Daily Summary', contents: { type: 'carousel', contents: bubbles } };
 }

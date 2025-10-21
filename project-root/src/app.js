@@ -25,6 +25,7 @@ import adviceRouter from './routes/advice.js';
 import aiRouter from './routes/ai.js';
 import mockDailySummaryRouter from './routes/mockDailySummary.js';
 import cdpRouter from './routes/cdp.js';
+import galleryRouter from './routes/gallery.js';
 import checkSuperAdmin from './middleware/checkSuperAdmin.js';
 import viewHelpers from './middleware/viewHelpers.js';
 
@@ -320,6 +321,7 @@ app.use('/admin', adminRouter);
 app.use(aiRouter);
 app.use(mockDailySummaryRouter);
 app.use(cdpRouter);
+app.use(galleryRouter);
 
 // 404
 app.use((req, res) => res.status(404).send('Not Found'));

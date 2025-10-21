@@ -40,7 +40,7 @@ function abs(baseUrl, relPath) {
   return base ? `${base}${relPath}` : relPath;
 }
 
-export function chooseImagesForSummary(summary, pool, { baseUrl = '', perOverview = 3, perSite = 2 } = {}) {
+export function chooseImagesForSummary(summary, pool, { baseUrl = '', perOverview = 3, perSite = 3 } = {}) {
   const wrap = (fname) => abs(baseUrl, `/static/img-report/${encodeURIComponent(fname)}`);
   const pickRandom = (arr, n) => {
     const out = [];
@@ -67,4 +67,3 @@ export function chooseImagesForSummary(summary, pool, { baseUrl = '', perOvervie
 }
 
 export default { loadImagePool, chooseImagesForSummary };
-
