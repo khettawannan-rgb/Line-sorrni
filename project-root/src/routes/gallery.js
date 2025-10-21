@@ -41,10 +41,9 @@ router.get('/gallery/photos', (req, res) => {
   </head><body>
     <header><h1>${title}</h1></header>
     <main>
-      ${items.length ? `<section class="grid">${items.map(it => `<div class="card"><img loading="lazy" src="${it.url}" alt="${it.name}" /><div class="name">${it.name}</div></div>`).join('')}</section>` : `<p class="empty">ยังไม่มีรูปในโฟลเดอร์ <code>public/img-report</code></p>`}
+      ${items.length ? `<section class="grid">${items.map(it => `<div class="card"><a href="${it.url}" target="_blank" rel="noopener"><img loading="lazy" src="${it.url}" alt="${it.name}" /></a><div class="name">${it.name}</div></div>`).join('')}</section>` : `<p class="empty">ยังไม่มีรูปในโฟลเดอร์ <code>public/img-report</code></p>`}
     </main>
   </body></html>`);
 });
 
 export default router;
-

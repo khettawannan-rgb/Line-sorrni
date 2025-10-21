@@ -17,8 +17,9 @@ function currentReport(req) {
   const data = DAILY_REPORTS[idx % DAILY_REPORTS.length];
   const summary = summarizeDaily(data);
   const pool = loadImagePool();
-  const baseUrl = process.env.BASE_URL || (req ? `${(req.get('x-forwarded-proto') || req.protocol || 'https')}://${req.get('host')}` : '');
-  const picks = chooseImagesForSummary(summary, pool, { baseUrl, perOverview: 3, perSite: 2 });
+  const baseUrl = process.env.PUBLIC_IMAGE_BASE || process.env.BASE_URL || (req ? `${(req.get('x-forwarded-proto') || req.protocol || 'https')}://${req.get('host')}` : '');
+  const pathPrefix = process.env.PUBLIC_IMAGE_PREFIX || '/static';
+  const picks = chooseImagesForSummary(summary, pool, { baseUrl, pathPrefix, perOverview: 3, perSite: 3 });
   const flex = buildDailySummaryFlex(summary, { overviewImages: picks.overviewImages, siteImages: picks.siteImages });
   return { idx, summary, flex, date: data.date, siteCount: data.sites.length };
 }
@@ -34,8 +35,9 @@ router.post(['/mock/send-daily-summary', '/admin/ai/mock/daily/send'], async (re
   const data = DAILY_REPORTS[useIndex];
   const summary = summarizeDaily(data);
   const pool = loadImagePool();
-  const baseUrl = process.env.BASE_URL || `${(req.get('x-forwarded-proto') || req.protocol || 'https')}://${req.get('host')}`;
-  const picks = chooseImagesForSummary(summary, pool, { baseUrl, perOverview: 3, perSite: 2 });
+  const baseUrl = process.env.PUBLIC_IMAGE_BASE || process.env.BASE_URL || `${(req.get('x-forwarded-proto') || req.protocol || 'https')}://${req.get('host')}`;
+  const pathPrefix = process.env.PUBLIC_IMAGE_PREFIX || '/static';
+  const picks = chooseImagesForSummary(summary, pool, { baseUrl, pathPrefix, perOverview: 3, perSite: 3 });
   const flex = buildDailySummaryFlex(summary, { overviewImages: picks.overviewImages, siteImages: picks.siteImages });
   const bodyTo = typeof req.body?.to === 'string' ? req.body.to.trim() : '';
   const groupId = String(req.body.groupId || '').trim();
