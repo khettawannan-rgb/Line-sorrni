@@ -41,10 +41,12 @@ function buildAbsolute(path) {
   return 'https://line.me';
 }
 
-export function buildDailySummaryFlex(summary) {
+export function buildDailySummaryFlex(summary, opts = {}) {
   const c = ci();
   const bubbles = [];
   const ovChart = chartUrl(summary.portfolio_s_curve || [], c.primary, c.plan);
+  const overviewImages = Array.isArray(opts.overviewImages) ? opts.overviewImages : [];
+  const siteImagesMap = (opts && typeof opts.siteImages === 'object') ? opts.siteImages : {};
 
   bubbles.push({
     type: 'bubble',
@@ -60,6 +62,11 @@ export function buildDailySummaryFlex(summary) {
       { type: 'text', text: summary.top_risks?.length ? `ความเสี่ยง: ${summary.top_risks.join(' • ')}` : 'ไม่มีความเสี่ยงเด่น', size: 'sm', color: c.warn, wrap: true, margin: 'sm' },
       ...(summary.portfolio_notes?.positive_notes?.length ? [{ type: 'text', text: `✅ ${summary.portfolio_notes.positive_notes[0]}`, size: 'sm', color: c.good, wrap: true }] : []),
       ...(summary.portfolio_notes?.negative_notes?.length ? [{ type: 'text', text: `⚠️ ${summary.portfolio_notes.negative_notes[0]}`, size: 'sm', color: c.warn, wrap: true }] : []),
+      ...(overviewImages.length ? [{
+        type: 'box', layout: 'horizontal', spacing: 'sm', margin: 'md', contents: overviewImages.slice(0, 3).map((url) => ({
+          type: 'image', url, size: 'full', aspectMode: 'cover', aspectRatio: '4:3'
+        }))
+      }] : []),
     ] },
   });
 
@@ -78,6 +85,11 @@ export function buildDailySummaryFlex(summary) {
         { type: 'text', text: `เวลา: ${s.start_end_span}`, size: 'xs', color: '#64748b' },
         { type: 'text', text: s.risks?.length ? `ความเสี่ยง: ${s.risks.join(' • ')}` : 'ไม่มีความเสี่ยงเด่น', size: 'sm', color: c.warn, wrap: true, margin: 'sm' },
         { type: 'image', url: sChart, size: 'full', aspectRatio: '6:2', margin: 'md' },
+        ...(Array.isArray(siteImagesMap[s.site_id]) && siteImagesMap[s.site_id].length ? [{
+          type: 'box', layout: 'horizontal', spacing: 'sm', margin: 'md', contents: siteImagesMap[s.site_id].slice(0, 2).map((url) => ({
+            type: 'image', url, size: 'full', aspectMode: 'cover', aspectRatio: '4:3'
+          }))
+        }] : []),
       ] },
       footer: { type: 'box', layout: 'horizontal', spacing: 'sm', contents: [
         { type: 'button', style: 'primary', color: c.primary, action: { type: 'uri', label: 'ดูแผนที่', uri: `https://maps.google.com/?q=${s.lat},${s.lng}&z=15` } },

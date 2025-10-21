@@ -5,6 +5,7 @@ import path from 'node:path';
 import { loadMock, saveMock, appendChatLog, loadChatLog, getDefaultMock } from '../services/ai/mockStore.js';
 import { seedMockWeather, seedMockMaterials, seedMockTasks, seedMockChat, seedMockCdp } from '../services/ai/mockSeeders.js';
 import { buildWeatherFlex, analyzeWeatherSlots, generateDailySummary, buildDailySummaryFlex, buildTasksFlex, buildChatText, buildChatTranscriptFlex, buildCdpText } from '../services/ai/advisor.js';
+import { buildDailySummaryFlex as buildDailyOverviewFlex } from '../flex/dailySummary.js';
 import { DAILY_REPORTS, summarizeDaily } from '../services/dailySummary.js';
 import { getReportIndex, nextIndex } from '../mock/state.js';
 import { buildMockPOs } from '../services/procurement/poMock.js';
@@ -12,6 +13,7 @@ import { buildPoStatusFlex } from '../flex/poStatus.js';
 import { pushLineMessage } from '../services/line.js';
 import AudienceGroup from '../models/audienceGroup.model.js';
 import LineConsent from '../models/lineConsent.model.js';
+import { loadImagePool, chooseImagesForSummary } from '../services/reportImages.js';
 
 const router = express.Router();
 // Allow sending when a recipient is explicitly provided, regardless of AI_MOCK_ONLY
@@ -55,7 +57,10 @@ router.get('/admin/ai', (req, res) => {
     const { worst, advice } = analyzeWeatherSlots(viewMock.weather);
     const dsIndex = getReportIndex() % DAILY_REPORTS.length;
     const dsSummary = summarizeDaily(DAILY_REPORTS[dsIndex]);
-    const dsFlex = buildDailySummaryFlex(dsSummary);
+    const pool = loadImagePool();
+    const baseUrl = process.env.BASE_URL || `${(req.get('x-forwarded-proto') || req.protocol || 'https')}://${req.get('host')}`;
+    const picks = chooseImagesForSummary(dsSummary, pool, { baseUrl, perOverview: 3, perSite: 2 });
+    const dsFlex = buildDailyOverviewFlex(dsSummary, { overviewImages: picks.overviewImages, siteImages: picks.siteImages });
     const poListPreview = buildMockPOs(8);
     const poFlexPreview = buildPoStatusFlex(poListPreview);
 

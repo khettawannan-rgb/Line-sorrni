@@ -44,12 +44,12 @@
 <% const chatTopics = Array.isArray(providedChat.topicSummary) ? providedChat.topicSummary.slice(0, 5) : []; %>
 <% const latestLineUsers = Array.isArray(providedChat.latestUsers) ? providedChat.latestUsers.slice(0, 5) : []; %>
 <% const chatStats = (typeof chatUserStats === 'object' && chatUserStats) ? chatUserStats : { active7d: 0, new7d: 0, returning7d: 0, active30d: 0, totalUsers: 0, messages7d: 0, messagesTotal: 0 }; %>
-<% const useMockAnalytics = typeof locals.useMockAnalytics === 'boolean' ? locals.useMockAnalytics : false; %>
-<% const intentStack = Array.isArray(locals.intentStack) ? locals.intentStack : []; %>
-<% const retention = Array.isArray(locals.retention) ? locals.retention : []; %>
-<% const hourHeatmap = Array.isArray(locals.hourHeatmap) ? locals.hourHeatmap : []; %>
-<% const sentiment = (typeof locals.sentiment === 'object' && locals.sentiment) ? locals.sentiment : { series: [], topKeywords: [] }; %>
-<% const agentResponse = Array.isArray(locals.agentResponse) ? locals.agentResponse : []; %>
+<% var useMockAnalytics = (typeof useMockAnalytics !== 'undefined') ? useMockAnalytics : false; %>
+<% var intentStack = (typeof intentStack !== 'undefined' && Array.isArray(intentStack)) ? intentStack : []; %>
+<% var retention = (typeof retention !== 'undefined' && Array.isArray(retention)) ? retention : []; %>
+<% var hourHeatmap = (typeof hourHeatmap !== 'undefined' && Array.isArray(hourHeatmap)) ? hourHeatmap : []; %>
+<% var sentiment = (typeof sentiment !== 'undefined' && sentiment && typeof sentiment === 'object') ? sentiment : { series: [], topKeywords: [] }; %>
+<% var agentResponse = (typeof agentResponse !== 'undefined' && Array.isArray(agentResponse)) ? agentResponse : []; %>
 <% const summaryTimestamp = new Date().toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }); %>
 <% const provinceStats = (typeof provinceMapStats === 'object' && provinceMapStats) ? provinceMapStats : {}; %>
 <% const focusAreas = [
