@@ -58,17 +58,17 @@ export function buildDailySummaryFlex(summary, opts = {}) {
       { type: 'box', layout: 'baseline', contents: [ { type: 'text', text: 'งานทั้งหมด', size: 'sm', color: '#64748b' }, { type: 'text', text: `${summary.completed_tasks}/${summary.total_tasks}`, weight: 'bold', size: 'sm', align: 'end', color: c.text, flex: 2 } ] },
       { type: 'box', layout: 'baseline', contents: [ { type: 'text', text: 'บวก/ลบ (ไซต์)', size: 'sm', color: '#64748b' }, { type: 'text', text: `${summary.pos_sites}/${summary.neg_sites}`, weight: 'bold', size: 'sm', align: 'end', color: c.text, flex: 2 } ] },
       { type: 'image', url: ovChart, size: 'full', aspectRatio: '6:2', margin: 'md' },
+      ...(overviewImages.length ? [{
+        type: 'box', layout: 'horizontal', spacing: 'sm', margin: 'sm', contents: overviewImages.slice(0, 3).map((url) => ({
+          type: 'box', layout: 'vertical', flex: 1, contents: [
+            { type: 'image', url, size: 'full', aspectMode: 'cover', aspectRatio: '1:1' },
+          ],
+        }))
+      }] : []),
       { type: 'text', text: `ภาพรวมตามแผน ${summary.portfolio_plan_pct}%`, size: 'sm', color: c.text, margin: 'sm' },
       { type: 'text', text: summary.top_risks?.length ? `ความเสี่ยง: ${summary.top_risks.join(' • ')}` : 'ไม่มีความเสี่ยงเด่น', size: 'sm', color: c.warn, wrap: true, margin: 'sm' },
       ...(summary.portfolio_notes?.positive_notes?.length ? [{ type: 'text', text: `✅ ${summary.portfolio_notes.positive_notes[0]}`, size: 'sm', color: c.good, wrap: true }] : []),
       ...(summary.portfolio_notes?.negative_notes?.length ? [{ type: 'text', text: `⚠️ ${summary.portfolio_notes.negative_notes[0]}`, size: 'sm', color: c.warn, wrap: true }] : []),
-      ...(overviewImages.length ? [{
-        type: 'box', layout: 'horizontal', spacing: 'sm', margin: 'md', contents: overviewImages.slice(0, 3).map((url) => ({
-          type: 'box', layout: 'vertical', flex: 1, contents: [
-            { type: 'image', url, size: 'full', aspectMode: 'cover', aspectRatio: '4:3' },
-          ],
-        }))
-      }] : []),
     ] },
   });
 
@@ -88,9 +88,9 @@ export function buildDailySummaryFlex(summary, opts = {}) {
         { type: 'text', text: s.risks?.length ? `ความเสี่ยง: ${s.risks.join(' • ')}` : 'ไม่มีความเสี่ยงเด่น', size: 'sm', color: c.warn, wrap: true, margin: 'sm' },
         { type: 'image', url: sChart, size: 'full', aspectRatio: '6:2', margin: 'md' },
         ...(Array.isArray(siteImagesMap[s.site_id]) && siteImagesMap[s.site_id].length ? [{
-          type: 'box', layout: 'horizontal', spacing: 'sm', margin: 'md', contents: siteImagesMap[s.site_id].slice(0, 3).map((url) => ({
+          type: 'box', layout: 'horizontal', spacing: 'sm', margin: 'sm', contents: siteImagesMap[s.site_id].slice(0, 3).map((url) => ({
             type: 'box', layout: 'vertical', flex: 1, contents: [
-              { type: 'image', url, size: 'full', aspectMode: 'cover', aspectRatio: '4:3' },
+              { type: 'image', url, size: 'full', aspectMode: 'cover', aspectRatio: '1:1' },
             ],
           }))
         }] : []),
