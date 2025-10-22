@@ -833,10 +833,13 @@ router.get('/dashboard/engagement', requireAuth, async (req, res) => {
       }
     }
 
+    const safeTrendSeries = Array.isArray(context.trendSeries) ? context.trendSeries : [];
     res.render('dashboard', {
       ...context,
       ...(mock ? mockPayload : {}),
       useMockAnalytics: !!mock,
+      // Ensure legacy template references don't crash
+      trendSeries: safeTrendSeries,
       title: 'Dashboard · Engagement',
       active: 'dashboard',
       subPage: 'engagement',
@@ -850,6 +853,7 @@ router.get('/dashboard/engagement', requireAuth, async (req, res) => {
         active: 'dashboard',
         subPage: 'engagement',
         useMockAnalytics: false,
+        trendSeries: [],
         mapboxToken: MAPBOX_TOKEN,
         dailySeries: [],
         productChart: [],
