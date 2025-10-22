@@ -330,6 +330,12 @@ router.post('/admin/ai/send/weather', async (req, res) => {
   appendChatLog({ type: 'send-weather', to: to || '(none)', dryRun, flex });
   try {
     if (!dryRun) {
+      // Rotate to a single recipient when multiple are targeted
+      if (recipients.length > 1) {
+        const key = groupId ? `send.weather.group:${groupId}` : (toAll ? 'send.weather.all' : 'send.weather.one');
+        const pick = nextIndex(key, recipients.length);
+        recipients = [recipients[pick]];
+      }
       for (const uid of recipients) await pushLineMessage(uid, [flex]);
     }
     return res.redirect('/admin/ai');
@@ -359,6 +365,11 @@ router.post('/admin/ai/send/tasks', async (req, res) => {
   appendChatLog({ type: 'send-tasks', to: to || '(none)', dryRun, flex });
   try {
     if (!dryRun) {
+      if (recipients.length > 1) {
+        const key = groupId ? `send.tasks.group:${groupId}` : (toAll ? 'send.tasks.all' : 'send.tasks.one');
+        const pick = nextIndex(key, recipients.length);
+        recipients = [recipients[pick]];
+      }
       for (const uid of recipients) await pushLineMessage(uid, [flex]);
     }
     return res.redirect('/admin/ai');
@@ -389,6 +400,11 @@ router.post('/admin/ai/send/chat', async (req, res) => {
   appendChatLog({ type: 'send-chat-transcript', to: to || '(none)', dryRun, text });
   try {
     if (!dryRun) {
+      if (recipients.length > 1) {
+        const key = groupId ? `send.chat.group:${groupId}` : (toAll ? 'send.chat.all' : 'send.chat.one');
+        const pick = nextIndex(key, recipients.length);
+        recipients = [recipients[pick]];
+      }
       for (const uid of recipients) await pushLineMessage(uid, [flex]);
     }
     return res.redirect('/admin/ai');
@@ -416,6 +432,11 @@ router.post('/admin/ai/mock/po/send', async (req, res) => {
       recipients = [to];
     }
     if (!recipients.length) return res.redirect('/admin/ai');
+    if (recipients.length > 1) {
+      const key = groupId ? `send.po.group:${groupId}` : (toAll ? 'send.po.all' : 'send.po.one');
+      const pick = nextIndex(key, recipients.length);
+      recipients = [recipients[pick]];
+    }
     for (const uid of recipients) await pushLineMessage(uid, [flex]);
     res.redirect('/admin/ai');
   } catch (err) {
@@ -444,6 +465,11 @@ router.post('/admin/ai/send/cdp', async (req, res) => {
   appendChatLog({ type: 'send-cdp-digest', to: to || '(none)', dryRun, text });
   try {
     if (!dryRun) {
+      if (recipients.length > 1) {
+        const key = groupId ? `send.cdp.group:${groupId}` : (toAll ? 'send.cdp.all' : 'send.cdp.one');
+        const pick = nextIndex(key, recipients.length);
+        recipients = [recipients[pick]];
+      }
       for (const uid of recipients) await pushLineMessage(uid, [{ type: 'text', text }]);
     }
     return res.redirect('/admin/ai');

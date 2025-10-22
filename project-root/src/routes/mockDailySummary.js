@@ -5,7 +5,7 @@ import { summarizeDaily } from '../services/dailySummary.js';
 import { buildDailySummaryFlex } from '../flex/dailySummary.js';
 import { pushLineMessage } from '../services/line.js';
 import { track } from '../lib/cdp.js';
-import { nextReportIndex, resetReportIndex, getReportIndex } from '../mock/state.js';
+import { nextReportIndex, resetReportIndex, getReportIndex, nextIndex } from '../mock/state.js';
 import AudienceGroup from '../models/audienceGroup.model.js';
 import LineConsent from '../models/lineConsent.model.js';
 import { loadImagePool, chooseImagesForSummary } from '../services/reportImages.js';
@@ -54,7 +54,14 @@ router.post(['/mock/send-daily-summary', '/admin/ai/mock/daily/send'], async (re
     return res.redirect(303, '/admin/ai');
   }
   try {
-    for (const uid of recipients) {
+    // Rotate: send to exactly one recipient per request when multiple are selected
+    let targetList = recipients;
+    if (recipients.length > 1) {
+      const key = groupId ? `send.daily.group:${groupId}` : (toAll ? 'send.daily.all' : 'send.daily.one');
+      const pick = nextIndex(key, recipients.length);
+      targetList = [recipients[pick]];
+    }
+    for (const uid of targetList) {
       await pushLineMessage(uid, [flex]);
       track('push_daily_summary_mock', { index: useIndex, date: data.date, sites: data.sites.length, pos: summary.pos_sites, neg: summary.neg_sites, to: uid });
     }
