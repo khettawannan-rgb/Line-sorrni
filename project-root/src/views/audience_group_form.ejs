@@ -65,7 +65,7 @@
                   <td><input type="checkbox" name="userIds" value="<%= u.userId %>" /></td>
                   <td><%= u.displayName || '-' %></td>
                   <td class="mono"><code><%= u.userId %></code></td>
-                  <td class="muted"><%= new Date(u.updatedAt).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) %></td>
+                  <td class="muted"><%= new Date(u.updatedAt).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Bangkok' }) %></td>
                 </tr>
               <% }) %>
               <% if (!(users||[]).length) { %>

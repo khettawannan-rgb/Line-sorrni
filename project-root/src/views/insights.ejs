@@ -11,7 +11,7 @@
       <strong><%= stats.uniqueUsers %></strong>
     </div>
     <div class="muted mt-2">
-      อัปเดตล่าสุด: <%= stats.lastMessageAt ? new Date(stats.lastMessageAt).toLocaleString('th-TH') : '-' %>
+      อัปเดตล่าสุด: <%= stats.lastMessageAt ? new Date(stats.lastMessageAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : '-' %>
     </div>
   </div>
 
@@ -80,8 +80,8 @@
                     <span class="badge gray">รอดำเนินการ</span>
                   <% } %>
                 </td>
-                <td><%= c.grantedAt ? new Date(c.grantedAt).toLocaleString('th-TH') : '-' %></td>
-                <td><%= c.updatedAt ? new Date(c.updatedAt).toLocaleString('th-TH') : '-' %></td>
+                <td><%= c.grantedAt ? new Date(c.grantedAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : '-' %></td>
+                <td><%= c.updatedAt ? new Date(c.updatedAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : '-' %></td>
               </tr>
             <% }) %>
           <% } else { %>
@@ -118,7 +118,7 @@
                   <div class="muted"><%= msg.userId %></div>
                 </td>
                 <td><%= msg.text || '[' + (msg.messageType || msg.type || 'event') + ']' %></td>
-                <td><%= new Date(msg.createdAt).toLocaleString('th-TH') %></td>
+                <td><%= new Date(msg.createdAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) %></td>
               </tr>
             <% }) %>
           <% } else { %>

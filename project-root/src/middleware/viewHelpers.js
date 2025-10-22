@@ -1,5 +1,11 @@
 import dayjs from 'dayjs';
 import 'dayjs/locale/th.js';
+import utc from 'dayjs/plugin/utc.js';
+import tz from 'dayjs/plugin/timezone.js';
+
+dayjs.extend(utc);
+dayjs.extend(tz);
+try { dayjs.tz.setDefault('Asia/Bangkok'); } catch {}
 
 function safeGet(obj, path, def = null) {
   if (!path) return obj ?? def;
@@ -29,7 +35,7 @@ function formatMoney(value) {
 
 function formatDate(value, format = 'DD MMM YYYY', fallback = '-') {
   if (!value) return fallback;
-  const d = dayjs(value);
+  const d = dayjs(value).tz('Asia/Bangkok');
   if (!d.isValid()) return fallback;
   return d.locale('th').format(format);
 }

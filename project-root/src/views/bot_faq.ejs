@@ -178,7 +178,7 @@
         </div>
         <div>
           <dt>ตอบล่าสุดเมื่อ</dt>
-          <dd><%= stats?.lastMatchedAt ? new Date(stats.lastMatchedAt).toLocaleString('th-TH') : 'ยังไม่มีการใช้งาน' %></dd>
+          <dd><%= stats?.lastMatchedAt ? new Date(stats.lastMatchedAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : 'ยังไม่มีการใช้งาน' %></dd>
         </div>
       </dl>
       <p class="muted mt-auto">หากมีการเพิ่ม/แก้ไข ระบบจะรีเฟรชข้อมูลบอทอัตโนมัติในทุกข้อความถัดไป</p>
@@ -244,7 +244,7 @@
                 <td>
                   <div><strong><%= item.usageCount || 0 %></strong> ครั้ง</div>
                   <div class="muted text-xs">
-                    <%= item.lastMatchedAt ? new Date(item.lastMatchedAt).toLocaleString('th-TH') : '-' %>
+                    <%= item.lastMatchedAt ? new Date(item.lastMatchedAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : '-' %>
                   </div>
                 </td>
                 <td>

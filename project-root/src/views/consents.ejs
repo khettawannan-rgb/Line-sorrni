@@ -73,10 +73,10 @@
               <% const badgeClass = consent.status === 'granted' ? 'badge success' : (consent.status === 'pending' ? 'badge warn' : 'badge gray'); %>
               <span class="<%= badgeClass %>"><%= consent.status %></span>
               <div class="muted mt-2">
-                อัปเดต: <%= consent.updatedAt ? new Date(consent.updatedAt).toLocaleString('th-TH') : '-' %>
+                อัปเดต: <%= consent.updatedAt ? new Date(consent.updatedAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : '-' %>
               </div>
               <div class="muted">
-                ยินยอมล่าสุด: <%= consent.grantedAt ? new Date(consent.grantedAt).toLocaleString('th-TH') : '-' %>
+                ยินยอมล่าสุด: <%= consent.grantedAt ? new Date(consent.grantedAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : '-' %>
               </div>
             </td>
             <td>
@@ -108,7 +108,7 @@
                   <% history.forEach(function(item){ %>
                     <li>
                       <strong><%= item.status %></strong>
-                      <span class="muted"> · <%= item.at ? new Date(item.at).toLocaleString('th-TH') : '-' %></span>
+                      <span class="muted"> · <%= item.at ? new Date(item.at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : '-' %></span>
                       <div class="muted">ช่องทาง: <%= item.channel || '-' %></div>
                       <% if (item.note) { %>
                         <div><%= item.note %></div>

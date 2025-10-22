@@ -288,13 +288,19 @@ router.post('/admin/ai/send/summary', async (req, res) => {
   } else if (to) {
     recipients = [to];
   }
+  const rotateRaw = String(req.body.rotate || req.query.rotate || '').toLowerCase();
+  const rotate = rotateRaw === '1' || rotateRaw === 'true' || rotateRaw === 'on' || rotateRaw === 'rotate';
   const dryRun = !recipients.length;
   appendChatLog({ type: 'send-summary', to: to || '(none)', dryRun, text: summary, flex });
   try {
     if (!dryRun) {
-      for (const uid of recipients) {
-        await pushLineMessage(uid, [flex]);
+      let target = recipients;
+      if (rotate && recipients.length > 1) {
+        const key = groupId ? `send.summary.group:${groupId}` : (toAll ? 'send.summary.all' : 'send.summary.one');
+        const pick = nextIndex(key, recipients.length);
+        target = [recipients[pick]];
       }
+      for (const uid of target) await pushLineMessage(uid, [flex]);
     }
     return res.redirect('/admin/ai');
   } catch (err) {
@@ -326,17 +332,19 @@ router.post('/admin/ai/send/weather', async (req, res) => {
   } else if (to) {
     recipients = [to];
   }
+  const rotateRaw = String(req.body.rotate || req.query.rotate || '').toLowerCase();
+  const rotate = rotateRaw === '1' || rotateRaw === 'true' || rotateRaw === 'on' || rotateRaw === 'rotate';
   const dryRun = !recipients.length;
   appendChatLog({ type: 'send-weather', to: to || '(none)', dryRun, flex });
   try {
     if (!dryRun) {
-      // Rotate to a single recipient when multiple are targeted
-      if (recipients.length > 1) {
+      let target = recipients;
+      if (rotate && recipients.length > 1) {
         const key = groupId ? `send.weather.group:${groupId}` : (toAll ? 'send.weather.all' : 'send.weather.one');
         const pick = nextIndex(key, recipients.length);
-        recipients = [recipients[pick]];
+        target = [recipients[pick]];
       }
-      for (const uid of recipients) await pushLineMessage(uid, [flex]);
+      for (const uid of target) await pushLineMessage(uid, [flex]);
     }
     return res.redirect('/admin/ai');
   } catch (err) {
@@ -361,16 +369,19 @@ router.post('/admin/ai/send/tasks', async (req, res) => {
   } else if (to) {
     recipients = [to];
   }
+  const rotateRaw = String(req.body.rotate || req.query.rotate || '').toLowerCase();
+  const rotate = rotateRaw === '1' || rotateRaw === 'true' || rotateRaw === 'on' || rotateRaw === 'rotate';
   const dryRun = !recipients.length;
   appendChatLog({ type: 'send-tasks', to: to || '(none)', dryRun, flex });
   try {
     if (!dryRun) {
-      if (recipients.length > 1) {
+      let target = recipients;
+      if (rotate && recipients.length > 1) {
         const key = groupId ? `send.tasks.group:${groupId}` : (toAll ? 'send.tasks.all' : 'send.tasks.one');
         const pick = nextIndex(key, recipients.length);
-        recipients = [recipients[pick]];
+        target = [recipients[pick]];
       }
-      for (const uid of recipients) await pushLineMessage(uid, [flex]);
+      for (const uid of target) await pushLineMessage(uid, [flex]);
     }
     return res.redirect('/admin/ai');
   } catch (err) {
@@ -396,16 +407,19 @@ router.post('/admin/ai/send/chat', async (req, res) => {
   } else if (to) {
     recipients = [to];
   }
+  const rotateRaw = String(req.body.rotate || req.query.rotate || '').toLowerCase();
+  const rotate = rotateRaw === '1' || rotateRaw === 'true' || rotateRaw === 'on' || rotateRaw === 'rotate';
   const dryRun = !recipients.length;
   appendChatLog({ type: 'send-chat-transcript', to: to || '(none)', dryRun, text });
   try {
     if (!dryRun) {
-      if (recipients.length > 1) {
+      let target = recipients;
+      if (rotate && recipients.length > 1) {
         const key = groupId ? `send.chat.group:${groupId}` : (toAll ? 'send.chat.all' : 'send.chat.one');
         const pick = nextIndex(key, recipients.length);
-        recipients = [recipients[pick]];
+        target = [recipients[pick]];
       }
-      for (const uid of recipients) await pushLineMessage(uid, [flex]);
+      for (const uid of target) await pushLineMessage(uid, [flex]);
     }
     return res.redirect('/admin/ai');
   } catch (err) {
@@ -431,13 +445,16 @@ router.post('/admin/ai/mock/po/send', async (req, res) => {
     } else if (to) {
       recipients = [to];
     }
+    const rotateRaw = String(req.body.rotate || req.query.rotate || '').toLowerCase();
+    const rotate = rotateRaw === '1' || rotateRaw === 'true' || rotateRaw === 'on' || rotateRaw === 'rotate';
     if (!recipients.length) return res.redirect('/admin/ai');
-    if (recipients.length > 1) {
+    let target = recipients;
+    if (rotate && recipients.length > 1) {
       const key = groupId ? `send.po.group:${groupId}` : (toAll ? 'send.po.all' : 'send.po.one');
       const pick = nextIndex(key, recipients.length);
-      recipients = [recipients[pick]];
+      target = [recipients[pick]];
     }
-    for (const uid of recipients) await pushLineMessage(uid, [flex]);
+    for (const uid of target) await pushLineMessage(uid, [flex]);
     res.redirect('/admin/ai');
   } catch (err) {
     console.warn('[AI] send po mock failed', err?.message || err);
@@ -461,16 +478,19 @@ router.post('/admin/ai/send/cdp', async (req, res) => {
   } else if (to) {
     recipients = [to];
   }
+  const rotateRaw = String(req.body.rotate || req.query.rotate || '').toLowerCase();
+  const rotate = rotateRaw === '1' || rotateRaw === 'true' || rotateRaw === 'on' || rotateRaw === 'rotate';
   const dryRun = !recipients.length;
   appendChatLog({ type: 'send-cdp-digest', to: to || '(none)', dryRun, text });
   try {
     if (!dryRun) {
-      if (recipients.length > 1) {
+      let target = recipients;
+      if (rotate && recipients.length > 1) {
         const key = groupId ? `send.cdp.group:${groupId}` : (toAll ? 'send.cdp.all' : 'send.cdp.one');
         const pick = nextIndex(key, recipients.length);
-        recipients = [recipients[pick]];
+        target = [recipients[pick]];
       }
-      for (const uid of recipients) await pushLineMessage(uid, [{ type: 'text', text }]);
+      for (const uid of target) await pushLineMessage(uid, [{ type: 'text', text }]);
     }
     return res.redirect('/admin/ai');
   } catch (err) {

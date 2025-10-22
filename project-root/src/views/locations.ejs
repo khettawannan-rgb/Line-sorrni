@@ -1,5 +1,5 @@
 <!-- project-root/src/views/locations.ejs -->
-<% const fmtDate = (ts) => ts ? new Date(ts).toLocaleString('th-TH') : '-'; %>
+<% const fmtDate = (ts) => ts ? new Date(ts).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : '-'; %>
 <% const fmtLatLng = (loc) => loc ? `${Number(loc.latitude).toFixed(5)}, ${Number(loc.longitude).toFixed(5)}` : '-'; %>
 <% const provinceDataJSON = JSON.stringify(provinceSummary || []); %>
 

@@ -54,14 +54,15 @@ router.post(['/mock/send-daily-summary', '/admin/ai/mock/daily/send'], async (re
     return res.redirect(303, '/admin/ai');
   }
   try {
-    // Rotate: send to exactly one recipient per request when multiple are selected
-    let targetList = recipients;
-    if (recipients.length > 1) {
+    const rotateRaw = String(req.body.rotate || req.query.rotate || '').toLowerCase();
+    const rotate = rotateRaw === '1' || rotateRaw === 'true' || rotateRaw === 'on' || rotateRaw === 'rotate';
+    let target = recipients;
+    if (rotate && recipients.length > 1) {
       const key = groupId ? `send.daily.group:${groupId}` : (toAll ? 'send.daily.all' : 'send.daily.one');
       const pick = nextIndex(key, recipients.length);
-      targetList = [recipients[pick]];
+      target = [recipients[pick]];
     }
-    for (const uid of targetList) {
+    for (const uid of target) {
       await pushLineMessage(uid, [flex]);
       track('push_daily_summary_mock', { index: useIndex, date: data.date, sites: data.sites.length, pos: summary.pos_sites, neg: summary.neg_sites, to: uid });
     }
