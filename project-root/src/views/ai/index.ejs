@@ -27,7 +27,7 @@
           <h3>Mock Weather</h3>
           <p class="muted">ปรับสภาพอากาศจำลองสำหรับไซต์งาน: <strong><%= mock.location?.name || '-' %></strong></p>
         </div>
-        <div class="panel__actions">
+        <div class="panel__actions ai-actions">
           <form method="post" action="/admin/ai/mock/load-demo">
             <button class="btn primary small" type="submit">Load Demo Dataset</button>
           </form>
@@ -171,7 +171,7 @@
           <button class="btn" id="btnPreviewDailyFlex" type="button">Preview Flex</button>
           <form method="post" action="/admin/ai/mock/daily/send" style="display:inline-flex; gap:8px; align-items:center;">
             <input name="to" placeholder="LINE user/group id (optional)" style="min-width:220px" />
-            <label class="muted" style="display:inline-flex; gap:6px; align-items:center;"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
+            <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
             <button class="btn primary" type="submit">Send Daily Summary (Mock)</button>
           </form>
           <% if ((audiences||[]).length) { %>
@@ -182,13 +182,13 @@
                 <option value="<%= g._id %>"><%= g.name %> (<%= (g.userIds||[]).length %>)</option>
               <% }) %>
             </select>
-            <label class="muted" style="display:inline-flex; gap:6px; align-items:center;"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
+            <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
             <button class="btn secondary" type="submit">ส่งทั้งกลุ่ม</button>
           </form>
           <% } %>
           <form method="post" action="/admin/ai/mock/daily/send" style="display:inline-flex; gap:8px; align-items:center;">
             <input type="hidden" name="toAll" value="1" />
-            <label class="muted" style="display:inline-flex; gap:6px; align-items:center;"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
+            <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
             <button class="btn ghost" type="submit">ส่งทุกคน (<%= audienceTotal || 0 %>)</button>
           </form>
           <form method="post" action="/admin/ai/mock/daily/reset" style="display:inline-flex; gap:8px; align-items:center;">
@@ -211,27 +211,30 @@
           <h3>Preview · Weather Flex</h3>
           <p class="muted">ตัวอย่าง Flex ที่จะส่งไป LINE</p>
         </div>
-        <form method="post" action="/admin/ai/send/weather" style="display:inline-flex; gap:8px; align-items:center;">
+        <div class="panel__actions ai-actions">
+        <form method="post" action="/admin/ai/send/weather">
           <input name="to" placeholder="LINE user/group id (optional)" style="min-width:260px" />
-          <label class="muted" style="display:inline-flex; gap:6px; align-items:center;"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
+          <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
           <button class="btn primary" type="submit">ส่ง Weather Flex (Mock)</button>
         </form>
         <% if ((audiences||[]).length) { %>
-        <form method="post" action="/admin/ai/send/weather" style="display:inline-flex; gap:8px; align-items:center;">
+        <form method="post" action="/admin/ai/send/weather">
           <select name="groupId" style="min-width:220px">
             <option value="">— เลือกกลุ่ม —</option>
             <% audiences.forEach(g => { %>
               <option value="<%= g._id %>"><%= g.name %> (<%= (g.userIds||[]).length %>)</option>
             <% }) %>
           </select>
+          <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
           <button class="btn secondary" type="submit">ส่งทั้งกลุ่ม</button>
         </form>
         <% } %>
-        <form method="post" action="/admin/ai/send/weather" style="display:inline-flex; gap:8px; align-items:center;">
+        <form method="post" action="/admin/ai/send/weather">
           <input type="hidden" name="toAll" value="1" />
-          <label class="muted" style="display:inline-flex; gap:6px; align-items:center;"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
+          <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
           <button class="btn ghost" type="submit">ส่งทุกคน (<%= audienceTotal || 0 %>)</button>
         </form>
+        </div>
       </header>
       <div class="panel__body">
         <div data-code-collapsible data-collapsed="true">
@@ -249,27 +252,30 @@
           <h3>Preview · PO Status (Mock)</h3>
           <p class="muted">สถานะ PO ล่าสุดหลายรายการ (Flex Carousel)</p>
         </div>
-        <form method="post" action="/admin/ai/mock/po/send" style="display:inline-flex; gap:8px; align-items:center;">
+        <div class="panel__actions ai-actions">
+        <form method="post" action="/admin/ai/mock/po/send">
           <input name="to" placeholder="LINE user/group id (optional)" style="min-width:220px" />
-          <label class="muted" style="display:inline-flex; gap:6px; align-items:center;"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
+          <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
           <button class="btn primary" type="submit">ส่ง PO Status (Mock)</button>
         </form>
         <% if ((audiences||[]).length) { %>
-        <form method="post" action="/admin/ai/mock/po/send" style="display:inline-flex; gap:8px; align-items:center;">
+        <form method="post" action="/admin/ai/mock/po/send">
           <select name="groupId" style="min-width:220px">
             <option value="">— เลือกกลุ่ม —</option>
             <% audiences.forEach(g => { %>
               <option value="<%= g._id %>"><%= g.name %> (<%= (g.userIds||[]).length %>)</option>
             <% }) %>
           </select>
+          <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
           <button class="btn secondary" type="submit">ส่งทั้งกลุ่ม</button>
         </form>
         <% } %>
-        <form method="post" action="/admin/ai/mock/po/send" style="display:inline-flex; gap:8px; align-items:center;">
+        <form method="post" action="/admin/ai/mock/po/send">
           <input type="hidden" name="toAll" value="1" />
-          <label class="muted" style="display:inline-flex; gap:6px; align-items:center;"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
+          <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
           <button class="btn ghost" type="submit">ส่งทุกคน (<%= audienceTotal || 0 %>)</button>
         </form>
+        </div>
       </header>
       <div class="panel__body">
         <div data-code-collapsible data-collapsed="true">
@@ -284,27 +290,30 @@
       <h3>Preview · I/O Summary</h3>
           <p class="muted">รายงานขาเข้า/ขาออก + คำแนะนำ (ข้อความ)</p>
         </div>
-        <form method="post" action="/admin/ai/send/summary" style="display:inline-flex; gap:8px; align-items:center;">
+        <div class="panel__actions ai-actions">
+        <form method="post" action="/admin/ai/send/summary">
           <input name="to" placeholder="LINE user/group id (optional)" style="min-width:260px" />
-          <label class="muted" style="display:inline-flex; gap:6px; align-items:center;"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
+          <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
           <button class="btn primary" type="submit">ส่ง I/O Summary (Mock)</button>
         </form>
         <% if ((audiences||[]).length) { %>
-        <form method="post" action="/admin/ai/send/summary" style="display:inline-flex; gap:8px; align-items:center;">
+        <form method="post" action="/admin/ai/send/summary">
           <select name="groupId" style="min-width:220px">
             <option value="">— เลือกกลุ่ม —</option>
             <% audiences.forEach(g => { %>
               <option value="<%= g._id %>"><%= g.name %> (<%= (g.userIds||[]).length %>)</option>
             <% }) %>
           </select>
+          <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
           <button class="btn secondary" type="submit">ส่งทั้งกลุ่ม</button>
         </form>
         <% } %>
-        <form method="post" action="/admin/ai/send/summary" style="display:inline-flex; gap:8px; align-items:center;">
+        <form method="post" action="/admin/ai/send/summary">
           <input type="hidden" name="toAll" value="1" />
-          <label class="muted" style="display:inline-flex; gap:6px; align-items:center;"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
+          <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
           <button class="btn ghost" type="submit">ส่งทุกคน (<%= audienceTotal || 0 %>)</button>
         </form>
+        </div>
       </header>
       <div class="panel__body">
         <div data-code-collapsible data-collapsed="true">
@@ -322,27 +331,30 @@
           <h3>Preview · Task Recommendations</h3>
           <p class="muted">คำแนะนำเชิงคาดการณ์ (Flex)</p>
         </div>
-        <form method="post" action="/admin/ai/send/tasks" style="display:inline-flex; gap:8px; align-items:center;">
+        <div class="panel__actions ai-actions">
+        <form method="post" action="/admin/ai/send/tasks">
           <input name="to" placeholder="LINE user/group id (optional)" style="min-width:220px" />
-          <label class="muted" style="display:inline-flex; gap:6px; align-items:center;"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
+          <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
           <button class="btn primary" type="submit">ส่ง Tasks (Mock)</button>
         </form>
         <% if ((audiences||[]).length) { %>
-        <form method="post" action="/admin/ai/send/tasks" style="display:inline-flex; gap:8px; align-items:center;">
+        <form method="post" action="/admin/ai/send/tasks">
           <select name="groupId" style="min-width:220px">
             <option value="">— เลือกกลุ่ม —</option>
             <% audiences.forEach(g => { %>
               <option value="<%= g._id %>"><%= g.name %> (<%= (g.userIds||[]).length %>)</option>
             <% }) %>
           </select>
+          <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
           <button class="btn secondary" type="submit">ส่งทั้งกลุ่ม</button>
         </form>
         <% } %>
-        <form method="post" action="/admin/ai/send/tasks" style="display:inline-flex; gap:8px; align-items:center;">
+        <form method="post" action="/admin/ai/send/tasks">
           <input type="hidden" name="toAll" value="1" />
-          <label class="muted" style="display:inline-flex; gap:6px; align-items:center;"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
+          <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
           <button class="btn ghost" type="submit">ส่งทุกคน (<%= audienceTotal || 0 %>)</button>
         </form>
+        </div>
       </header>
       <div class="panel__body">
         <div data-code-collapsible data-collapsed="true">
@@ -358,27 +370,30 @@
           <h3>Preview · Chat Transcript</h3>
           <p class="muted">บันทึกแชทล่าสุด</p>
         </div>
-        <form method="post" action="/admin/ai/send/chat" style="display:inline-flex; gap:8px; align-items:center;">
+        <div class="panel__actions ai-actions">
+        <form method="post" action="/admin/ai/send/chat">
           <input name="to" placeholder="LINE user/group id (optional)" style="min-width:220px" />
-          <label class="muted" style="display:inline-flex; gap:6px; align-items:center;"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
+          <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
           <button class="btn primary" type="submit">ส่ง Chat Transcript (Mock)</button>
         </form>
         <% if ((audiences||[]).length) { %>
-        <form method="post" action="/admin/ai/send/chat" style="display:inline-flex; gap:8px; align-items:center;">
+        <form method="post" action="/admin/ai/send/chat">
           <select name="groupId" style="min-width:220px">
             <option value="">— เลือกกลุ่ม —</option>
             <% audiences.forEach(g => { %>
               <option value="<%= g._id %>"><%= g.name %> (<%= (g.userIds||[]).length %>)</option>
             <% }) %>
           </select>
+          <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
           <button class="btn secondary" type="submit">ส่งทั้งกลุ่ม</button>
         </form>
         <% } %>
-        <form method="post" action="/admin/ai/send/chat" style="display:inline-flex; gap:8px; align-items:center;">
+        <form method="post" action="/admin/ai/send/chat">
           <input type="hidden" name="toAll" value="1" />
-          <label class="muted" style="display:inline-flex; gap:6px; align-items:center;"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
+          <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
           <button class="btn ghost" type="submit">ส่งทุกคน (<%= audienceTotal || 0 %>)</button>
         </form>
+        </div>
       </header>
       <div class="panel__body">
         <div data-code-collapsible data-collapsed="true">
@@ -396,27 +411,30 @@
           <h3>Preview · CDP Digest</h3>
           <p class="muted">พฤติกรรมผู้ใช้/การแบ่งกลุ่ม/คาดการณ์</p>
         </div>
-        <form method="post" action="/admin/ai/send/cdp" style="display:inline-flex; gap:8px; align-items:center;">
+        <div class="panel__actions ai-actions">
+        <form method="post" action="/admin/ai/send/cdp">
           <input name="to" placeholder="LINE user/group id (optional)" style="min-width:220px" />
-          <label class="muted" style="display:inline-flex; gap:6px; align-items:center;"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
+          <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
           <button class="btn primary" type="submit">ส่ง CDP Digest (Mock)</button>
         </form>
         <% if ((audiences||[]).length) { %>
-        <form method="post" action="/admin/ai/send/cdp" style="display:inline-flex; gap:8px; align-items:center;">
+        <form method="post" action="/admin/ai/send/cdp">
           <select name="groupId" style="min-width:220px">
             <option value="">— เลือกกลุ่ม —</option>
             <% audiences.forEach(g => { %>
               <option value="<%= g._id %>"><%= g.name %> (<%= (g.userIds||[]).length %>)</option>
             <% }) %>
           </select>
+          <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
           <button class="btn secondary" type="submit">ส่งทั้งกลุ่ม</button>
         </form>
         <% } %>
-        <form method="post" action="/admin/ai/send/cdp" style="display:inline-flex; gap:8px; align-items:center;">
+        <form method="post" action="/admin/ai/send/cdp">
           <input type="hidden" name="toAll" value="1" />
-          <label class="muted" style="display:inline-flex; gap:6px; align-items:center;"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
+          <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
           <button class="btn ghost" type="submit">ส่งทุกคน (<%= audienceTotal || 0 %>)</button>
         </form>
+        </div>
       </header>
       <div class="panel__body">
         <div data-code-collapsible data-collapsed="true">

@@ -279,6 +279,8 @@ router.post('/admin/ai/send/summary', async (req, res) => {
   const to = (req.body.to || DEFAULT_RECIPIENT || '').trim();
   const groupId = String(req.body.groupId || '').trim();
   const toAll = String(req.body.toAll || '').toLowerCase() === '1' || String(req.body.toAll || '').toLowerCase() === 'true';
+  const fmtRaw = String(req.body.fmt || req.query.fmt || '').toLowerCase();
+  const sendFlex = fmtRaw === 'flex'; // default เป็นข้อความ เพื่อความเข้ากันได้สูงสุด
   let recipients = [];
   if (groupId) {
     const g = await AudienceGroup.findById(groupId).lean();
@@ -291,7 +293,7 @@ router.post('/admin/ai/send/summary', async (req, res) => {
   const rotateRaw = String(req.body.rotate || req.query.rotate || '').toLowerCase();
   const rotate = rotateRaw === '1' || rotateRaw === 'true' || rotateRaw === 'on' || rotateRaw === 'rotate';
   const dryRun = !recipients.length;
-  appendChatLog({ type: 'send-summary', to: to || '(none)', dryRun, text: summary, flex });
+  appendChatLog({ type: 'send-summary', to: to || '(none)', dryRun, text: summary, flex, format: sendFlex ? 'flex' : 'text' });
   try {
     if (!dryRun) {
       let target = recipients;
@@ -300,7 +302,22 @@ router.post('/admin/ai/send/summary', async (req, res) => {
         const pick = nextIndex(key, recipients.length);
         target = [recipients[pick]];
       }
-      for (const uid of target) await pushLineMessage(uid, [flex]);
+      for (const uid of target) {
+        try {
+          if (sendFlex) {
+            await pushLineMessage(uid, [flex]);
+          } else {
+            await pushLineMessage(uid, [{ type: 'text', text: summary.slice(0, 4000) }]);
+          }
+        } catch (e) {
+          // ถ้า flex ล้มเหลว ให้ fallback เป็นข้อความ
+          if (sendFlex) {
+            await pushLineMessage(uid, [{ type: 'text', text: summary.slice(0, 4000) }]);
+          } else {
+            throw e;
+          }
+        }
+      }
     }
     return res.redirect('/admin/ai');
   } catch (err) {
