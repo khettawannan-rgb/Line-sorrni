@@ -18,9 +18,22 @@ export function buildIoSummaryListFlex(type = 'today', seed = Date.now()) {
   const header = { type: 'bubble', body: { type: 'box', layout: 'vertical', paddingAll: '16px', contents: [ { type: 'text', text: `📊 ${title}`, weight: 'bold', size: 'lg' }, { type: 'text', text: 'รวม 10 รายการ', size: 'sm', color: '#64748b' } ] } };
   bubbles.push(header);
   for (let i = 0; i < 10; i++) {
-    const in1 = rnd.int(80, 320); // tons
-    const in2 = rnd.int(80, 320);
-    const out = rnd.int(200, 900);
+    // Scale volumes by range type
+    let in1, in2, out;
+    if (type === 'month') {
+      in1 = rnd.int(3000, 9000);
+      in2 = rnd.int(3000, 9000);
+      out = rnd.int(10000, 30000);
+    } else if (type === 'week') {
+      in1 = rnd.int(400, 1500);
+      in2 = rnd.int(400, 1500);
+      out = rnd.int(1200, 4500);
+    } else {
+      // today / yesterday
+      in1 = rnd.int(80, 320); // tons
+      in2 = rnd.int(80, 320);
+      out = rnd.int(200, 900);
+    }
     const proj = rnd.pick(['ขยายช่องจราจร ทล.12 สุพรรณบุรี', 'ซ่อมปรับปรุงผิวทาง ทล.33 ปราจีนบุรี', 'งานก่อสร้างสะพานข้ามแยก', 'โครงการปรับปรุงไหล่ทาง']);
     const loc1 = rnd.pick(['ทล.311', 'ทล.1 (พหลโยธิน)', 'กทม. 3027', 'ทล.34 บางนา-ตราด']);
     const loc2 = rnd.pick(['ตอน บ้านม้า – ชัยนาท', 'ช่วง กม.35–37', 'ตอน บางนา – บางปู', 'ตอน บางบัวทอง – ปทุมธานี']);
@@ -49,4 +62,3 @@ export function buildIoSummaryListFlex(type = 'today', seed = Date.now()) {
 }
 
 export default { buildPoStatusMockFlex, buildIoSummaryListFlex };
-
