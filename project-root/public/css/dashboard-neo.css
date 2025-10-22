@@ -493,17 +493,35 @@ body.app-shell.use-fullwidth .chart-frame canvas {
 .ai-actions input[type="text"],
 .ai-actions input[name="to"],
 .ai-actions select {
-  height: 36px;
-  padding: 0 12px;
+  height: 34px;
+  padding: 0 10px;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   background: #fff;
+  font-size: 0.9rem;
 }
-.ai-actions .btn { height: 36px; line-height: 36px; padding-inline: 14px; }
-.ai-actions .toggle { display:inline-flex; gap:6px; align-items:center; padding:6px 10px; border:1px solid #e2e8f0; border-radius:999px; background:#f8fafc; color:#334155; }
-.ai-actions .toggle input { appearance:none; width:16px; height:16px; border:1px solid #94a3b8; border-radius:4px; position:relative; background:#fff; }
+.ai-actions .btn {
+  height: 32px;
+  line-height: 30px;
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.ai-actions .toggle {
+  display:inline-flex;
+  gap:6px; align-items:center;
+  padding:4px 8px;
+  border:1px solid #e2e8f0; border-radius:999px;
+  background:#f8fafc; color:#334155;
+  font-size: 0.85rem;
+}
+.ai-actions .toggle input {
+  appearance:none; width:14px; height:14px;
+  border:1px solid #94a3b8; border-radius:4px; position:relative; background:#fff;
+}
 .ai-actions .toggle input:checked { background:#10b981; border-color:#10b981; }
-.ai-actions .toggle input:checked::after { content:'\2713'; position:absolute; left:3px; top:-1px; color:#fff; font-size:12px; }
+.ai-actions .toggle input:checked::after { content:'\2713'; position:absolute; left:2px; top:-3px; color:#fff; font-size:12px; }
 @media (max-width: 920px) {
   .ai-actions { justify-content: flex-start; }
 }
