@@ -502,7 +502,7 @@ async function handlePostbackEvent(ev) {
   const [action, query = ''] = data.split('?');
   const params = new URLSearchParams(query);
 
-  if (action === 'main-menu') {
+  if (action === 'main-menu' || action === 'MAIN_MENU') {
     return replyMainMenu(ev);
   }
 
@@ -593,21 +593,30 @@ async function handlePostbackEvent(ev) {
   }
 
   if (action === 'CONTACT_US') {
-    const phone = process.env.CONTACT_PHONE || '+66-2-000-0000';
-    const email = process.env.CONTACT_EMAIL || 'support@example.com';
-    const url = process.env.CONTACT_URL || (process.env.BASE_URL ? `${(process.env.BASE_URL || '').replace(/\/$/, '')}/admin` : 'https://example.com');
-    return replyActionCard(ev.replyToken, {
-      title: 'ติดต่อเรา',
-      body: `โทร: ${phone}\nอีเมล: ${email}`,
-      actions: [
-        { label: 'โทร', uri: `tel:${phone.replace(/[^+0-9]/g,'')}` },
-        { label: 'อีเมล', uri: `mailto:${email}` },
-        { label: 'เปิดเว็บไซต์', uri: url },
-        { label: 'เมนู', text: 'เมนู' },
-      ],
-      color: '#0ea5e9',
-      altText: 'ข้อมูลติดต่อ',
-    });
+    // Per request: reply short text only
+    return replyText(ev.replyToken, 'กำลังติดต่อเจ้าหน้าที่ให้ค่ะ รอสักครู่');
+  }
+
+  // Backward-compat for existing Rich Menu postbacks
+  if (action === 'DAILY_REPORT' || action === 'NOW' || action === 'LATEST') {
+    const idx = nextIndex('menu.summary.today', 10);
+    const flex = buildIoSummaryListFlex('today', 400000 + idx, { single: true, index: idx });
+    return replyFlex(ev.replyToken, 'สรุปรายงาน (Mock)', flex.contents);
+  }
+  if (action === 'FIND_REPORT') {
+    const bubble = buildMainMenuFlex();
+    return replyFlex(ev.replyToken, 'เมนูหลัก (บางฟีเจอร์จะเปิดเร็วๆ นี้)', bubble, [
+      { type: 'text', text: 'ฟีเจอร์นี้จะเปิดให้ใช้งานเร็วๆ นี้ค่ะ ขอบคุณที่รอ 🙏' },
+    ]);
+  }
+  if (action === 'CONNECT_COMPANY') {
+    return replyText(ev.replyToken, 'ฟีเจอร์เชื่อมต่อบริษัทยังไม่พร้อมใช้งานค่ะ กำลังพัฒนาอยู่ 🙏');
+  }
+  if (action === 'SETTINGS') {
+    const bubble = buildMainMenuFlex();
+    return replyFlex(ev.replyToken, 'เมนูหลัก (บางฟีเจอร์จะเปิดเร็วๆ นี้)', bubble, [
+      { type: 'text', text: 'เมนูตั้งค่ายังไม่พร้อมใช้งาน กำลังมาเร็วๆ นี้ค่ะ 💙' },
+    ]);
   }
 
   return replyActionCard(ev.replyToken, {
@@ -660,22 +669,8 @@ async function handleText(ev) {
     return replyStockAlertMessage(ev);
   }
 
-  if (text === 'เมนู') {
-    return replyActionCard(ev.replyToken, {
-      title: 'เมนูหลัก',
-      subtitle: 'เลือกฟังก์ชันที่ต้องการ',
-      actions: [
-        { label: 'สถานะใบสั่งซื้อ', text: 'สถานะ' },
-        { label: 'สรุปวันนี้', text: 'สรุป วันนี้' },
-        { label: 'สรุปเมื่อวาน', text: 'สรุป เมื่อวาน' },
-        { label: 'สรุปสัปดาห์นี้', text: 'สรุป สัปดาห์นี้' },
-        { label: 'สรุปเดือนนี้', text: 'สรุป เดือนนี้' },
-        { label: 'สร้างใบสั่งซื้อ (PO)', text: 'สร้างใบสั่งซื้อ' },
-        { label: 'เปิดใบขอซื้อ (PR)', text: 'เปิดใบขอซื้อ' },
-      ],
-      color: '#1d4ed8',
-      altText: 'เมนูหลัก',
-    });
+  if (text === 'เมนู' || text === 'กลับสู่เมนู' || text === 'กลับเมนู' || text === 'เมนูหลัก') {
+    return replyMainMenu(ev);
   }
 
   if (/^เช็คของ$/i.test(text) || /check stock/i.test(text)) {
