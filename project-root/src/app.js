@@ -72,6 +72,8 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
 app.use((req, res, next) => {
+  // Bypass HTTPS redirect for health endpoints to satisfy platform checks
+  if (req.path === '/health' || req.path === '/healthz') return next();
   const protoHeader = req.get('x-forwarded-proto');
   const forwardedProto = protoHeader ? protoHeader.split(',')[0].trim() : '';
   if (forwardedProto && forwardedProto !== 'https') {
@@ -243,6 +245,7 @@ app.get('/health', (req, res) => {
   console.log('✅ Health check pinged');
   res.status(200).send('OK');
 });
+app.head('/health', (req, res) => res.status(200).end());
 app.get('/health/line', async (req, res) => {
   try {
     const info = await getBotInfo();
