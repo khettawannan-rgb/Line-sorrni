@@ -56,6 +56,7 @@ const REQUIRED_LINE_ENVS = [
 
 const FEATURE_WEATHER = String(process.env.FEATURE_WEATHER_ADVICE || '').toLowerCase() === 'true';
 const FEATURE_STOCK = String(process.env.FEATURE_STOCK_ALERTS || '').toLowerCase() === 'true';
+const FEATURE_TEXT_QUIZ = String(process.env.FEATURE_TEXT_QUIZ || '').toLowerCase() === 'true';
 
 REQUIRED_LINE_ENVS.forEach((key) => {
   if (!process.env[key]) {
@@ -501,6 +502,30 @@ async function handlePostbackEvent(ev) {
   const [action, query = ''] = data.split('?');
   const params = new URLSearchParams(query);
 
+  if (action === 'main-menu') {
+    return replyMainMenu(ev);
+  }
+
+  if (action === 'open_daily_report') {
+    const idx = nextIndex('menu.summary.today', 10);
+    const flex = buildIoSummaryListFlex('today', 400000 + idx, { single: true, index: idx });
+    return replyFlex(ev.replyToken, 'สรุปรายงาน (Mock)', flex.contents);
+  }
+
+  if (action === 'coming_soon') {
+    const feat = params.get('feature') || '';
+    if (feat === 'contact') {
+      // For contact, reply a short text only
+      return replyText(ev.replyToken, 'กำลังติดต่อเจ้าหน้าที่ให้ค่ะ รอสักครู่');
+    }
+    const polite =
+      Math.random() < 0.5
+        ? 'ฟีเจอร์นี้จะเปิดให้ใช้งานเร็วๆ นี้ค่ะ ขอบคุณที่รอ 🙏'
+        : 'กำลังมาเร็วๆ นี้ค่ะ ขอบคุณที่รอนะคะ 💙';
+    const bubble = buildMainMenuFlex();
+    return replyFlex(ev.replyToken, 'เมนูหลัก (บางฟีเจอร์จะเปิดเร็วๆ นี้)', bubble, [{ type: 'text', text: polite }]);
+  }
+
   if (action === 'po-status') {
     const userId = getUserId(ev);
     if (!(await isSuperAdminUser(userId))) {
@@ -599,15 +624,17 @@ async function handleText(ev) {
   const userId = getUserId(ev);
   const superAdmin = await isSuperAdminUser(userId);
 
-  // Quiz game (single game) — handle first
-  try {
-    const handledQuiz = await handleQuizMessage(ev);
-    if (handledQuiz) return handledQuiz;
-  } catch (err) {
-    console.warn('[WEBHOOK] quiz handler error', err?.message || err);
+  // Game: prefer LIFF (default). Text quiz only when FEATURE_TEXT_QUIZ=true
+  if (FEATURE_TEXT_QUIZ) {
+    try {
+      const handledQuiz = await handleQuizMessage(ev);
+      if (handledQuiz) return handledQuiz;
+    } catch (err) {
+      console.warn('[WEBHOOK] quiz handler error', err?.message || err);
+    }
   }
 
-  // Game menu trigger (legacy LIFF menu)
+  // LIFF game menu (default)
   try {
     const handled = await onTextGameMenu(ev);
     if (handled) return handled;
@@ -1089,6 +1116,44 @@ function buildQuickReplyItems(items = []) {
 async function loadWeatherScenario(name = 'ok') {
   const module = await import(`../services/advice/mocks/${name}.json`, { with: { type: 'json' } });
   return module.default || module;
+}
+
+// --- Main menu (clean vertical bubble, size mega) -------------------------
+function buildMainMenuFlex() {
+  const header = {
+    type: 'box', layout: 'vertical', paddingAll: '18px', backgroundColor: '#0f172a', contents: [
+      { type: 'text', text: 'เมนูหลัก', weight: 'bold', size: 'lg', color: '#ffffff' },
+      { type: 'text', text: 'บางฟีเจอร์จะเปิดใช้งานเร็วๆ นี้', size: 'sm', color: '#cbd5e1' },
+    ],
+  };
+  const primaryButtons = [
+    { type: 'button', style: 'primary', action: { type: 'postback', label: 'รายงานวันนี้', data: 'open_daily_report', displayText: 'รายงานวันนี้' }, color: '#16a34a' },
+    { type: 'button', style: 'secondary', action: { type: 'postback', label: 'เลือกรายงาน', data: 'coming_soon?feature=find_report', displayText: 'เลือกรายงาน' } },
+    { type: 'button', style: 'secondary', action: { type: 'postback', label: 'เชื่อมต่อบริษัท', data: 'coming_soon?feature=connect_company', displayText: 'เชื่อมต่อบริษัท' } },
+  ];
+  const secondaryButtons = [
+    { type: 'button', style: 'secondary', action: { type: 'postback', label: 'ล่าสุด', data: 'open_daily_report', displayText: 'ล่าสุด' } },
+    { type: 'button', style: 'secondary', action: { type: 'postback', label: 'ตั้งค่า', data: 'coming_soon?feature=settings', displayText: 'ตั้งค่า' } },
+    { type: 'button', style: 'secondary', action: { type: 'postback', label: 'ติดต่อเรา', data: 'coming_soon?feature=contact', displayText: 'ติดต่อเรา' } },
+  ];
+  return {
+    type: 'bubble', size: 'mega',
+    header,
+    body: {
+      type: 'box', layout: 'vertical', spacing: 'md', paddingAll: '16px', contents: [
+        { type: 'box', layout: 'vertical', spacing: 'sm', contents: primaryButtons },
+        { type: 'separator', margin: 'md' },
+        { type: 'box', layout: 'vertical', spacing: 'sm', contents: secondaryButtons },
+        { type: 'separator', margin: 'md' },
+        { type: 'text', text: 'ขอบคุณที่ใช้งาน ระบบกำลังพัฒนาให้ดีขึ้นเสมอ 🙏', size: 'xs', color: '#64748b', wrap: true },
+      ],
+    },
+  };
+}
+
+function replyMainMenu(ev) {
+  const bubble = buildMainMenuFlex();
+  return replyFlex(ev.replyToken, 'เมนูหลัก (บางฟีเจอร์จะเปิดเร็วๆ นี้)', bubble);
 }
 
 async function replyWeatherAdvice(ev, scenario) {
