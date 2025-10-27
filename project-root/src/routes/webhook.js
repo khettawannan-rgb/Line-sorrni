@@ -40,6 +40,7 @@ import { buildFlexWeatherAdvice } from '../line/buildFlexWeatherAdvice.js';
 import { buildStockAlert } from '../services/stock/stock-alert.js';
 import { buildFlexStockAlert } from '../line/buildFlexStockAlert.js';
 import { buildPoStatusMockFlex, buildIoSummaryListFlex } from '../services/mock/menuMock.js';
+import { handleQuizMessage } from '../services/game/quiz.js';
 import { nextIndex } from '../mock/state.js';
 
 const router = Router();
@@ -598,7 +599,15 @@ async function handleText(ev) {
   const userId = getUserId(ev);
   const superAdmin = await isSuperAdminUser(userId);
 
-  // Game menu trigger (early)
+  // Quiz game (single game) — handle first
+  try {
+    const handledQuiz = await handleQuizMessage(ev);
+    if (handledQuiz) return handledQuiz;
+  } catch (err) {
+    console.warn('[WEBHOOK] quiz handler error', err?.message || err);
+  }
+
+  // Game menu trigger (legacy LIFF menu)
   try {
     const handled = await onTextGameMenu(ev);
     if (handled) return handled;

@@ -2360,17 +2360,17 @@ textarea:focus {
 }
 
 .ai-lab .ai-actions {
-  display: flex;
-  align-items: center;
+  display: grid;
   gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  grid-auto-flow: row;
+  justify-items: end;
 }
 
 .ai-lab .ai-actions form {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .ai-lab .ai-actions input,

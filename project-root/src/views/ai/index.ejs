@@ -169,13 +169,13 @@
         </div>
         <div class="panel__actions ai-actions">
           <button class="btn" id="btnPreviewDailyFlex" type="button">Preview Flex</button>
-          <form method="post" action="/admin/ai/mock/daily/send" style="display:inline-flex; gap:8px; align-items:center;">
+          <form method="post" action="/admin/ai/mock/daily/send">
             <input name="to" placeholder="LINE user/group id (optional)" style="min-width:220px" />
             <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
             <button class="btn primary" type="submit">Send Daily Summary (Mock)</button>
           </form>
           <% if ((audiences||[]).length) { %>
-          <form method="post" action="/admin/ai/mock/daily/send" style="display:inline-flex; gap:8px; align-items:center;">
+          <form method="post" action="/admin/ai/mock/daily/send">
             <select name="groupId" style="min-width:220px">
               <option value="">— เลือกกลุ่ม —</option>
               <% audiences.forEach(g => { %>
@@ -186,12 +186,12 @@
             <button class="btn secondary" type="submit">ส่งทั้งกลุ่ม</button>
           </form>
           <% } %>
-          <form method="post" action="/admin/ai/mock/daily/send" style="display:inline-flex; gap:8px; align-items:center;">
+          <form method="post" action="/admin/ai/mock/daily/send">
             <input type="hidden" name="toAll" value="1" />
             <label class="muted toggle"><input type="checkbox" name="rotate" value="1" /> ส่งทีละคน</label>
             <button class="btn ghost" type="submit">ส่งทุกคน (<%= audienceTotal || 0 %>)</button>
           </form>
-          <form method="post" action="/admin/ai/mock/daily/reset" style="display:inline-flex; gap:8px; align-items:center;">
+          <form method="post" action="/admin/ai/mock/daily/reset">
             <button class="btn ghost" type="submit">Reset Rotation</button>
           </form>
           <span class="muted" id="dailyFlexIndex">Report <%= (typeof dailyIndex==='number' ? (dailyIndex+1) : 1) %>/<%= dailyTotal || 10 %></span>
