@@ -11,7 +11,7 @@
          m.unit_cost!=null || m.total_value!=null || m.next_delivery
    )))); %>
 
-<section class="section-block">
+<section class="section-block ai-lab">
   <header class="section-header">
     <div class="section-header__titles">
       <span class="section-pill section-pill--cdp">AI</span>
@@ -167,7 +167,7 @@
           <h3>Preview · Daily Summary (Mock)</h3>
           <p class="muted">สรุปภาพรวม + รายไซต์ (Flex Carousel)</p>
         </div>
-        <div class="panel__actions" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <div class="panel__actions ai-actions">
           <button class="btn" id="btnPreviewDailyFlex" type="button">Preview Flex</button>
           <form method="post" action="/admin/ai/mock/daily/send" style="display:inline-flex; gap:8px; align-items:center;">
             <input name="to" placeholder="LINE user/group id (optional)" style="min-width:220px" />
@@ -471,3 +471,7 @@
     </div>
   </article>
 </section>
+<script>
+  // Scope-only meta for this page
+  try { document.body.setAttribute('data-daily-total', '<%= dailyTotal || 10 %>'); } catch (e) {}
+</script>

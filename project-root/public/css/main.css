@@ -2346,6 +2346,74 @@ textarea:focus {
   }
 }
 
+/* ----------------------------------------- */
+/* AI Mock Lab (scoped styles)               */
+/* ----------------------------------------- */
+.ai-lab .control-grid.two-col {
+  display: grid;
+  gap: var(--grid-gutter);
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+}
+
+.ai-lab .control-grid .span-2 {
+  grid-column: 1 / -1;
+}
+
+.ai-lab .ai-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.ai-lab .ai-actions form {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-lab .ai-actions input,
+.ai-lab .ai-actions select {
+  width: auto;
+  min-width: 220px;
+}
+
+/* Fix oversized checkbox/radio on this page only */
+.ai-lab input[type="checkbox"],
+.ai-lab input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+.ai-lab label.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(8, 184, 111, 0.16);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--muted);
+}
+
+.ai-lab pre.code {
+  background: rgba(2, 24, 34, 0.04);
+  border: 1px solid rgba(8, 184, 111, 0.12);
+  border-radius: var(--r-lg);
+  padding: 12px 14px;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.ai-lab [data-code-collapsible] > pre {
+  margin-top: 8px;
+}
+
 @media (min-width: 1440px) {
   :root {
     --container-max: 1200px;

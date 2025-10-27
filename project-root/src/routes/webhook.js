@@ -697,7 +697,7 @@ async function handleText(ev) {
       // Determine range keyword
       const kw = /เมื่อวาน/.test(text) ? 'yesterday' : /สัปดาห์/.test(text) ? 'week' : /เดือน/.test(text) ? 'month' : 'today';
       const idx = nextIndex(`menu.summary.${kw}`, 10);
-      const flex = buildIoSummaryListFlex(kw, 400000 + idx);
+      const flex = buildIoSummaryListFlex(kw, 400000 + idx, { single: true, index: idx });
       return replyFlex(ev.replyToken, 'สรุปรายงาน (Mock)', flex.contents);
     }
     const range = getDateRangeFromKeyword(text);
