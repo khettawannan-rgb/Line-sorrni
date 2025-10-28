@@ -598,12 +598,12 @@ async function handlePostbackEvent(ev) {
   }
 
   // Backward-compat for existing Rich Menu postbacks
-  if (action === 'DAILY_REPORT' || action === 'NOW' || action === 'LATEST') {
+  if (action === 'DAILY_REPORT' || action === 'DAILY' || action === 'TODAY' || action === 'REPORT_TODAY') {
     const idx = nextIndex('menu.summary.today', 10);
     const flex = buildIoSummaryListFlex('today', 400000 + idx, { single: true, index: idx });
     return replyFlex(ev.replyToken, 'สรุปรายงาน (Mock)', flex.contents);
   }
-  if (action === 'FIND_REPORT') {
+  if (action === 'FIND_REPORT' || action === 'NOW' || action === 'LATEST') {
     const bubble = buildMainMenuFlex();
     return replyFlex(ev.replyToken, 'เมนูหลัก (บางฟีเจอร์จะเปิดเร็วๆ นี้)', bubble, [
       { type: 'text', text: 'ฟีเจอร์นี้จะเปิดให้ใช้งานเร็วๆ นี้ค่ะ ขอบคุณที่รอ 🙏' },
@@ -675,7 +675,7 @@ async function handleText(ev) {
     const flex = buildIoSummaryListFlex('today', 400000 + idx, { single: true, index: idx });
     return replyFlex(ev.replyToken, 'สรุปรายงาน (Mock)', flex.contents);
   }
-  if (/^(เลือกรายงาน|ตั้งค่า|เชื่อมต่อบริษัท|find\s*report|settings|connect\s*company)$/i.test(text)) {
+  if (/^(เลือกรายงาน|ล่าสุด|ตั้งค่า|เชื่อมบริษัท|เชื่อมต่อบริษัท|find\s*report|settings|connect\s*company|latest)$/i.test(text)) {
     const bubble = buildMainMenuFlex();
     const polite = 'ฟีเจอร์นี้จะเปิดให้ใช้งานเร็วๆ นี้ค่ะ ขอบคุณที่รอ 🙏';
     return replyFlex(ev.replyToken, 'เมนูหลัก (บางฟีเจอร์จะเปิดเร็วๆ นี้)', bubble, [{ type: 'text', text: polite }]);
