@@ -20,6 +20,7 @@ import LineConsent from '../models/lineConsent.model.js';
 import AudienceGroup from '../models/audienceGroup.model.js';
 import LineChatLog from '../models/lineChatLog.model.js';
 import LineMedia from '../models/lineMedia.model.js';
+import Prize from '../models/Prize.js';
 import { sanitizeRedirect } from '../utils/url.js';
 import { pushFlex, flexAdminShortcuts } from '../services/flex.js';
 import { isSuperAdminSession } from '../middleware/checkSuperAdmin.js';
@@ -2306,6 +2307,141 @@ router.post('/tools/mock-records', requireAuth, async (req, res) => {
       result: { ok: false, error: err?.message || String(err) },
     });
   }
+});
+
+/* ------------------------------------------------------------------ */
+/* Tools: Rewards / Prizes                                            */
+/* ------------------------------------------------------------------ */
+
+async function ensurePrizeSeed() {
+  const count = await Prize.countDocuments({});
+  if (count > 0) return false;
+  const seed = [
+    { name: 'หมอน', total: 1 },
+    { name: 'ผ้าห่ม', total: 1 },
+    { name: 'ปากกา', total: 24 },
+    { name: 'ดินสอ', total: 16 },
+    { name: 'กระเป๋าปากกา', total: 2 },
+    { name: 'แผ่นรอบงเมาส์', total: 1 },
+    { name: 'สมุดแมวมาลี', total: 12 },
+    { name: 'สมุดโน๊ต', total: 9 },
+    { name: 'กระเป๋าแคร์แบร์', total: 2 },
+    { name: 'Post IT', total: 10 },
+    { name: 'สติก๊กเกอร์', total: 10 },
+  ];
+  await Prize.insertMany(seed.map((s) => ({ ...s, reserved: 0, used: 0 })));
+  return true;
+}
+
+function summarizePrizes(list = []) {
+  return list.reduce(
+    (acc, p) => {
+      const total = Number(p.total || 0);
+      const reserved = Number(p.reserved || 0);
+      const used = Number(p.used || 0);
+      const available = Math.max(total - reserved - used, 0);
+      acc.total += total;
+      acc.reserved += reserved;
+      acc.used += used;
+      acc.available += available;
+      return acc;
+    },
+    { total: 0, reserved: 0, used: 0, available: 0 }
+  );
+}
+
+router.get('/tools/rewards', requireAuth, async (req, res) => {
+  await ensurePrizeSeed();
+  const prizes = await Prize.find({}).sort({ name: 1 }).lean();
+  const withAvail = prizes.map((p) => ({
+    ...p,
+    available: Math.max(Number(p.total || 0) - Number(p.reserved || 0) - Number(p.used || 0), 0),
+  }));
+  const summary = summarizePrizes(withAvail);
+  const assigned = typeof req.query.assigned === 'string' ? req.query.assigned : '';
+  const error = typeof req.query.error === 'string' ? req.query.error : '';
+  return res.render('tools/rewards', {
+    title: 'Rewards',
+    active: 'tools',
+    prizes: withAvail,
+    summary,
+    result: assigned ? { ok: true, message: `สุ่มได้: ${assigned}` } : error ? { ok: false, error } : null,
+  });
+});
+
+router.post('/tools/rewards/allocate', requireAuth, async (req, res) => {
+  // Weighted random by available count
+  const prizes = await Prize.find({}).lean();
+  const choices = [];
+  for (const p of prizes) {
+    const available = Math.max(Number(p.total || 0) - Number(p.reserved || 0) - Number(p.used || 0), 0);
+    if (available > 0) {
+      choices.push({ id: String(p._id), name: p.name, weight: available });
+    }
+  }
+  if (choices.length === 0) {
+    return res.redirect('/admin/tools/rewards?error=' + encodeURIComponent('ของรางวัลหมดแล้ว'));
+  }
+  const totalWeight = choices.reduce((sum, c) => sum + c.weight, 0);
+  let r = Math.random() * totalWeight;
+  let picked = choices[0];
+  for (const c of choices) {
+    if ((r -= c.weight) <= 0) { picked = c; break; }
+  }
+  // Atomic increment reserved by 1 if still available
+  const updated = await Prize.findOneAndUpdate(
+    {
+      _id: new mongoose.Types.ObjectId(picked.id),
+      $expr: { $lt: ['$reserved', { $subtract: ['$total', '$used'] }] },
+    },
+    { $inc: { reserved: 1 } },
+    { new: true }
+  );
+  if (!updated) {
+    // Race condition fallback: retry once quickly by redirecting
+    return res.redirect('/admin/tools/rewards');
+  }
+  return res.redirect('/admin/tools/rewards?assigned=' + encodeURIComponent(picked.name));
+});
+
+router.post('/tools/rewards/:id/mark-used', requireAuth, async (req, res) => {
+  const id = String(req.params.id || '').trim();
+  if (!id) return res.redirect('/admin/tools/rewards');
+  const updated = await Prize.findOneAndUpdate(
+    { _id: new mongoose.Types.ObjectId(id), reserved: { $gt: 0 } },
+    { $inc: { reserved: -1, used: 1 } },
+    { new: true }
+  );
+  if (!updated) {
+    return res.redirect('/admin/tools/rewards?error=' + encodeURIComponent('ไม่มีของค้างแจกอยู่สำหรับชิ้นนี้'));
+  }
+  return res.redirect('/admin/tools/rewards');
+});
+
+router.post('/tools/rewards/:id/revert', requireAuth, async (req, res) => {
+  const id = String(req.params.id || '').trim();
+  if (!id) return res.redirect('/admin/tools/rewards');
+  const from = String(req.body.from || 'reserved');
+  if (from === 'used') {
+    const updated = await Prize.findOneAndUpdate(
+      { _id: new mongoose.Types.ObjectId(id), used: { $gt: 0 } },
+      { $inc: { used: -1 } },
+      { new: true }
+    );
+    if (!updated) {
+      return res.redirect('/admin/tools/rewards?error=' + encodeURIComponent('ไม่สามารถคืนสถานะจากใช้แล้วได้'));
+    }
+    return res.redirect('/admin/tools/rewards');
+  }
+  const updated = await Prize.findOneAndUpdate(
+    { _id: new mongoose.Types.ObjectId(id), reserved: { $gt: 0 } },
+    { $inc: { reserved: -1 } },
+    { new: true }
+  );
+  if (!updated) {
+    return res.redirect('/admin/tools/rewards?error=' + encodeURIComponent('ไม่มีของค้างแจกสำหรับชิ้นนี้'));
+  }
+  return res.redirect('/admin/tools/rewards');
 });
 
 /* ------------------------------------------------------------------ */
