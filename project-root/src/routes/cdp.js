@@ -7,13 +7,13 @@ const router = Router();
 router.post('/cdp/track', (req, res) => {
   try {
     const { name, payload } = req.body || {};
-    if (!name) return res.status(400).json({ ok: false, error: 'missing name' });
+    if (!name) return res.status(200).json({ ok: false, error: 'missing name' });
     track(String(name), typeof payload === 'object' ? payload : { raw: payload });
-    res.json({ ok: true });
+    return res.status(200).json({ ok: true });
   } catch (err) {
-    res.status(500).json({ ok: false, error: err?.message || 'failed' });
+    // Always 200 to avoid client overlays
+    return res.status(200).json({ ok: false, error: err?.message || 'failed' });
   }
 });
 
 export default router;
-
