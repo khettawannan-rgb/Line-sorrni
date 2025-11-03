@@ -33,8 +33,9 @@ export async function onTextGameMenu(ev) {
       return `https://${cand.replace(/\/$/, '')}`;
     };
     const baseUrl = pickBase();
-    const forceDirect = String(process.env.FORCE_DIRECT_GAME_LINKS || process.env.LIFF_GAMES_MODE || '').toLowerCase();
-    const preferDirect = forceDirect === 'true' || forceDirect === 'direct';
+    const forceMode = String(process.env.FORCE_DIRECT_GAME_LINKS || process.env.LIFF_GAMES_MODE || '').toLowerCase();
+    // Default to direct links to avoid LIFF dev-mode restrictions; use 'liff' to force LIFF
+    const preferDirect = !forceMode || forceMode === 'true' || forceMode === 'direct';
     const makeUrl = (game) => {
       if (!preferDirect && liffId) return `https://liff.line.me/${liffId}?game=${encodeURIComponent(game)}`;
       if (baseUrl) return `${baseUrl}/liff/index.html?game=${encodeURIComponent(game)}`;
