@@ -65,8 +65,23 @@
       try { const profile = await liff.getProfile(); state.userId = profile.userId || ''; } catch {}
     }
 
-    function renderQuiz(){
-      const data = [
+    async function loadQuizBank(){
+      try {
+        const res = await fetch('/liff/quiz-bank.json', { cache: 'no-store' });
+        const json = await res.json();
+        return Array.isArray(json?.data) ? json.data : [];
+      } catch { return []; }
+    }
+
+    function pickRandom(arr, n){
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+      return a.slice(0, n);
+    }
+
+    async function renderQuiz(){
+      const bank = await loadQuizBank();
+      const data = bank.length ? pickRandom(bank, Math.min(5, bank.length)) : [
         { q:'ส่วนผสมหลักของแอสฟัลต์คืออะไร?', c:['บิทูเมน','ปูนซีเมนต์','ทราย','ดิน'], a:0 },
         { q:'ฝนตกควรทำอย่างไรกับการปูยาง?', c:['ทำต่อ','หยุด','เพิ่มน้ำ','เพิ่มอุณหภูมิ'], a:1 },
         { q:'อุณหภูมิผสมยางควร...', c:['ต่ำ','พอเหมาะ','สูงมาก','สุ่ม'], a:1 },
@@ -81,16 +96,24 @@
       const qEl = document.createElement('div');
       const btns = document.createElement('div'); btns.className='actions';
       root.appendChild(qEl); root.appendChild(btns);
-      function next(){
+      async function next(){
         if(state.step>=5){
           const win = state.score>=4;
-          root.innerHTML = `<p class="q">สรุปคะแนน: ${state.score}/5</p><p>${win? 'ยินดีด้วย! โค้ดรางวัล: <strong>WIN-'+state.sessionId.slice(0,4).toUpperCase()+'</strong>' : 'ลองอีกครั้งได้'}</p>`;
+          let prizeText = '';
+          if (win) {
+            try {
+              const r = await fetch('/games/allocate-prize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: state.userId, game: 'quiz', sessionId: state.sessionId }) });
+              const d = await r.json();
+              if (d?.ok && d?.assigned) prizeText = ` ได้รางวัล: <strong>${d.assigned}</strong>`; else prizeText = ' ได้รางวัล: <em>หมดโควต้า</em>';
+            } catch {}
+          }
+          root.innerHTML = `<p class=\"q\">สรุปคะแนน: ${state.score}/5</p><p>${win? 'ยินดีด้วย!'+prizeText+' · โค้ดอ้างอิง: <strong>WIN-'+state.sessionId.slice(0,4).toUpperCase()+'</strong>' : 'ลองอีกครั้งได้'}</p>`;
           track('finish', { userId: state.userId, game:'quiz', score: state.score });
           if(win) track('win_reward', { userId: state.userId, game:'quiz', code: 'WIN-'+state.sessionId.slice(0,4).toUpperCase() });
           return;
         }
         const cur = data[state.step];
-        qEl.innerHTML = `<p class="q">${state.step+1}) ${cur.q}</p>`;
+        qEl.innerHTML = `<p class=\"q\">${state.step+1}) ${cur.q}</p>`;
         btns.innerHTML = '';
         cur.c.forEach((choice,idx)=>{
           const b=document.createElement('button'); b.className='btn-ci'; b.textContent=choice;
@@ -107,9 +130,10 @@
       const scenarios = ['แดดจัด','เมฆมาก','ฝนปรอย','ฝนหนัก','ลมแรง'];
       const root=$('#view'); root.innerHTML=''; const box=document.createElement('div'); const btns=document.createElement('div'); btns.className='actions'; root.appendChild(box); root.appendChild(btns);
       state.step=0; state.score=0;
-      function next(){
+      async function next(){
         if(state.step>=5){
-          const win=state.score>=4; root.innerHTML=`<p class="q">คะแนน: ${state.score}/5</p><p>${win?'ผ่าน! โค้ด: <strong>WIN-'+state.sessionId.slice(0,4).toUpperCase()+'</strong>':'ไม่ผ่าน ลองใหม่'}</p>`;
+          const win=state.score>=4; let prizeText=''; if(win){ try{ const r = await fetch('/games/allocate-prize', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ userId: state.userId, game:'runner', sessionId: state.sessionId }) }); const d = await r.json(); prizeText = (d?.ok && d?.assigned) ? ` ได้รางวัล: <strong>${d.assigned}</strong>` : ' ได้รางวัล: <em>หมดโควต้า</em>'; } catch{} }
+          root.innerHTML=`<p class="q">คะแนน: ${state.score}/5</p><p>${win?'ผ่าน!'+prizeText+' · โค้ด: <strong>WIN-'+state.sessionId.slice(0,4).toUpperCase()+'</strong>':'ไม่ผ่าน ลองใหม่'}</p>`;
           track('finish',{ userId:state.userId, game:'runner', score:state.score }); if(win) track('win_reward',{ userId:state.userId, game:'runner' }); return;
         }
         const w = scenarios[Math.floor(Math.random()*scenarios.length)];
@@ -130,7 +154,7 @@
       $('#subtitle').textContent = 'ทายป้ายจราจร (5 รอบ)';
       const data=[['🚫','ห้ามผ่าน'],['⚠️','ระวังอันตราย'],['⬅️','เลี้ยวซ้าย'],['🅿️','ที่จอดรถ'],['🚸','ทางข้าม']];
       const root=$('#view'); root.innerHTML=''; const q=document.createElement('div'); const btns=document.createElement('div'); btns.className='actions'; root.appendChild(q); root.appendChild(btns);
-      state.step=0; state.score=0; function next(){ if(state.step>=5){ const win=state.score>=4; root.innerHTML=`<p class="q">คะแนน: ${state.score}/5</p><p>${win?'ผ่าน! โค้ด: <strong>WIN-'+state.sessionId.slice(0,4).toUpperCase()+'</strong>':'ไม่ผ่าน ลองใหม่'}</p>`; track('finish',{ userId:state.userId, game:'sign', score: state.score }); if(win) track('win_reward',{ userId:state.userId, game:'sign' }); return; } const cur=data[state.step]; q.innerHTML=`<div style="font-size:52px">${cur[0]}</div><p class="muted">นี่คือป้ายอะไร?</p>`; btns.innerHTML=''; const choices=['ห้ามผ่าน','ระวังอันตราย','เลี้ยวซ้าย','ที่จอดรถ','ทางข้าม'].sort(()=>Math.random()-0.5).slice(0,4); choices.forEach((c)=>{ const b=document.createElement('button'); b.className='btn-ci'; b.textContent=c; b.onclick=()=>{ const correct=c===cur[1]; if(correct) state.score++; state.step++; track('answer',{ userId:state.userId, game:'sign', step: state.step, correct }); next(); }; btns.appendChild(b);});}
+      state.step=0; state.score=0; async function next(){ if(state.step>=5){ const win=state.score>=4; let prizeText=''; if(win){ try{ const r = await fetch('/games/allocate-prize', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ userId: state.userId, game:'sign', sessionId: state.sessionId }) }); const d = await r.json(); prizeText = (d?.ok && d?.assigned) ? ` ได้รางวัล: <strong>${d.assigned}</strong>` : ' ได้รางวัล: <em>หมดโควต้า</em>'; } catch{} } root.innerHTML=`<p class="q">คะแนน: ${state.score}/5</p><p>${win?'ผ่าน!'+prizeText+' · โค้ด: <strong>WIN-'+state.sessionId.slice(0,4).toUpperCase()+'</strong>':'ไม่ผ่าน ลองใหม่'}</p>`; track('finish',{ userId:state.userId, game:'sign', score: state.score }); if(win) track('win_reward',{ userId:state.userId, game:'sign' }); return; } const cur=data[state.step]; q.innerHTML=`<div style="font-size:52px">${cur[0]}</div><p class="muted">นี่คือป้ายอะไร?</p>`; btns.innerHTML=''; const choices=['ห้ามผ่าน','ระวังอันตราย','เลี้ยวซ้าย','ที่จอดรถ','ทางข้าม'].sort(()=>Math.random()-0.5).slice(0,4); choices.forEach((c)=>{ const b=document.createElement('button'); b.className='btn-ci'; b.textContent=c; b.onclick=()=>{ const correct=c===cur[1]; if(correct) state.score++; state.step++; track('answer',{ userId:state.userId, game:'sign', step: state.step, correct }); next(); }; btns.appendChild(b);});}
       next();
     }
 
