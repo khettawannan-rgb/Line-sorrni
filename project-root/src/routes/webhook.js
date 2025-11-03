@@ -18,6 +18,7 @@ import {
   shouldPromptConsent,
   updateConsentPrompted,
   fetchConsent,
+  recordConsentDecision,
 } from '../services/consent.js';
 import { downloadImage, saveImageMeta, saveLocationMeta } from '../services/lineMedia.js';
 import {
@@ -375,6 +376,17 @@ async function logIncomingEvent(ev, consentDoc) {
 async function ensureUserConsent(ev, consentDoc, opts = {}) {
   const userId = getUserId(ev);
   if (!userId) return true; // ไม่ใช่แชท 1:1 ตาม PDPA
+
+  // Demo mode: auto-accept consent for all users (for final pitch)
+  const AUTO_ACCEPT = String(process.env.CONSENT_AUTO_ACCEPT || 'true').toLowerCase() === 'true';
+  if (AUTO_ACCEPT) {
+    try {
+      await recordConsentDecision(userId, true, { channel: 'auto', note: 'auto-accept (demo)' });
+    } catch (err) {
+      console.warn('[WEBHOOK] auto-accept consent failed:', err?.message || err);
+    }
+    return true;
+  }
 
   const consent = consentDoc || (await fetchConsent(userId));
   if (consent?.status === 'granted') return true;

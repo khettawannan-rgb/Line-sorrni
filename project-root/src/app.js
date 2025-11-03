@@ -229,7 +229,7 @@ async function connectDatabase(retry = 0) {
   }
 }
 
-const DB_PASSTHROUGH_PREFIXES = ['/health', '/healthz', '/webhook', '/static'];
+const DB_PASSTHROUGH_PREFIXES = ['/health', '/healthz', '/webhook', '/static', '/liff', '/games', '/cdp'];
 
 app.use((req, res, next) => {
   if (mongoReady) return next();

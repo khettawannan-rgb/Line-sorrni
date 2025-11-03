@@ -31,9 +31,9 @@ router.post('/games/allocate-prize', async (req, res) => {
 
     return res.json({ ok: true, assigned: pick.name, prize: { id: pick.id, name: pick.name } });
   } catch (err) {
-    return res.status(500).json({ ok: false, error: err?.message || 'failed' });
+    // Return 200 with an error payload to avoid proxy 502/Bad Gateway overlays in some clients
+    return res.status(200).json({ ok: false, error: err?.message || 'unavailable' });
   }
 });
 
 export default router;
-

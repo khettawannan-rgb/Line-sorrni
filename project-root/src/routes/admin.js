@@ -2322,12 +2322,12 @@ async function ensurePrizeSeed() {
     { name: 'ปากกา', total: 24 },
     { name: 'ดินสอ', total: 16 },
     { name: 'กระเป๋าปากกา', total: 2 },
-    { name: 'แผ่นรอบงเมาส์', total: 1 },
+    { name: 'แผ่นรองเมาส์', total: 1 },
     { name: 'สมุดแมวมาลี', total: 12 },
-    { name: 'สมุดโน๊ต', total: 9 },
+    { name: 'สมุดโน้ต', total: 9 },
     { name: 'กระเป๋าแคร์แบร์', total: 2 },
-    { name: 'Post IT', total: 10 },
-    { name: 'สติก๊กเกอร์', total: 10 },
+    { name: 'Post-it', total: 10 },
+    { name: 'สติกเกอร์', total: 10 },
   ];
   await Prize.insertMany(seed.map((s) => ({ ...s, reserved: 0, used: 0 })));
   return true;
@@ -2360,12 +2360,13 @@ router.get('/tools/rewards', requireAuth, async (req, res) => {
   const summary = summarizePrizes(withAvail);
   const assigned = typeof req.query.assigned === 'string' ? req.query.assigned : '';
   const error = typeof req.query.error === 'string' ? req.query.error : '';
+  const message = typeof req.query.message === 'string' ? req.query.message : '';
   return res.render('tools/rewards', {
     title: 'Rewards',
     active: 'tools',
     prizes: withAvail,
     summary,
-    result: assigned ? { ok: true, message: `สุ่มได้: ${assigned}` } : error ? { ok: false, error } : null,
+    result: assigned ? { ok: true, message: `สุ่มได้: ${assigned}` } : error ? { ok: false, error } : (message ? { ok: true, message } : null),
   });
 });
 
@@ -2416,6 +2417,36 @@ router.post('/tools/rewards/:id/mark-used', requireAuth, async (req, res) => {
     return res.redirect('/admin/tools/rewards?error=' + encodeURIComponent('ไม่มีของค้างแจกอยู่สำหรับชิ้นนี้'));
   }
   return res.redirect('/admin/tools/rewards');
+});
+
+router.post('/tools/rewards/normalize', requireAuth, async (req, res) => {
+  // Fix common typos and merge duplicates safely
+  const corrections = [
+    { cond: { name: 'แผ่นรอบงเมาส์' }, good: 'แผ่นรองเมาส์' },
+    { cond: { name: 'สติก๊กเกอร์' }, good: 'สติกเกอร์' },
+    { cond: { name: 'สมุดโน๊ต' }, good: 'สมุดโน้ต' },
+    { cond: { name: { $regex: /^post\s*it$/i } }, good: 'Post-it' },
+  ];
+  let changed = 0;
+  for (const spec of corrections) {
+    const badList = await Prize.find(spec.cond).lean();
+    if (!badList.length) continue;
+    const good = await Prize.findOne({ name: spec.good });
+    for (const bad of badList) {
+      if (good) {
+        await Prize.updateOne(
+          { _id: good._id },
+          { $inc: { total: Number(bad.total||0), reserved: Number(bad.reserved||0), used: Number(bad.used||0) } }
+        );
+        await Prize.deleteOne({ _id: bad._id });
+        changed += 1;
+      } else {
+        await Prize.updateOne({ _id: bad._id }, { $set: { name: spec.good } });
+        changed += 1;
+      }
+    }
+  }
+  return res.redirect('/admin/tools/rewards?message=' + encodeURIComponent(`แก้คำผิดและรวมรายการแล้ว (${changed})`));
 });
 
 router.post('/tools/rewards/:id/revert', requireAuth, async (req, res) => {

@@ -13,14 +13,19 @@
       <div class="card small"><div class="card-body"><strong>ใช้แล้ว</strong><div><%= summary.used %></div></div></div>
     </div>
 
-    <form class="form" method="post" action="/admin/tools/rewards/allocate" style="margin-bottom:16px">
-      <div class="form-actions">
-        <button class="btn primary" type="submit" <%= summary.available<=0 ? 'disabled' : '' %>>สุ่มแจกให้ผู้ชนะ</button>
+    <div class="form" style="margin-bottom:16px">
+      <div class="form-actions" style="display:flex;gap:8px;flex-wrap:wrap">
+        <form method="post" action="/admin/tools/rewards/allocate">
+          <button class="btn primary" type="submit" <%= summary.available<=0 ? 'disabled' : '' %>>สุ่มแจกให้ผู้ชนะ</button>
+        </form>
+        <form method="post" action="/admin/tools/rewards/normalize">
+          <button class="btn ghost" type="submit">แก้คำผิด/รวมรายการซ้ำ</button>
+        </form>
         <% if (summary.available<=0) { %>
           <span class="form-help" style="margin-left:8px;opacity:0.7">ของรางวัลหมดแล้ว</span>
         <% } %>
       </div>
-    </form>
+    </div>
 
     <div class="table-wrap table-scroll">
       <table class="table compact">
@@ -66,4 +71,3 @@
   </div>
   
 </div>
-
